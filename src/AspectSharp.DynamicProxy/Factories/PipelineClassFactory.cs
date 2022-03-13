@@ -1,0 +1,202 @@
+﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy.Utils;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using System.Reflection.Emit;
+using System.Threading.Tasks;
+using static AspectSharp.DynamicProxy.Utils.InterceptorTypeCache;
+
+namespace AspectSharp.DynamicProxy.Factories
+{
+    internal static class PipelineClassFactory
+    {
+        private static readonly ConstructorInfo _objectConstructorMethodInfo = typeof(object).GetConstructor(Array.Empty<Type>());
+
+        private static readonly MethodInfo _getTargetMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Target)).GetGetMethod();
+        private static readonly MethodInfo _getParametersMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Parameters)).GetGetMethod();
+        private static readonly MethodInfo _waitTaskMethodInfo = typeof(Task).GetMethod(nameof(Task.Wait), Array.Empty<Type>());
+        private static readonly MethodInfo _setReturnValueMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.ReturnValue)).GetSetMethod();
+        private static readonly MethodInfo _asTaskValueTaskMethodInfo = typeof(ValueTask).GetMethod(nameof(ValueTask.AsTask));
+        private static readonly MethodInfo _getCompletedTaskMethodInfo = typeof(Task).GetProperty(nameof(Task.CompletedTask)).GetGetMethod();
+
+        private static readonly Type _interceptDelegateType = typeof(InterceptDelegate);
+        private static readonly Type _abstractInterceptorAttributeType = typeof(AbstractInterceptorAttribute);
+
+        private static readonly MethodInfo _createPipelineMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.CreatePipeline), new Type[] { typeof(AspectDelegate), typeof(AbstractInterceptorAttribute[]) });
+
+        private static readonly ConstructorInfo _aspectDelegateConstructorInfo = typeof(AspectDelegate).GetConstructor(new Type[] { typeof(object), typeof(IntPtr) });
+
+        public static IReadOnlyDictionary<MethodInfo, PropertyInfo> CreatePipelineClass(Type serviceType, TypeBuilder typeBuilder, InterceptedTypeData interceptedTypeData)
+        {
+            var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
+            var staticAttrs = MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
+            var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, interceptedTypeData.AllInterceptors.ToArray());
+            var staticConstructorBuilder = typeBuilder.DefineConstructor(staticAttrs, CallingConventions.Standard, Type.EmptyTypes);
+            var constructorParameters = new Dictionary<string, ParameterBuilder>();
+            foreach (var idx in Enumerable.Range(1, interceptedTypeData.AllInterceptors.Count()))
+            {
+                var parameterName = string.Format("aspect{0}", idx);
+                constructorParameters.Add(parameterName, constructorBuilder.DefineParameter(idx, ParameterAttributes.None, parameterName));
+            }
+
+            var cil = constructorBuilder.GetILGenerator();
+            cil.DeclareLocal(typeof(AbstractInterceptorAttribute[]));
+            cil.Emit(OpCodes.Ldarg_0);
+            cil.Emit(OpCodes.Call, _objectConstructorMethodInfo);
+
+            var staticCil = staticConstructorBuilder.GetILGenerator();
+
+            var methods = serviceType.GetMethods();
+            var index = 1;
+
+            var ret = new Dictionary<MethodInfo, PropertyInfo>();
+            var indexedInterceptors = interceptedTypeData.AllInterceptors.Select<Type, (Type Interceptor, int Index)>((interceptorType, idx) => (interceptorType, idx + 1)).ToList();
+            foreach (var methodInfo in methods)
+            {
+                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out var interceptors))
+                {
+                    var aspectDelegateField = CreateAspectDelegate(typeBuilder, staticCil, methodInfo, index);
+
+                    ret.Add(methodInfo, CreatePipelineProperty(typeBuilder, cil, aspectDelegateField, interceptors, indexedInterceptors, index));
+
+                    index++;
+                }
+            }
+            cil.Emit(OpCodes.Ret);
+            staticCil.Emit(OpCodes.Ret);
+
+            return ret;
+        }
+
+        private static FieldBuilder CreateAspectDelegate(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, int index)
+        {
+            var retType = methodInfo.ReturnType;
+            var isValueTask = retType == typeof(ValueTask);
+            var isAsync = retType == typeof(Task) || isValueTask;
+
+            var isVoid = retType == typeof(void) || isValueTask || isAsync;
+
+            if (retType.IsGenericType)
+            {
+                var genericTypeDefinition = retType.GetGenericTypeDefinition();
+                isValueTask = genericTypeDefinition == typeof(ValueTask<>);
+                isAsync = genericTypeDefinition == typeof(Task<>) || isValueTask;
+                if (isAsync)
+                    retType = retType.GetGenericArguments()[0];
+            }
+
+            var delegateFieldBuilder = typeBuilder.DefineField(string.Format("_aspectDelegate{0}", index), typeof(AspectDelegate), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
+
+            var methodBuilder = typeBuilder.DefineMethod(string.Format("AspectDelegate{0}", index), MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard, typeof(Task), new Type[] { typeof(AspectContext) });
+            methodBuilder.DefineParameter(1, ParameterAttributes.None, "context");
+
+            var cil = methodBuilder.GetILGenerator();
+
+            Console.Clear();
+
+            if (!isVoid)
+                cil.DeclareLocal(methodInfo.DeclaringType);
+            var parameters = methodInfo.GetParameters();
+            foreach (var param in parameters)
+                cil.DeclareLocal(param.ParameterType);
+            if (isValueTask)
+                cil.DeclareLocal(methodInfo.ReturnType);
+
+            cil.Emit(OpCodes.Ldarg_0);
+            cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
+            cil.Emit(OpCodes.Isinst, methodInfo.DeclaringType);
+            if (!isVoid)
+                cil.Emit(OpCodes.Stloc_0);
+
+            foreach (var i in Enumerable.Range(isVoid ? 0 : 1, parameters.Length))
+            {
+                cil.Emit(OpCodes.Ldarg_0);
+                cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
+                cil.Emit(OpCodes.Ldc_I4, isVoid ? i : i - 1);
+                cil.Emit(OpCodes.Ldelem_Ref);
+                var param = parameters[isVoid ? i : i - 1];
+                if (param.ParameterType.IsValueType)
+                    cil.Emit(OpCodes.Unbox_Any, param.ParameterType);
+                else
+                    cil.Emit(OpCodes.Castclass, param.ParameterType);
+                cil.Emit(OpCodes.Stloc, i);
+            }
+
+            if (!isVoid)
+            {
+                cil.Emit(OpCodes.Ldarg_0);
+                cil.Emit(OpCodes.Ldloc_0);
+            }
+            foreach (var i in Enumerable.Range(isVoid ? 0 : 1, parameters.Length))
+                cil.Emit(OpCodes.Ldloc, i);
+            cil.Emit(OpCodes.Callvirt, methodInfo);
+            if (isValueTask)
+            {
+                cil.Emit(OpCodes.Stloc_S, parameters.Length + (isVoid ? 0 : 1));
+                cil.Emit(OpCodes.Ldloca_S, parameters.Length + (isVoid ? 0 : 1));
+                if (isVoid)
+                    cil.Emit(OpCodes.Call, _asTaskValueTaskMethodInfo);
+                else
+                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(retType).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod());
+            }
+            else if (isAsync && !isVoid)
+                cil.Emit(OpCodes.Callvirt, typeof(Task<>).MakeGenericType(retType).GetProperty(nameof(Task<int>.Result)).GetGetMethod());
+            if (!isVoid)
+            {
+                if (retType.IsValueType)
+                    cil.Emit(OpCodes.Box, retType);
+                cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
+                cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
+            }
+            else if (!isAsync)
+                cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
+            cil.Emit(OpCodes.Ret);
+
+            staticCil.Emit(OpCodes.Ldnull);
+            staticCil.Emit(OpCodes.Ldftn, methodBuilder);
+            staticCil.Emit(OpCodes.Newobj, _aspectDelegateConstructorInfo);
+            staticCil.Emit(OpCodes.Stsfld, delegateFieldBuilder);
+
+            return delegateFieldBuilder;
+        }
+
+        private static PropertyBuilder CreatePipelineProperty(TypeBuilder typeBuilder, ILGenerator constructorIlGenerator, FieldInfo aspectDelegateField, IEnumerable<Type> interceptors, IEnumerable<(Type Interceptor, int Index)> indexedInterceptors, int index)
+        {
+            var pipelineField = typeBuilder.DefineField(string.Format("_pipeline{0}", index), _interceptDelegateType, FieldAttributes.Private | FieldAttributes.InitOnly);
+
+            var methodBuilder = typeBuilder.DefineMethod(string.Format("get_pipeline{0}", index), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.SpecialName, CallingConventions.Standard | CallingConventions.HasThis, _interceptDelegateType, null);
+            var cil = methodBuilder.GetILGenerator();
+
+            cil.Emit(OpCodes.Ldarg_0);
+            cil.Emit(OpCodes.Ldfld, pipelineField);
+            cil.Emit(OpCodes.Ret);
+
+            var property = typeBuilder.DefineProperty(string.Format("Pipeline{0}", index), PropertyAttributes.None, _interceptDelegateType, Array.Empty<Type>());
+            property.SetGetMethod(methodBuilder);
+
+            constructorIlGenerator.Emit(OpCodes.Ldc_I4, interceptors.Count());
+            constructorIlGenerator.Emit(OpCodes.Newarr, _abstractInterceptorAttributeType);
+
+            var arrayIdx = 0;
+            foreach (var (_, parameterIdx) in indexedInterceptors.Where(tuple => interceptors.Any(interceptor => tuple.Interceptor == interceptor)))
+            {
+                constructorIlGenerator.Emit(OpCodes.Dup);
+                constructorIlGenerator.Emit(OpCodes.Ldc_I4, arrayIdx);
+                constructorIlGenerator.Emit(OpCodes.Ldarg, parameterIdx);
+                constructorIlGenerator.Emit(OpCodes.Stelem_Ref);
+                arrayIdx++;
+            }
+            constructorIlGenerator.Emit(OpCodes.Stloc_0);
+
+            constructorIlGenerator.Emit(OpCodes.Ldarg_0);
+            constructorIlGenerator.Emit(OpCodes.Ldsfld, aspectDelegateField);
+            constructorIlGenerator.Emit(OpCodes.Ldloc_0);
+            constructorIlGenerator.Emit(OpCodes.Call, _createPipelineMethodInfo);
+            constructorIlGenerator.Emit(OpCodes.Stfld, pipelineField);
+
+            return property;
+        }
+    }
+}

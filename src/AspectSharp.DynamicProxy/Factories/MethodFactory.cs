@@ -21,13 +21,13 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _getCompletedValueTaskMethodInfo = typeof(ValueTask).GetProperty(nameof(ValueTask.CompletedTask)).GetGetMethod();
         private static readonly MethodInfo _getCompletedTaskMethodInfo = typeof(Task).GetProperty(nameof(Task.CompletedTask)).GetGetMethod();
 
-        public static void CreateMethods(Type serviceType, TypeBuilder typeBuilder, FieldInfo[] fields, IReadOnlyDictionary<MethodInfo, PropertyInfo> pipelineProperties, IReadOnlyDictionary<MethodInfo, FieldInfo> contextActivatorFields)
+        public static IEnumerable<MethodBuilder> CreateMethods(Type serviceType, TypeBuilder typeBuilder, FieldInfo[] fields, IReadOnlyDictionary<MethodInfo, PropertyInfo> pipelineProperties, IReadOnlyDictionary<MethodInfo, FieldInfo> contextActivatorFields)
         {
             var targetField = fields[0];
             var pipelinesField = fields[1];
             var contextFactoryField = fields[2];
 
-            var methods = serviceType.GetMethods().Where(mi => !mi.IsSpecialName);
+            var methods = serviceType.GetMethods()/*.Where(mi => !mi.IsSpecialName)*/;
             foreach (var methodInfo in methods)
             {
                 var methodName = methodInfo.Name;
@@ -48,7 +48,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 }
 
                 var parameters = methodInfo.GetParameters();
-                var methodBuilder = typeBuilder.DefineMethod(methodInfo.Name, methodInfo.Attributes ^ MethodAttributes.Abstract, CallingConventions.Standard | CallingConventions.HasThis, methodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
+                var methodBuilder = typeBuilder.DefineMethod(methodInfo.Name, methodInfo.Attributes ^ MethodAttributes.Abstract, methodInfo.CallingConvention, methodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
                 var hasParameters = parameters.Length > 0;
                 foreach (var tuple in parameters.Zip(Enumerable.Range(1, parameters.Length), (first, second) => new Tuple<ParameterInfo, int>(first, second)))
                 {
@@ -58,7 +58,6 @@ namespace AspectSharp.DynamicProxy.Factories
                 }
 
                 var cil = methodBuilder.GetILGenerator();
-                Console.Clear();
 
                 if (pipelineProperties.TryGetValue(methodInfo, out var pipelineProperty) &&
                     contextActivatorFields.TryGetValue(methodInfo, out var aspectContextActivatorField))
@@ -117,6 +116,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     else if (isAsync)
                         cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
                     cil.Emit(OpCodes.Ret);
+                    yield return methodBuilder;
                     continue;
                 }
                 cil.Emit(OpCodes.Ldarg_0);
@@ -129,6 +129,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 }
                 cil.Emit(OpCodes.Callvirt, methodInfo);
                 cil.Emit(OpCodes.Ret);
+                yield return methodBuilder;
             }
         }
     }

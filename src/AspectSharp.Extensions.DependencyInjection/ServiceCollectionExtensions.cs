@@ -10,8 +10,6 @@ namespace AspectSharp.Extensions.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        private static readonly ICollection<Type> _interceptorsaddedInServices = new List<Type>();
-
         public static IServiceCollection AddAspects(this IServiceCollection services)
         {
             services.AddTransient<IAspectContextFactory, AspectContextFactory>();
@@ -21,15 +19,6 @@ namespace AspectSharp.Extensions.DependencyInjection
             {
                 if (InterceptorTypeCache.TryGetInterceptedTypeData(sd.ServiceType, out var interceptorTypeCache))
                 {
-                    foreach (var interceptor in interceptorTypeCache.AllInterceptors)
-                    {
-                        if (!_interceptorsaddedInServices.Contains(interceptor))
-                        {
-                            services.AddSingleton(interceptor);
-                            _interceptorsaddedInServices.Add(interceptor);
-                        }
-                    }
-
                     var targetType = sd.ImplementationType;
                     if (targetType is null && sd.ImplementationInstance is not null)
                     {
@@ -50,7 +39,7 @@ namespace AspectSharp.Extensions.DependencyInjection
                     {
                         try
                         {
-                            var (proxyType, pipelineType) = ProxyClassFactory.Create(sd.ServiceType, targetType, interceptorTypeCache);
+                            var (proxyType, pipelineType) = DynamicProxyFactory.Create(sd.ServiceType, targetType, interceptorTypeCache);
                             services.Remove(sd);
                             services.AddSingleton(pipelineType);
                             services.Add(new ServiceDescriptor(targetType, targetType, sd.Lifetime));

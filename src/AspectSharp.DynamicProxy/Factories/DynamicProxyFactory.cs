@@ -7,7 +7,7 @@ using static AspectSharp.DynamicProxy.Utils.InterceptorTypeCache;
 
 namespace AspectSharp.DynamicProxy.Factories
 {
-    internal static class ProxyClassFactory
+    internal static class DynamicProxyFactory
     {
         private static readonly ConstructorInfo _objectConstructorMethodInfo = typeof(object).GetConstructor(Array.Empty<Type>());
 
@@ -23,7 +23,11 @@ namespace AspectSharp.DynamicProxy.Factories
                 return type;
 
             var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Target == targetType);
-            var typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, ++previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
+            TypeBuilder typeBuilder;
+            if (previouslyDefinedProxyClassFromThisTargetCount == 0)
+                typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+            else
+                typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
 
             var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}_Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
             var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData);
@@ -33,13 +37,13 @@ namespace AspectSharp.DynamicProxy.Factories
 
             DefineConstructor(targetType, typeBuilder, readonlyFields);
 
-            PropertyFactory.CreateProperties(serviceType, typeBuilder, readonlyFields[0]);
-
-            EventFactory.CreateEvents(serviceType, typeBuilder, readonlyFields[0]);
-
             var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
 
-            MethodFactory.CreateMethods(serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields);
+            var methods = MethodFactory.CreateMethods(serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
+
+            PropertyFactory.CreateProperties(serviceType, typeBuilder, methods, readonlyFields[0]);
+
+            EventFactory.CreateEvents(serviceType, typeBuilder, methods, readonlyFields[0]);
 
             typeBuilder.AddInterfaceImplementation(serviceType);
 
@@ -106,7 +110,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
         private static AssemblyBuilder NewAssemblyBuilder()
         {
-            var assemblyName = new AssemblyName(typeof(ProxyClassFactory).Assembly.GetName().Name + ".Proxies");
+            var assemblyName = new AssemblyName(typeof(DynamicProxyFactory).Assembly.GetName().Name + ".Proxies");
             return AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
         }
 

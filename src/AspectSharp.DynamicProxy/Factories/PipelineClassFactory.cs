@@ -1,4 +1,5 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.Abstractions.Attributes;
 using AspectSharp.DynamicProxy.Utils;
 using System;
 using System.Collections.Generic;
@@ -14,6 +15,8 @@ namespace AspectSharp.DynamicProxy.Factories
     {
         private static readonly ConstructorInfo _objectConstructorMethodInfo = typeof(object).GetConstructor(Array.Empty<Type>());
 
+        private static readonly MethodInfo _getTypeFromHandleMethodInfo = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new Type[] { typeof(RuntimeTypeHandle) });
+
         private static readonly MethodInfo _getTargetMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Target)).GetGetMethod();
         private static readonly MethodInfo _getParametersMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Parameters)).GetGetMethod();
         private static readonly MethodInfo _waitTaskMethodInfo = typeof(Task).GetMethod(nameof(Task.Wait), Array.Empty<Type>());
@@ -25,6 +28,7 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly Type _abstractInterceptorAttributeType = typeof(AbstractInterceptorAttribute);
 
         private static readonly MethodInfo _createPipelineMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.CreatePipeline), new Type[] { typeof(AspectDelegate), typeof(AbstractInterceptorAttribute[]) });
+        private static readonly MethodInfo _getInterceptorsMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.GetInterceptors), new Type[] { typeof(Type), typeof(int) });
 
         private static readonly ConstructorInfo _aspectDelegateConstructorInfo = typeof(AspectDelegate).GetConstructor(new Type[] { typeof(object), typeof(IntPtr) });
 
@@ -32,34 +36,31 @@ namespace AspectSharp.DynamicProxy.Factories
         {
             var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
             var staticAttrs = MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
-            var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, interceptedTypeData.AllInterceptors.ToArray());
+            var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, Type.EmptyTypes);
             var staticConstructorBuilder = typeBuilder.DefineConstructor(staticAttrs, CallingConventions.Standard, Type.EmptyTypes);
-            var constructorParameters = new Dictionary<string, ParameterBuilder>();
-            foreach (var idx in Enumerable.Range(1, interceptedTypeData.AllInterceptors.Count()))
-            {
-                var parameterName = string.Format("aspect{0}", idx);
-                constructorParameters.Add(parameterName, constructorBuilder.DefineParameter(idx, ParameterAttributes.None, parameterName));
-            }
-
             var cil = constructorBuilder.GetILGenerator();
             cil.DeclareLocal(typeof(AbstractInterceptorAttribute[]));
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Call, _objectConstructorMethodInfo);
 
             var staticCil = staticConstructorBuilder.GetILGenerator();
+            var localServiceType = staticCil.DeclareLocal(typeof(Type));
+            staticCil.Emit(OpCodes.Ldtoken, serviceType);
+            staticCil.Emit(OpCodes.Call, _getTypeFromHandleMethodInfo);
+            staticCil.Emit(OpCodes.Stloc_0, localServiceType);
 
-            var methods = serviceType.GetMethods();
+            var methods = serviceType.GetMethods().Where(mi => !mi.IsSpecialName);
             var index = 1;
 
             var ret = new Dictionary<MethodInfo, PropertyInfo>();
-            var indexedInterceptors = interceptedTypeData.AllInterceptors.Select<Type, (Type Interceptor, int Index)>((interceptorType, idx) => (interceptorType, idx + 1)).ToList();
+            var indexedInterceptors = interceptedTypeData.AllInterceptors.Select<CustomAttributeData, (CustomAttributeData Interceptor, int Index)>((interceptorType, idx) => (interceptorType, idx + 1)).ToList();
             foreach (var methodInfo in methods)
             {
-                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out var interceptors))
+                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))
                 {
-                    var aspectDelegateField = CreateAspectDelegate(typeBuilder, staticCil, methodInfo, index);
+                    var (aspectDelegateField, aspectsFromDelegateField) = CreateAspectDelegate(typeBuilder, staticCil, methodInfo, index);
 
-                    ret.Add(methodInfo, CreatePipelineProperty(typeBuilder, cil, aspectDelegateField, interceptors, indexedInterceptors, index));
+                    ret.Add(methodInfo, CreatePipelineProperty(typeBuilder, cil, aspectDelegateField, aspectsFromDelegateField, index));
 
                     index++;
                 }
@@ -70,7 +71,7 @@ namespace AspectSharp.DynamicProxy.Factories
             return ret;
         }
 
-        private static FieldBuilder CreateAspectDelegate(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, int index)
+        private static (FieldBuilder aspectDelegateField, FieldBuilder aspectsFromDelegateField) CreateAspectDelegate(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, int index)
         {
             var retType = methodInfo.ReturnType;
             var isValueTask = retType == typeof(ValueTask);
@@ -87,14 +88,14 @@ namespace AspectSharp.DynamicProxy.Factories
                     retType = retType.GetGenericArguments()[0];
             }
 
+            var aspectsFromDelegateFieldBuilder = typeBuilder.DefineField(string.Format("_aspectsFromDelegate{0}", index), typeof(AbstractInterceptorAttribute[]), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
+
             var delegateFieldBuilder = typeBuilder.DefineField(string.Format("_aspectDelegate{0}", index), typeof(AspectDelegate), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
 
             var methodBuilder = typeBuilder.DefineMethod(string.Format("AspectDelegate{0}", index), MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard, typeof(Task), new Type[] { typeof(AspectContext) });
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "context");
 
             var cil = methodBuilder.GetILGenerator();
-
-            Console.Clear();
 
             if (!isVoid)
                 cil.DeclareLocal(methodInfo.DeclaringType);
@@ -159,10 +160,15 @@ namespace AspectSharp.DynamicProxy.Factories
             staticCil.Emit(OpCodes.Newobj, _aspectDelegateConstructorInfo);
             staticCil.Emit(OpCodes.Stsfld, delegateFieldBuilder);
 
-            return delegateFieldBuilder;
+            staticCil.Emit(OpCodes.Ldloc_0);
+            staticCil.Emit(OpCodes.Ldc_I4, methodInfo.GetHashCode());
+            staticCil.Emit(OpCodes.Call, _getInterceptorsMethodInfo);
+            staticCil.Emit(OpCodes.Stsfld, aspectsFromDelegateFieldBuilder);
+
+            return (delegateFieldBuilder, aspectsFromDelegateFieldBuilder);
         }
 
-        private static PropertyBuilder CreatePipelineProperty(TypeBuilder typeBuilder, ILGenerator constructorIlGenerator, FieldInfo aspectDelegateField, IEnumerable<Type> interceptors, IEnumerable<(Type Interceptor, int Index)> indexedInterceptors, int index)
+        private static PropertyBuilder CreatePipelineProperty(TypeBuilder typeBuilder, ILGenerator constructorIlGenerator, FieldInfo aspectDelegateField, FieldInfo aspectsFromDelegateField, int index)
         {
             var pipelineField = typeBuilder.DefineField(string.Format("_pipeline{0}", index), _interceptDelegateType, FieldAttributes.Private | FieldAttributes.InitOnly);
 
@@ -176,23 +182,9 @@ namespace AspectSharp.DynamicProxy.Factories
             var property = typeBuilder.DefineProperty(string.Format("Pipeline{0}", index), PropertyAttributes.None, _interceptDelegateType, Array.Empty<Type>());
             property.SetGetMethod(methodBuilder);
 
-            constructorIlGenerator.Emit(OpCodes.Ldc_I4, interceptors.Count());
-            constructorIlGenerator.Emit(OpCodes.Newarr, _abstractInterceptorAttributeType);
-
-            var arrayIdx = 0;
-            foreach (var (_, parameterIdx) in indexedInterceptors.Where(tuple => interceptors.Any(interceptor => tuple.Interceptor == interceptor)))
-            {
-                constructorIlGenerator.Emit(OpCodes.Dup);
-                constructorIlGenerator.Emit(OpCodes.Ldc_I4, arrayIdx);
-                constructorIlGenerator.Emit(OpCodes.Ldarg, parameterIdx);
-                constructorIlGenerator.Emit(OpCodes.Stelem_Ref);
-                arrayIdx++;
-            }
-            constructorIlGenerator.Emit(OpCodes.Stloc_0);
-
             constructorIlGenerator.Emit(OpCodes.Ldarg_0);
             constructorIlGenerator.Emit(OpCodes.Ldsfld, aspectDelegateField);
-            constructorIlGenerator.Emit(OpCodes.Ldloc_0);
+            constructorIlGenerator.Emit(OpCodes.Ldsfld, aspectsFromDelegateField);
             constructorIlGenerator.Emit(OpCodes.Call, _createPipelineMethodInfo);
             constructorIlGenerator.Emit(OpCodes.Stfld, pipelineField);
 

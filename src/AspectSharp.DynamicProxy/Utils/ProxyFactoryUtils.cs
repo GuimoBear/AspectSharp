@@ -1,7 +1,9 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.Abstractions.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace AspectSharp.DynamicProxy.Utils
@@ -67,6 +69,17 @@ namespace AspectSharp.DynamicProxy.Utils
             var targetMethod = targetType.GetMethod(methodName, parameterTypes ?? Array.Empty<Type>());
 
             return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
+        }
+
+        public static AbstractInterceptorAttribute[] GetInterceptors(Type serviceType, int methodHashCode)
+        {
+            List<AbstractInterceptorAttribute> interceptors = new List<AbstractInterceptorAttribute>();
+            foreach (var attributeData in serviceType.CustomAttributes.Where(attr => attr.AttributeType.IsAssignableTo(typeof(AbstractInterceptorAttribute))))
+                interceptors.Add(attributeData.CreateInstance() as AbstractInterceptorAttribute);
+            foreach (var attributeData in (serviceType.GetMethods().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode)?.CustomAttributes?.Where(attr => attr.AttributeType.IsAssignableTo(typeof(AbstractInterceptorAttribute))) ?? Enumerable.Empty<CustomAttributeData>()))
+                interceptors.Add(attributeData.CreateInstance() as AbstractInterceptorAttribute);
+
+            return interceptors.ToArray();
         }
     }
 }

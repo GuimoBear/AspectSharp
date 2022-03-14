@@ -40,10 +40,10 @@ namespace AspectSharp.DynamicProxy.Factories
             var index = 1;
 
             var ret = new Dictionary<MethodInfo, FieldInfo>();
-            var indexedInterceptors = interceptedTypeData.AllInterceptors.Select<Type, (Type Interceptor, int Index)>((interceptorType, idx) => (interceptorType, idx + 1)).ToList();
+            var indexedInterceptors = interceptedTypeData.AllInterceptors.Select<CustomAttributeData, (CustomAttributeData Interceptor, int Index)>((interceptorType, idx) => (interceptorType, idx + 1)).ToList();
             foreach (var methodInfo in methods)
             {
-                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out var interceptors))
+                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))
                 {
                     var field = typeBuilder.DefineField(string.Format("_aspectContextAtivator{0}", index), typeof(AspectContextActivator), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
 

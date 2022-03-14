@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace AspectSharp.Abstractions
+namespace AspectSharp.Abstractions.Attributes
 {
     public abstract class AbstractInterceptorAttribute : Attribute
     {

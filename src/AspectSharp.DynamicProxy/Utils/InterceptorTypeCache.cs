@@ -1,4 +1,4 @@
-﻿using AspectSharp.Abstractions;
+﻿using AspectSharp.Abstractions.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -19,14 +19,13 @@ namespace AspectSharp.DynamicProxy.Utils
 
             var typeDefinitionAttributes = type
                        .CustomAttributes
-                       .Select(attr => attr.AttributeType)
-                       .Where(attr => attr.IsAssignableTo(_abstractInterceptorType))
+                       .Where(attr => attr.AttributeType.IsAssignableTo(_abstractInterceptorType))
                        .ToList();
 
             var methodInterceptors = type
                 .GetMethods()
                 .Where(mi => mi.CustomAttributes.Any(attr => attr.AttributeType.IsAssignableTo(_abstractInterceptorType)))
-                .ToDictionary(mi => mi, mi => mi.CustomAttributes.Select(attr => attr.AttributeType).Where(attr => attr.IsAssignableTo(_abstractInterceptorType)).ToList() as IEnumerable<Type>);
+                .ToDictionary(mi => mi, mi => mi.CustomAttributes.Where(attr => attr.AttributeType.IsAssignableTo(_abstractInterceptorType)).ToList() as IEnumerable<CustomAttributeData>);
 
             if (typeDefinitionAttributes.Any() || methodInterceptors.Any())
             {
@@ -47,17 +46,17 @@ namespace AspectSharp.DynamicProxy.Utils
         internal sealed class InterceptedTypeData
         {
             public bool HasInterceptorInTypeDefinition { get; init; }
-            public IEnumerable<Type> TypeDefinitionInterceptors { get; init; }
+            public IEnumerable<CustomAttributeData> TypeDefinitionInterceptors { get; init; }
             public bool HasInterceptorInSomeMethod { get; init; }
-            public IReadOnlyDictionary<MethodInfo, IEnumerable<Type>> MethodInterceptors { get; init; }
+            public IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>> MethodInterceptors { get; init; }
 
             public bool IsIntercepted => HasInterceptorInTypeDefinition || HasInterceptorInSomeMethod;
 
-            public IEnumerable<Type> AllInterceptors => TypeDefinitionInterceptors?.Concat(MethodInterceptors?.Values?.SelectMany(x => x))?.Distinct() ?? Enumerable.Empty<Type>();
+            public IEnumerable<CustomAttributeData> AllInterceptors => TypeDefinitionInterceptors?.Concat(MethodInterceptors?.Values?.SelectMany(x => x))?.Distinct() ?? Enumerable.Empty<CustomAttributeData>();
 
-            public bool TryGetMethodInterceptors(MethodInfo methodInfo, out IEnumerable<Type> interceptors)
+            public bool TryGetMethodInterceptors(MethodInfo methodInfo, out IEnumerable<CustomAttributeData> interceptors)
             {
-                var interceptorList = new List<Type>();
+                var interceptorList = new List<CustomAttributeData>();
                 if (HasInterceptorInTypeDefinition)
                     interceptorList.AddRange(TypeDefinitionInterceptors);
                 if (HasInterceptorInSomeMethod &&

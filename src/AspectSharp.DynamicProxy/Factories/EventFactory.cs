@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -7,7 +8,7 @@ namespace AspectSharp.DynamicProxy.Factories
 {
     internal static class EventFactory
     {
-        public static void CreateEvents(Type serviceType, TypeBuilder typeBuilder, FieldInfo targetField)
+        public static void CreateEvents(Type serviceType, TypeBuilder typeBuilder, IEnumerable<MethodBuilder> methods, FieldInfo targetField)
         {
             foreach (var @event in serviceType.GetEvents())
             {
@@ -16,38 +17,55 @@ namespace AspectSharp.DynamicProxy.Factories
                 var addMethodInfo = @event.GetAddMethod();
                 if (addMethodInfo != null)
                 {
-                    var parameters = addMethodInfo.GetParameters();
-                    var methodBuilder = typeBuilder.DefineMethod(addMethodInfo.Name, addMethodInfo.Attributes ^ MethodAttributes.Abstract, addMethodInfo.CallingConvention, addMethodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
+                    var attrs = addMethodInfo.Attributes ^ MethodAttributes.Abstract;
+                    var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == addMethodInfo.Name && mi.ReturnType == addMethodInfo.ReturnType && mi.Attributes == attrs && mi.CallingConvention == addMethodInfo.CallingConvention);
 
-                    foreach (var parameter in parameters)
-                        methodBuilder.DefineParameter(parameter.Position, parameter.Attributes, parameter.Name);
+                    if (previouslyCreatedMethod is not null)
+                        eventBuilder.SetAddOnMethod(previouslyCreatedMethod);
+                    else
+                    {
+                        var parameters = addMethodInfo.GetParameters();
 
-                    var cil = methodBuilder.GetILGenerator();
-                    cil.Emit(OpCodes.Ldarg_0);
-                    cil.Emit(OpCodes.Ldfld, targetField);
-                    cil.Emit(OpCodes.Ldarg_1);
-                    cil.Emit(OpCodes.Callvirt, addMethodInfo);
-                    cil.Emit(OpCodes.Ret);
+                        var methodBuilder = typeBuilder.DefineMethod(addMethodInfo.Name, attrs, addMethodInfo.CallingConvention, addMethodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
 
-                    eventBuilder.SetAddOnMethod(methodBuilder);
+                        foreach (var parameter in parameters)
+                            methodBuilder.DefineParameter(parameter.Position, parameter.Attributes, parameter.Name);
+
+                        var cil = methodBuilder.GetILGenerator();
+                        cil.Emit(OpCodes.Ldarg_0);
+                        cil.Emit(OpCodes.Ldfld, targetField);
+                        cil.Emit(OpCodes.Ldarg_1);
+                        cil.Emit(OpCodes.Callvirt, addMethodInfo);
+                        cil.Emit(OpCodes.Ret);
+
+                        eventBuilder.SetAddOnMethod(methodBuilder);
+                    }
                 }
 
                 var removeMethodInfo = @event.GetRemoveMethod();
                 if (removeMethodInfo != null)
                 {
-                    var parameters = removeMethodInfo.GetParameters();
-                    var methodBuilder = typeBuilder.DefineMethod(removeMethodInfo.Name, removeMethodInfo.Attributes ^ MethodAttributes.Abstract, removeMethodInfo.CallingConvention, removeMethodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
+                    var attrs = removeMethodInfo.Attributes ^ MethodAttributes.Abstract;
+                    var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == removeMethodInfo.Name && mi.ReturnType == removeMethodInfo.ReturnType && mi.Attributes == attrs && mi.CallingConvention == removeMethodInfo.CallingConvention);
 
-                    foreach (var parameter in parameters)
-                        methodBuilder.DefineParameter(parameter.Position, parameter.Attributes, parameter.Name);
+                    if (previouslyCreatedMethod is not null)
+                        eventBuilder.SetRemoveOnMethod(previouslyCreatedMethod);
+                    else
+                    {
+                        var parameters = removeMethodInfo.GetParameters();
+                        var methodBuilder = typeBuilder.DefineMethod(removeMethodInfo.Name, attrs, removeMethodInfo.CallingConvention, removeMethodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
 
-                    var cil = methodBuilder.GetILGenerator();
-                    cil.Emit(OpCodes.Ldarg_0);
-                    cil.Emit(OpCodes.Ldfld, targetField);
-                    cil.Emit(OpCodes.Ldarg_1);
-                    cil.Emit(OpCodes.Callvirt, removeMethodInfo);
-                    cil.Emit(OpCodes.Ret);
-                    eventBuilder.SetRemoveOnMethod(methodBuilder);
+                        foreach (var parameter in parameters)
+                            methodBuilder.DefineParameter(parameter.Position, parameter.Attributes, parameter.Name);
+
+                        var cil = methodBuilder.GetILGenerator();
+                        cil.Emit(OpCodes.Ldarg_0);
+                        cil.Emit(OpCodes.Ldfld, targetField);
+                        cil.Emit(OpCodes.Ldarg_1);
+                        cil.Emit(OpCodes.Callvirt, removeMethodInfo);
+                        cil.Emit(OpCodes.Ret);
+                        eventBuilder.SetRemoveOnMethod(methodBuilder);
+                    }
                 }
             }
         }

@@ -3,6 +3,7 @@ using AspectSharp.Abstractions.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace AspectSharp.DynamicProxy.Utils
@@ -52,7 +53,52 @@ namespace AspectSharp.DynamicProxy.Utils
                 !interceptedTypeData.TryGetMethodInterceptors(methodInfo, out var interceptors))
                 return Array.Empty<AbstractInterceptorAttribute>();
 
-            return interceptors.Select(attributeData => attributeData.CreateInstance() as AbstractInterceptorAttribute).ToArray();
+            var typeDefinitionAttributes =
+                serviceType
+                    .CustomAttributes.Zip(serviceType
+                        .GetCustomAttributes(true)
+                        .Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType()))
+                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance));
+
+            var methodAttributes =
+                methodInfo
+                    .CustomAttributes.Zip(methodInfo
+                        .GetCustomAttributes(true)
+                        .Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType()))
+                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance));
+
+            var ret = new List<AbstractInterceptorAttribute>();
+            foreach(var tuple in typeDefinitionAttributes.Concat(methodAttributes))
+            {
+                var data = tuple.Item1;
+                var instance = tuple.Item2;
+
+                if (interceptors.Any(attr => IsEquals(attr, data)))
+                    ret.Add(instance);
+            }
+            return ret.ToArray();
+
+            //return interceptors.Select(attributeData => attributeData.CreateInstance() as AbstractInterceptorAttribute).ToArray();
+        }
+
+        private static bool IsEquals(CustomAttributeData left, CustomAttributeData right)
+        {
+            if (left.Constructor != right.Constructor)
+                return false;
+
+            foreach(var tuple in left.ConstructorArguments.Zip(right.ConstructorArguments, (l, r) => new Tuple<CustomAttributeTypedArgument, CustomAttributeTypedArgument>(l, r)))
+            {
+                if (tuple.Item1 != tuple.Item2)
+                    return false;
+            }
+
+            foreach (var tuple in left.NamedArguments.Zip(right.NamedArguments, (l, r) => new Tuple<CustomAttributeNamedArgument, CustomAttributeNamedArgument>(l, r)))
+            {
+                if (tuple.Item1 != tuple.Item2)
+                    return false;
+            }
+
+            return true;
         }
     }
 }

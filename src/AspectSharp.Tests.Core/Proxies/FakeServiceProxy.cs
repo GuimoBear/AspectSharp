@@ -65,6 +65,7 @@ namespace AspectSharp.Tests.Core.Proxies
             return ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline3);
         }
 
+#if NETCOREAPP3_1_OR_GREATER
         public ValueTask DoSomethingValueAsyncWithoutParameterAndWithoutReturn()
             => _target.DoSomethingValueAsyncWithoutParameterAndWithoutReturn();
 
@@ -72,7 +73,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator4, _target, this, ProxyFactoryUtils.EmptyParameters);
             ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline4).Wait();
-            return ValueTask.CompletedTask;
+            return default;
         }
 
         public ValueTask DoSomethingValueAsyncWithParameterAndWithoutReturn(int param1, string param2, IEnumerable<string> param3)
@@ -83,8 +84,9 @@ namespace AspectSharp.Tests.Core.Proxies
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator5, _target, this, parameters);
             ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline5).Wait();
-            return ValueTask.CompletedTask;
+            return default;
         }
+#endif
 
         public int DoSomethingWithoutParameterAndValueTypeReturn()
             => _target.DoSomethingWithoutParameterAndValueTypeReturn();
@@ -149,6 +151,7 @@ namespace AspectSharp.Tests.Core.Proxies
             return Task.FromResult((int)context.ReturnValue);
         }
 
+#if NETCOREAPP3_1_OR_GREATER
         public ValueTask<int> DoSomethingValueAsyncWithoutParameterAndValueTypeReturn()
             => _target.DoSomethingValueAsyncWithoutParameterAndValueTypeReturn();
 
@@ -156,7 +159,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator12, _target, this, ProxyFactoryUtils.EmptyParameters);
             ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline12).Wait();
-            return ValueTask.FromResult((int)context.ReturnValue);
+            return new ValueTask<int>((int)context.ReturnValue);
         }
 
         public ValueTask<int> DoSomethingValueAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
@@ -167,8 +170,9 @@ namespace AspectSharp.Tests.Core.Proxies
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator13, _target, this, parameters);
             ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline13).Wait();
-            return ValueTask.FromResult((int)context.ReturnValue);
+            return new ValueTask<int>((int)context.ReturnValue);
         }
+#endif
 
         public Task<IEnumerable<string>> DoSomethingAsyncWithoutParameterAndReferenceypeReturn()
             => _target.DoSomethingAsyncWithoutParameterAndReferenceypeReturn();
@@ -191,6 +195,7 @@ namespace AspectSharp.Tests.Core.Proxies
             return Task.FromResult((IEnumerable<string>)context.ReturnValue);
         }
 
+#if NETCOREAPP3_1_OR_GREATER
         public ValueTask<IEnumerable<string>> DoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn()
             => _target.DoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn();
 
@@ -198,7 +203,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator16, _target, this, ProxyFactoryUtils.EmptyParameters);
             ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline16).Wait();
-            return ValueTask.FromResult((IEnumerable<string>)context.ReturnValue);
+            return new ValueTask<IEnumerable<string>>((IEnumerable<string>)context.ReturnValue);
         }
 
         public ValueTask<IEnumerable<string>> DoSomethingValueAsyncWithParameterAndReferenceTypeReturn(int param1, string param2, IEnumerable<string> param3)
@@ -209,28 +214,35 @@ namespace AspectSharp.Tests.Core.Proxies
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator17, _target, this, parameters);
             ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline17).Wait();
-            return ValueTask.FromResult((IEnumerable<string>)context.ReturnValue);
+            return new ValueTask<IEnumerable<string>>((IEnumerable<string>)context.ReturnValue);
         }
+#endif
 
         private static readonly FakeServiceProxy_Pipelines _pipelines;
 
         private static readonly AspectContextActivator _aspectContextAtivator1;
         private static readonly AspectContextActivator _aspectContextAtivator2;
         private static readonly AspectContextActivator _aspectContextAtivator3;
+#if NETCOREAPP3_1_OR_GREATER
         private static readonly AspectContextActivator _aspectContextAtivator4;
         private static readonly AspectContextActivator _aspectContextAtivator5;
+#endif
         private static readonly AspectContextActivator _aspectContextAtivator6;
         private static readonly AspectContextActivator _aspectContextAtivator7;
         private static readonly AspectContextActivator _aspectContextAtivator8;
         private static readonly AspectContextActivator _aspectContextAtivator9;
         private static readonly AspectContextActivator _aspectContextAtivator10;
         private static readonly AspectContextActivator _aspectContextAtivator11;
+#if NETCOREAPP3_1_OR_GREATER
         private static readonly AspectContextActivator _aspectContextAtivator12;
         private static readonly AspectContextActivator _aspectContextAtivator13;
+#endif
         private static readonly AspectContextActivator _aspectContextAtivator14;
         private static readonly AspectContextActivator _aspectContextAtivator15;
+#if NETCOREAPP3_1_OR_GREATER
         private static readonly AspectContextActivator _aspectContextAtivator16;
         private static readonly AspectContextActivator _aspectContextAtivator17;
+#endif
 
         static FakeServiceProxy()
         {
@@ -248,10 +260,12 @@ namespace AspectSharp.Tests.Core.Proxies
 
             _aspectContextAtivator3 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn");
 
+#if NETCOREAPP3_1_OR_GREATER
             _aspectContextAtivator4 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
             _aspectContextAtivator5 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn", parameterTypes);
+#endif
 
             _aspectContextAtivator6 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithoutParameterAndValueTypeReturn");
 
@@ -268,20 +282,24 @@ namespace AspectSharp.Tests.Core.Proxies
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
             _aspectContextAtivator11 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn", parameterTypes);
 
+#if NETCOREAPP3_1_OR_GREATER
             _aspectContextAtivator12 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
             _aspectContextAtivator13 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn", parameterTypes);
+#endif
 
             _aspectContextAtivator14 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithoutParameterAndReferenceypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
             _aspectContextAtivator15 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn", parameterTypes);
 
+#if NETCOREAPP3_1_OR_GREATER
             _aspectContextAtivator16 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
             _aspectContextAtivator17 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndReferenceTypeReturn", parameterTypes);
+#endif
         }
     }
 }

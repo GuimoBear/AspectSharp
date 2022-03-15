@@ -20,7 +20,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     var attrs = addMethodInfo.Attributes ^ MethodAttributes.Abstract;
                     var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == addMethodInfo.Name && mi.ReturnType == addMethodInfo.ReturnType && mi.Attributes == attrs && mi.CallingConvention == addMethodInfo.CallingConvention);
 
-                    if (previouslyCreatedMethod is not null)
+                    if (!(previouslyCreatedMethod is null))
                         eventBuilder.SetAddOnMethod(previouslyCreatedMethod);
                     else
                     {
@@ -48,7 +48,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     var attrs = removeMethodInfo.Attributes ^ MethodAttributes.Abstract;
                     var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == removeMethodInfo.Name && mi.ReturnType == removeMethodInfo.ReturnType && mi.Attributes == attrs && mi.CallingConvention == removeMethodInfo.CallingConvention);
 
-                    if (previouslyCreatedMethod is not null)
+                    if (!(previouslyCreatedMethod is null))
                         eventBuilder.SetRemoveOnMethod(previouslyCreatedMethod);
                     else
                     {
@@ -74,7 +74,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     var attrs = raiseMethodInfo.Attributes ^ MethodAttributes.Abstract;
                     var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == raiseMethodInfo.Name && mi.ReturnType == raiseMethodInfo.ReturnType && mi.Attributes == attrs && mi.CallingConvention == raiseMethodInfo.CallingConvention);
 
-                    if (previouslyCreatedMethod is not null)
+                    if (!(previouslyCreatedMethod is null))
                         eventBuilder.SetRaiseMethod(previouslyCreatedMethod);
                     else
                     {

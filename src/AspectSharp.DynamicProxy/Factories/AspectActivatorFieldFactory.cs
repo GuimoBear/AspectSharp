@@ -13,7 +13,7 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _getTypeFromHandleMethodInfo = typeof(Type).GetMethod(nameof(Type.GetTypeFromHandle), new Type[] { typeof(RuntimeTypeHandle) });
         private static readonly MethodInfo _newContextActivatorMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.NewContextActivator), new Type[] { typeof(Type), typeof(Type), typeof(Type), typeof(string), typeof(Type[]) });
 
-        public static (FieldBuilder pipelineField, IReadOnlyDictionary<MethodInfo, FieldInfo>) CreateStaticFields(TypeBuilder typeBuilder, Type serviceType, Type targetType, Type pipelineDefinitionType, InterceptedTypeData interceptedTypeData)
+        public static Tuple<FieldBuilder, IReadOnlyDictionary<MethodInfo, FieldInfo>> CreateStaticFields(TypeBuilder typeBuilder, Type serviceType, Type targetType, Type pipelineDefinitionType, InterceptedTypeData interceptedTypeData)
         {
             var attrs = MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
             var staticConstructor = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard, null);
@@ -87,7 +87,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 }
             }
             cil.Emit(OpCodes.Ret);
-            return (pipelineField, ret);
+            return new Tuple<FieldBuilder, IReadOnlyDictionary<MethodInfo, FieldInfo>>(pipelineField, ret);
         }
 
         private static IEnumerable<Tuple<MethodInfo, FieldBuilder, FieldBuilder, FieldBuilder>> DefineStaticConstructor(TypeBuilder typeBuilder, Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, IEnumerable<MethodBuilder> fieldBuilders)

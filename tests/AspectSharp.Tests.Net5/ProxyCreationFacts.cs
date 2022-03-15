@@ -18,28 +18,17 @@ namespace AspectSharp.Tests.Net5
             var serviceClass = typeof(IFakeService);
             var targetClass = typeof(FakeService);
 
-            var configs = new DynamicProxyFactoryConfigurations
-            {
-                ExcludeTypeDefinitionAspectsForMethods = true
-            };
+            var configs = new DynamicProxyFactoryConfigurations(default, default, true);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceClass, configs, out var interceptedTypeData)
                 .Should().BeTrue();
 
-            var (proxyClass, pipelineClass) = DynamicProxyFactory.Create(serviceClass, targetClass, interceptedTypeData, configs);
-
-            var pipelineInstance = Activator.CreateInstance(pipelineClass);
+            var proxyClass = DynamicProxyFactory.Create(serviceClass, targetClass, interceptedTypeData, configs);
 
             proxyClass
                 .Should().NotBeNull();
 
             proxyClass.IsAssignableTo(serviceClass);
-
-            pipelineClass
-                .Should().NotBeNull();
-
-            pipelineClass.GetProperties()
-                .Length.Should().Be(interceptedTypeData.Interceptors.Keys.Count());
         }
     }
 }

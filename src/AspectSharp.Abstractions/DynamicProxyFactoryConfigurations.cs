@@ -5,11 +5,27 @@ namespace AspectSharp.Abstractions
 {
     internal sealed class DynamicProxyFactoryConfigurations
     {
-        internal InterceptedEventMethod IncludeTypeDefinitionAspectsToEvents { get; init; }
-        internal InterceptedPropertyMethod IncludeTypeDefinitionAspectsToProperties { get; init; }
-        internal bool ExcludeTypeDefinitionAspectsForMethods { get; init; }
+        internal InterceptedEventMethod IncludeTypeDefinitionAspectsToEvents { get; }
+        internal InterceptedPropertyMethod IncludeTypeDefinitionAspectsToProperties { get; }
+        internal bool ExcludeTypeDefinitionAspectsForMethods { get; }
+
+        public DynamicProxyFactoryConfigurations() { }
+
+        public DynamicProxyFactoryConfigurations(
+            InterceptedEventMethod includeTypeDefinitionAspectsToEvents,
+            InterceptedPropertyMethod includeTypeDefinitionAspectsToProperties,
+            bool excludeTypeDefinitionAspectsForMethods)
+        {
+            IncludeTypeDefinitionAspectsToEvents = includeTypeDefinitionAspectsToEvents;
+            IncludeTypeDefinitionAspectsToProperties = includeTypeDefinitionAspectsToProperties;
+            ExcludeTypeDefinitionAspectsForMethods = excludeTypeDefinitionAspectsForMethods;
+        }
 
         public override int GetHashCode()
-            => HashCode.Combine(IncludeTypeDefinitionAspectsToEvents, IncludeTypeDefinitionAspectsToProperties, ExcludeTypeDefinitionAspectsForMethods);
+        {
+            return IncludeTypeDefinitionAspectsToEvents.GetHashCode() ^
+                   IncludeTypeDefinitionAspectsToProperties.GetHashCode() ^
+                   ExcludeTypeDefinitionAspectsForMethods.GetHashCode();
+        }
     }
 }

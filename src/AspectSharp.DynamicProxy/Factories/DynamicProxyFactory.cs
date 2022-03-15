@@ -15,16 +15,16 @@ namespace AspectSharp.DynamicProxy.Factories
         internal static readonly AssemblyBuilder _proxiedClassesAssemblyBuilder = NewAssemblyBuilder();
         internal static readonly ModuleBuilder _proxiedClassesModuleBuilder = NewModuleBuilder(_proxiedClassesAssemblyBuilder);
 
-        private static readonly IDictionary<(Type Service, Type Target), (Type Proxy, Type Pipeline)> _cachedProxyTypes
-            = new Dictionary<(Type Service, Type Target), (Type, Type)>();
+        private static readonly IDictionary<Tuple<Type, Type>, Tuple<Type , Type>> _cachedProxyTypes
+            = new Dictionary<Tuple<Type, Type>, Tuple<Type, Type>>();
 
-        public static (Type Proxy, Type Pipelines) Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
+        public static Type Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
         {
             configs = configs ?? Configurations;
-            if (_cachedProxyTypes.TryGetValue((serviceType, targetType), out var type))
-                return type;
+            if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type>(serviceType, targetType), out var type))
+                return type.Item1;
 
-            var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Target == targetType);
+            var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item2 == targetType);
             TypeBuilder typeBuilder;
             if (previouslyDefinedProxyClassFromThisTargetCount == 0)
                 typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
@@ -36,7 +36,9 @@ namespace AspectSharp.DynamicProxy.Factories
 
             var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
 
-            var (pipelineField, contextActivatorFields) = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, concretePipelineType, interceptedTypeData);
+            var tuple = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, concretePipelineType, interceptedTypeData);
+            var pipelineField = tuple.Item1;
+            var contextActivatorFields = tuple.Item2;
 
             var readonlyFields = DefineReadonlyFields(serviceType, pipelineField, typeBuilder).ToArray();
 
@@ -52,8 +54,8 @@ namespace AspectSharp.DynamicProxy.Factories
             typeBuilder.AddInterfaceImplementation(serviceType);
 
             var concreteType = typeBuilder.CreateType();
-            _cachedProxyTypes.Add((serviceType, targetType), (concreteType, concretePipelineType));
-            return (concreteType, concretePipelineType);
+            _cachedProxyTypes.Add(new Tuple<Type, Type>(serviceType, targetType), new Tuple<Type, Type>(concreteType, concretePipelineType));
+            return concreteType;
         }
 
         private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, FieldBuilder pipelineField, TypeBuilder typeBuilder)
@@ -74,8 +76,10 @@ namespace AspectSharp.DynamicProxy.Factories
             var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, coonstructorParameters);
 
             var parameters = new List<ParameterBuilder>();
-            foreach (var (readonlyFieldBuilder, idx) in readonlyFields.Where(rf => rf != pipelinesField).Zip(Enumerable.Range(1, readonlyFields.Where(rf => rf != pipelinesField).Count()), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
+            foreach (var tuple in readonlyFields.Where(rf => rf != pipelinesField).Zip(Enumerable.Range(1, readonlyFields.Where(rf => rf != pipelinesField).Count()), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
             {
+                var readonlyFieldBuilder = tuple.Item1;
+                var idx = tuple.Item2;
                 parameters.Add(constructorBuilder.DefineParameter(idx, ParameterAttributes.None, readonlyFieldBuilder.Name.Substring(1)));
             }
 
@@ -94,7 +98,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
         private static AssemblyBuilder NewAssemblyBuilder()
         {
-            var assemblyName = new AssemblyName(typeof(DynamicProxyFactory).Assembly.GetName().Name + ".Proxies");
+            var assemblyName = new AssemblyName("AspectSharp.Proxies");
             return AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
         }
 

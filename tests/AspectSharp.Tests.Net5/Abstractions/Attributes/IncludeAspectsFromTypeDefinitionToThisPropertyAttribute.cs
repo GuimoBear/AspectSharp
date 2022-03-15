@@ -14,10 +14,7 @@ namespace AspectSharp.Tests.Net5.Abstractions.Attributes
         [InlineData(InterceptedPropertyMethod.All)]
         public void Given_AnPropertyMethodMethod_When_CreateAttribute_Then_MethodsShouldBeSetted(InterceptedPropertyMethod expectedMethod)
         {
-            var sut = new IncludeAspectsFromTypeDefinitionToThisPropertyAttribute()
-            {
-                Methods = expectedMethod
-            };
+            var sut = new IncludeAspectsFromTypeDefinitionToThisPropertyAttribute(expectedMethod);
 
             sut.Methods.Should().Be(expectedMethod);
         }

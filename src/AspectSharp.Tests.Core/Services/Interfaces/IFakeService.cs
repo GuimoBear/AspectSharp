@@ -36,6 +36,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         [Aspect2]
         Task InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn();
 
+#if NETCOREAPP3_1_OR_GREATER
         ValueTask DoSomethingValueAsyncWithoutParameterAndWithoutReturn();
 
         [Aspect1]
@@ -47,6 +48,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         [Aspect1]
         [Aspect2]
         ValueTask InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn(int param1, string param2, IEnumerable<string> param3);
+#endif
 
         int DoSomethingWithoutParameterAndValueTypeReturn();
 
@@ -84,6 +86,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         [Aspect2]
         Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3);
 
+#if NETCOREAPP3_1_OR_GREATER
         ValueTask<int> DoSomethingValueAsyncWithoutParameterAndValueTypeReturn();
 
         [Aspect1]
@@ -94,7 +97,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
 
         [Aspect1]
         ValueTask<int> InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3);
-
+#endif
         Task<IEnumerable<string>> DoSomethingAsyncWithoutParameterAndReferenceypeReturn();
 
         [Aspect1]
@@ -107,6 +110,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         [Aspect2]
         Task<IEnumerable<string>> InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn(int param1, string param2, IEnumerable<string> param3);
 
+#if NETCOREAPP3_1_OR_GREATER
         ValueTask<IEnumerable<string>> DoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn();
 
         [Aspect1]
@@ -118,5 +122,6 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         [Aspect1]
         [Aspect2]
         ValueTask<IEnumerable<string>> InterceptedDoSomethingValueAsyncWithParameterAndReferenceTypeReturn(int param1, string param2, IEnumerable<string> param3);
+#endif
     }
 }

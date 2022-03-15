@@ -21,7 +21,9 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _getParametersMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Parameters)).GetGetMethod();
         private static readonly MethodInfo _waitTaskMethodInfo = typeof(Task).GetMethod(nameof(Task.Wait), Array.Empty<Type>());
         private static readonly MethodInfo _setReturnValueMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.ReturnValue)).GetSetMethod();
+#if NETCOREAPP3_1_OR_GREATER
         private static readonly MethodInfo _asTaskValueTaskMethodInfo = typeof(ValueTask).GetMethod(nameof(ValueTask.AsTask));
+#endif
         private static readonly MethodInfo _getCompletedTaskMethodInfo = typeof(Task).GetProperty(nameof(Task.CompletedTask)).GetGetMethod();
 
         private static readonly Type _interceptDelegateType = typeof(InterceptDelegate);
@@ -57,7 +59,9 @@ namespace AspectSharp.DynamicProxy.Factories
             {
                 if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))
                 {
-                    var (aspectDelegateField, aspectsFromDelegateField) = CreateAspectDelegate(typeBuilder, staticCil, methodInfo, configs, index);
+                    var tuple = CreateAspectDelegate(typeBuilder, staticCil, methodInfo, configs, index);
+                    var aspectDelegateField = tuple.Item1;
+                    var aspectsFromDelegateField = tuple.Item2;
 
                     ret.Add(methodInfo, CreatePipelineProperty(typeBuilder, cil, aspectDelegateField, aspectsFromDelegateField, index));
 
@@ -70,19 +74,37 @@ namespace AspectSharp.DynamicProxy.Factories
             return ret;
         }
 
-        private static (FieldBuilder aspectDelegateField, FieldBuilder aspectsFromDelegateField) CreateAspectDelegate(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
+        private static Tuple<FieldBuilder, FieldBuilder> CreateAspectDelegate(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
         {
             var retType = methodInfo.ReturnType;
+#if NETCOREAPP3_1_OR_GREATER
             var isValueTask = retType == typeof(ValueTask);
-            var isAsync = retType == typeof(Task) || isValueTask;
+#endif
+            var isAsync = retType == typeof(Task)
+#if NETCOREAPP3_1_OR_GREATER
+                || isValueTask;
+#else
+                ;
+#endif
 
-            var isVoid = retType == typeof(void) || isValueTask || isAsync;
+            var isVoid = retType == typeof(void)
+#if NETCOREAPP3_1_OR_GREATER
+                || isValueTask
+#endif
+                || isAsync;
 
             if (retType.IsGenericType)
             {
                 var genericTypeDefinition = retType.GetGenericTypeDefinition();
-                isValueTask = genericTypeDefinition == typeof(ValueTask<>);
-                isAsync = genericTypeDefinition == typeof(Task<>) || isValueTask;
+#if NETCOREAPP3_1_OR_GREATER
+                isValueTask = retType == typeof(ValueTask<>);
+#endif
+                isAsync = genericTypeDefinition == typeof(Task<>)
+#if NETCOREAPP3_1_OR_GREATER
+                || isValueTask;
+#else
+                ;
+#endif
                 if (isAsync)
                     retType = retType.GetGenericArguments()[0];
             }
@@ -101,8 +123,10 @@ namespace AspectSharp.DynamicProxy.Factories
             var parameters = methodInfo.GetParameters();
             foreach (var param in parameters)
                 cil.DeclareLocal(param.ParameterType);
+#if NETCOREAPP3_1_OR_GREATER
             if (isValueTask)
                 cil.DeclareLocal(methodInfo.ReturnType);
+#endif
 
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
@@ -132,6 +156,8 @@ namespace AspectSharp.DynamicProxy.Factories
             foreach (var i in Enumerable.Range(isVoid ? 0 : 1, parameters.Length))
                 cil.Emit(OpCodes.Ldloc, i);
             cil.Emit(OpCodes.Callvirt, methodInfo);
+
+#if NETCOREAPP3_1_OR_GREATER
             if (isValueTask)
             {
                 cil.Emit(OpCodes.Stloc_S, parameters.Length + (isVoid ? 0 : 1));
@@ -139,9 +165,11 @@ namespace AspectSharp.DynamicProxy.Factories
                 if (isVoid)
                     cil.Emit(OpCodes.Call, _asTaskValueTaskMethodInfo);
                 else
-                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(retType).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod());
+                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(retType).GetConstructor(new Type[] { retType }));
             }
-            else if (isAsync && !isVoid)
+            else
+#endif
+            if (isAsync && !isVoid)
                 cil.Emit(OpCodes.Callvirt, typeof(Task<>).MakeGenericType(retType).GetProperty(nameof(Task<int>.Result)).GetGetMethod());
             if (!isVoid)
             {
@@ -165,7 +193,7 @@ namespace AspectSharp.DynamicProxy.Factories
             staticCil.Emit(OpCodes.Call, _getInterceptorsMethodInfo);
             staticCil.Emit(OpCodes.Stsfld, aspectsFromDelegateFieldBuilder);
 
-            return (delegateFieldBuilder, aspectsFromDelegateFieldBuilder);
+            return new Tuple<FieldBuilder, FieldBuilder>(delegateFieldBuilder, aspectsFromDelegateFieldBuilder);
         }
 
         private static PropertyBuilder CreatePipelineProperty(TypeBuilder typeBuilder, ILGenerator constructorIlGenerator, FieldInfo aspectDelegateField, FieldInfo aspectsFromDelegateField, int index)

@@ -28,12 +28,10 @@ namespace AspectSharp.Abstractions
 
         internal DynamicProxyFactoryConfigurations Build()
         {
-            return new DynamicProxyFactoryConfigurations
-            {
-                IncludeTypeDefinitionAspectsToEvents = _includeTypeDefinitionAspectsToEvents,
-                IncludeTypeDefinitionAspectsToProperties = _includeTypeDefinitionAspectsToProperties,
-                ExcludeTypeDefinitionAspectsForMethods = _excludeTypeDefinitionAspectsForMethods
-            };
+            return new DynamicProxyFactoryConfigurations(
+                _includeTypeDefinitionAspectsToEvents, 
+                _includeTypeDefinitionAspectsToProperties, 
+                _excludeTypeDefinitionAspectsForMethods);
         }
     }
 }

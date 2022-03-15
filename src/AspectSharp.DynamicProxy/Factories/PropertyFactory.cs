@@ -22,7 +22,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                     var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == propertyMethod.Name && mi.ReturnType == propertyMethod.ReturnType && mi.Attributes == attrs && mi.CallingConvention == propertyMethod.CallingConvention);
 
-                    if (previouslyCreatedMethod is not null)
+                    if (!(previouslyCreatedMethod is null))
                         propertyBuilder.SetGetMethod(previouslyCreatedMethod);
                     else
                     {
@@ -42,7 +42,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                     var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == propertyMethod.Name && mi.ReturnType == propertyMethod.ReturnType && mi.Attributes == attrs && mi.CallingConvention == propertyMethod.CallingConvention);
 
-                    if (previouslyCreatedMethod is not null)
+                    if (!(previouslyCreatedMethod is null))
                         propertyBuilder.SetSetMethod(previouslyCreatedMethod);
                     else
                     {

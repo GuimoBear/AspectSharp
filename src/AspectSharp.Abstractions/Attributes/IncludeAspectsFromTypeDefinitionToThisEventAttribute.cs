@@ -7,8 +7,11 @@ namespace AspectSharp.Abstractions.Attributes
     [AttributeUsage(AttributeTargets.Event, AllowMultiple = false, Inherited = true)]
     public sealed class IncludeAspectsFromTypeDefinitionToThisEventAttribute : IncludeAspectsFromTypeDefinitionAttribute
     {
-        public InterceptedEventMethod Methods { get; init; }
+        public InterceptedEventMethod Methods { get; }
 
-        public IncludeAspectsFromTypeDefinitionToThisEventAttribute(params Type[] aspects) : base(aspects) { }
+        public IncludeAspectsFromTypeDefinitionToThisEventAttribute(InterceptedEventMethod methods, params Type[] aspects) : base(aspects) 
+        { 
+            Methods = methods;
+        }
     }
 }

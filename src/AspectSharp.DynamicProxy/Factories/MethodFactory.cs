@@ -1,5 +1,4 @@
 ﻿using AspectSharp.Abstractions;
-using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Utils;
 using System;
 using System.Collections.Generic;
@@ -18,7 +17,6 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _executePipelineMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.ExecutePipeline));
         private static readonly MethodInfo _getReturnValueMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.ReturnValue)).GetGetMethod();
 
-        private static readonly MethodInfo _getCompletedValueTaskMethodInfo = typeof(ValueTask).GetProperty(nameof(ValueTask.CompletedTask)).GetGetMethod();
         private static readonly MethodInfo _getCompletedTaskMethodInfo = typeof(Task).GetProperty(nameof(Task.CompletedTask)).GetGetMethod();
 
         public static IEnumerable<MethodBuilder> CreateMethods(Type serviceType, TypeBuilder typeBuilder, FieldInfo[] fields, IReadOnlyDictionary<MethodInfo, PropertyInfo> pipelineProperties, IReadOnlyDictionary<MethodInfo, FieldInfo> contextActivatorFields)
@@ -33,16 +31,34 @@ namespace AspectSharp.DynamicProxy.Factories
                 var methodName = methodInfo.Name;
 
                 var retType = methodInfo.ReturnType;
+#if NETCOREAPP3_1_OR_GREATER
                 var isValueTask = retType == typeof(ValueTask);
-                var isAsync = retType == typeof(Task) || isValueTask;
+#endif
+                var isAsync = retType == typeof(Task)
+#if NETCOREAPP3_1_OR_GREATER
+                || isValueTask;
+#else
+                ;
+#endif
 
-                var isVoid = retType == typeof(void) || isValueTask || isAsync;
+                var isVoid = retType == typeof(void)
+#if NETCOREAPP3_1_OR_GREATER
+                || isValueTask
+#endif
+                || isAsync;
 
                 if (retType.IsGenericType)
                 {
                     var genericTypeDefinition = retType.GetGenericTypeDefinition();
-                    isValueTask = genericTypeDefinition == typeof(ValueTask<>);
-                    isAsync = genericTypeDefinition == typeof(Task<>) || isValueTask;
+#if NETCOREAPP3_1_OR_GREATER
+                    isValueTask = retType == typeof(ValueTask<>);
+#endif
+                    isAsync = genericTypeDefinition == typeof(Task<>)
+#if NETCOREAPP3_1_OR_GREATER
+                || isValueTask;
+#else
+                ;
+#endif
                     if (isAsync)
                         retType = retType.GetGenericArguments()[0];
                 }
@@ -58,6 +74,12 @@ namespace AspectSharp.DynamicProxy.Factories
                 }
 
                 var cil = methodBuilder.GetILGenerator();
+#if NETCOREAPP3_1_OR_GREATER
+                LocalBuilder valueTaskLocal = default;
+                if (isValueTask && isVoid)
+                    valueTaskLocal = cil.DeclareLocal(typeof(ValueTask));
+#endif
+
 
                 if (pipelineProperties.TryGetValue(methodInfo, out var pipelineProperty) &&
                     contextActivatorFields.TryGetValue(methodInfo, out var aspectContextActivatorField))
@@ -106,14 +128,28 @@ namespace AspectSharp.DynamicProxy.Factories
                             cil.Emit(OpCodes.Castclass, retType);
                         if (isAsync)
                         {
+#if NETCOREAPP3_1_OR_GREATER
                             if (isValueTask)
-                                cil.Emit(OpCodes.Call, typeof(ValueTask).GetMethod(nameof(ValueTask.FromResult)).MakeGenericMethod(retType));
+                                cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(retType).GetConstructor(new Type[] { retType }));
                             else
+#endif
                                 cil.Emit(OpCodes.Call, typeof(Task).GetMethod(nameof(Task<int>.FromResult)).MakeGenericMethod(retType));
                         }
                     }
-                    else if (isAsync)
+                    else if (isAsync
+#if NETCOREAPP3_1_OR_GREATER
+                        && !isValueTask
+#endif
+                        )
                         cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
+#if NETCOREAPP3_1_OR_GREATER
+                    else if (isValueTask)
+                    {
+                        cil.Emit(OpCodes.Ldloca_S, 0);
+                        cil.Emit(OpCodes.Initobj, typeof(ValueTask));
+                        cil.Emit(OpCodes.Ldloc_0);
+                    }
+#endif
                     cil.Emit(OpCodes.Ret);
                     yield return methodBuilder;
                     continue;

@@ -13,7 +13,7 @@ namespace AspectSharp.DynamicProxy.Utils
     {
         private static readonly Type _abstractInterceptorType = typeof(AbstractInterceptorAttribute);
 
-        private static readonly ConcurrentDictionary<(Type, int), InterceptedTypeData> _cachedTypes = new ConcurrentDictionary<(Type, int), InterceptedTypeData>();
+        private static readonly ConcurrentDictionary<Tuple<Type, int>, InterceptedTypeData> _cachedTypes = new ConcurrentDictionary<Tuple<Type, int>, InterceptedTypeData>();
 
         internal static ConcurrentDictionary<int, DynamicProxyFactoryConfigurations> _previouslyUsedConfigurations { get; private set; } = new ConcurrentDictionary<int, DynamicProxyFactoryConfigurations>();
 
@@ -34,20 +34,20 @@ namespace AspectSharp.DynamicProxy.Utils
         internal static bool TryGetInterceptedTypeData(Type type, DynamicProxyFactoryConfigurations configs, out InterceptedTypeData interceptedTypeData)
         {
             configs = configs ?? Configurations;
-            if (_cachedTypes.TryGetValue((type, configs.GetHashCode()), out interceptedTypeData))
+            if (_cachedTypes.TryGetValue(new Tuple<Type, int>(type, configs.GetHashCode()), out interceptedTypeData))
                 return true;
 
             _ = _previouslyUsedConfigurations.TryAdd(configs.GetHashCode(), configs);
 
             var typeDefinitionAttributes = type
                 .CustomAttributes
-                    .Where(attr => attr.AttributeType.IsAssignableTo(_abstractInterceptorType))
+                    .Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType))
                     .ToList();
 
             var methodInterceptorDictionary = type
                 .GetMethods()
-                    .Where(mi => typeDefinitionAttributes.Any() || mi.CustomAttributes.Any(attr => attr.AttributeType.IsAssignableTo(_abstractInterceptorType)))
-                    .ToDictionary(mi => mi, mi => typeDefinitionAttributes.Concat(mi.CustomAttributes.Where(attr => attr.AttributeType.IsAssignableTo(_abstractInterceptorType)).ToList()));
+                    .Where(mi => typeDefinitionAttributes.Any() || mi.CustomAttributes.Any(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)))
+                    .ToDictionary(mi => mi, mi => typeDefinitionAttributes.Concat(mi.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).ToList()));
 
             if (methodInterceptorDictionary.Any())
             {
@@ -55,152 +55,20 @@ namespace AspectSharp.DynamicProxy.Utils
                 var events = type.GetEvents();
 
                 var interceptors = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>();
-                foreach(var (methodInfo, allMethodInterceptors) in methodInterceptorDictionary)
+                foreach(var tuple in methodInterceptorDictionary)
                 {
+                    var methodInfo = tuple.Key;
+                    var allMethodInterceptors = tuple.Value;
                     var typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList();
                     var methodInterceptors = allMethodInterceptors.Skip(typeDefinitionAttributes.Count).ToList();
 
                     var propertyFromMethod = properties.FirstOrDefault(prop => prop.GetGetMethod() == methodInfo || prop.GetSetMethod() == methodInfo);
                     var eventFromMethod = events.FirstOrDefault(evt => evt.GetAddMethod() == methodInfo || evt.GetRemoveMethod() == methodInfo || evt.GetRaiseMethod() == methodInfo);
 
-                    if (propertyFromMethod is not null)
-                    {
-                        var propertyMethodType = propertyFromMethod.GetPropertyMethodType(methodInfo);
-                        if (configs.IncludeTypeDefinitionAspectsToProperties.HasFlag(propertyMethodType))
-                        {
-                            var excludingAttributes = propertyFromMethod
-                                .GetCustomAttributes(true)
-                                .Where(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute) ||
-                                               attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionToThisPropertyAttribute))
-                                .Concat(methodInfo.GetCustomAttributes(true)
-                                    .Where(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute)));
-                            foreach (var attribute in excludingAttributes)
-                            {
-                                if (attribute is ExcludeAspectsFromTypeDefinitionAttribute excludeAspects)
-                                {
-                                    if (excludeAspects.ExcludeAll)
-                                    {
-                                        typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                                        break;
-                                    }
-                                    else
-                                        typeDefinitionInterceptors = typeDefinitionInterceptors.Where(attr => !excludeAspects.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                                else if (attribute is ExcludeAspectsFromTypeDefinitionToThisPropertyAttribute excludeAspectsFromThisProperty)
-                                {
-                                    if (excludeAspectsFromThisProperty.ExcludeAll)
-                                    {
-                                        typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                                        break;
-                                    }
-                                    else if (excludeAspectsFromThisProperty.Methods.HasFlag(propertyMethodType))
-                                        typeDefinitionInterceptors = typeDefinitionInterceptors.Where(attr => !excludeAspectsFromThisProperty.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                            var includingAttributes = propertyFromMethod
-                                .GetCustomAttributes(true)
-                                .Where(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute) ||
-                                               attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionToThisPropertyAttribute))
-                                .Concat(methodInfo.GetCustomAttributes(true)
-                                    .Where(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute)));
-                            foreach (var attribute in includingAttributes)
-                            {
-                                if (attribute is IncludeAspectsFromTypeDefinitionAttribute includeAspects)
-                                {
-                                    if (includeAspects.IncludeAll)
-                                    {
-                                        typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList();
-                                        break;
-                                    }
-                                    else
-                                        typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).Where(attr => includeAspects.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                                else if (attribute is IncludeAspectsFromTypeDefinitionToThisPropertyAttribute includeAspectsFromThisProperty)
-                                {
-                                    if (includeAspectsFromThisProperty.IncludeAll)
-                                    {
-                                        typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                                        break;
-                                    }
-                                    else if (includeAspectsFromThisProperty.Methods.HasFlag(propertyMethodType))
-                                        typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).Where(attr => includeAspectsFromThisProperty.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                            }
-                        }
-                    }
-                    else if (eventFromMethod is not null)
-                    {
-                        var eventMethodType = eventFromMethod.GetEventMethodType(methodInfo);
-                        if (configs.IncludeTypeDefinitionAspectsToEvents.HasFlag(eventMethodType))
-                        {
-                            var excludingAttributes = eventFromMethod
-                                .GetCustomAttributes(true)
-                                .Where(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute) ||
-                                               attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionToThisEventAttribute))
-                                .Concat(methodInfo.GetCustomAttributes(true)
-                                    .Where(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute)));
-                            foreach (var attribute in excludingAttributes)
-                            {
-                                if (attribute is ExcludeAspectsFromTypeDefinitionAttribute excludeAspects)
-                                {
-                                    if (excludeAspects.ExcludeAll)
-                                    {
-                                        typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                                        break;
-                                    }
-                                    else
-                                        typeDefinitionInterceptors = typeDefinitionInterceptors.Where(attr => !excludeAspects.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                                else if (attribute is ExcludeAspectsFromTypeDefinitionToThisEventAttribute excludeAspectsFromThisEvent)
-                                {
-                                    if (excludeAspectsFromThisEvent.ExcludeAll)
-                                    {
-                                        typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                                        break;
-                                    }
-                                    else if (excludeAspectsFromThisEvent.Methods.HasFlag(eventMethodType))
-                                        typeDefinitionInterceptors = typeDefinitionInterceptors.Where(attr => !excludeAspectsFromThisEvent.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                            }
-                        }
-                        else
-                        {
-                            typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                            var includingAttributes = eventFromMethod
-                                .GetCustomAttributes(true)
-                                .Where(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute) ||
-                                               attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionToThisEventAttribute))
-                                .Concat(methodInfo.GetCustomAttributes(true)
-                                    .Where(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute)));
-                            foreach (var attribute in includingAttributes)
-                            {
-                                if (attribute is IncludeAspectsFromTypeDefinitionAttribute includeAspects)
-                                {
-                                    if (includeAspects.IncludeAll)
-                                    {
-                                        typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList();
-                                        break;
-                                    }
-                                    else
-                                        typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).Where(attr => includeAspects.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                                else if (attribute is IncludeAspectsFromTypeDefinitionToThisEventAttribute includeAspectsFromThisEvent)
-                                {
-                                    if (includeAspectsFromThisEvent.IncludeAll)
-                                    {
-                                        typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                                        break;
-                                    }
-                                    else if (includeAspectsFromThisEvent.Methods.HasFlag(eventMethodType))
-                                        typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).Where(attr => includeAspectsFromThisEvent.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
-                                }
-                            }
-                        }
-                    }
+                    if (!(propertyFromMethod is null))
+                        typeDefinitionAttributes = propertyFromMethod.FilterTypeDefinitionInterceptorsFromProperty(methodInfo, configs, typeDefinitionAttributes).ToList();
+                    else if (!(eventFromMethod is null))
+                        typeDefinitionAttributes = eventFromMethod.FilterTypeDefinitionInterceptorsFromEvent(methodInfo, configs, typeDefinitionAttributes).ToList();
                     else
                     {
                         if (configs.ExcludeTypeDefinitionAspectsForMethods)
@@ -209,27 +77,19 @@ namespace AspectSharp.DynamicProxy.Utils
                             var attribute = methodInfo.GetCustomAttributes(true).FirstOrDefault(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute));
                             if (attribute is IncludeAspectsFromTypeDefinitionAttribute includeAspects)
                             {
+                                typeDefinitionInterceptors = includeAspects.IncludeAspectsFromTypeDefinition(allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList()).ToList();
                                 if (includeAspects.IncludeAll)
-                                {
-                                    typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList();
                                     break;
-                                }
-                                else
-                                    typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).Where(attr => includeAspects.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
                             }
                         }
                         else
                         {
                             var attribute = methodInfo.GetCustomAttributes(true).FirstOrDefault(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute));
                             if (attribute is ExcludeAspectsFromTypeDefinitionAttribute excludeAspects)
-                            { 
+                            {
+                                typeDefinitionInterceptors = excludeAspects.ExcludeAspectsFromTypeDefinition(typeDefinitionInterceptors).ToList();
                                 if (excludeAspects.ExcludeAll)
-                                {
-                                    typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
                                     break;
-                                }
-                                else
-                                    typeDefinitionInterceptors = typeDefinitionInterceptors.Where(attr => !excludeAspects.Aspects.Any(attributeType => attributeType == attr.AttributeType)).ToList();
                             }
                         }
                     }
@@ -239,17 +99,53 @@ namespace AspectSharp.DynamicProxy.Utils
                 }
                 if (interceptors.Any())
                 {
-                    interceptedTypeData = new InterceptedTypeData
-                    {
-                        Interceptors = interceptors,
-                        IsIntercepted = interceptors.Any()
-                    };
-                    _cachedTypes.TryAdd((type, configs.GetHashCode()), interceptedTypeData);
+                    interceptedTypeData = new InterceptedTypeData(interceptors);
+                    _cachedTypes.TryAdd(new Tuple<Type, int>(type, configs.GetHashCode()), interceptedTypeData);
                     return true;
                 }
             }
             interceptedTypeData = default;
             return false;
+        }
+
+        private static IEnumerable<CustomAttributeData> FilterTypeDefinitionInterceptorsFromProperty(this PropertyInfo propertyInfo, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, IEnumerable<CustomAttributeData> typeDefinitionInterceptors)
+        {
+            var propertyMethodType = propertyInfo.GetPropertyMethodType(methodInfo);
+            if (configs.IncludeTypeDefinitionAspectsToProperties.HasFlag(propertyMethodType))
+            {
+                typeDefinitionInterceptors = propertyInfo.ExcludeTypeDefinitionAspects<ExcludeAspectsFromTypeDefinitionToThisPropertyAttribute>(
+                    typeDefinitionInterceptors,
+                    excludeAspectsFromThisProperty => excludeAspectsFromThisProperty.Methods.HasFlag(propertyMethodType),
+                    methodInfo).ToList();
+            }
+            else
+            {
+                typeDefinitionInterceptors = propertyInfo.IncludeTypeDefinitionAspects<IncludeAspectsFromTypeDefinitionToThisPropertyAttribute>(
+                    typeDefinitionInterceptors,
+                    includeAspectsFromThisProperty => includeAspectsFromThisProperty.Methods.HasFlag(propertyMethodType),
+                    methodInfo).ToList();
+            }
+            return typeDefinitionInterceptors;
+        }
+
+        private static IEnumerable<CustomAttributeData> FilterTypeDefinitionInterceptorsFromEvent(this EventInfo eventInfo, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, IEnumerable<CustomAttributeData> typeDefinitionInterceptors)
+        {
+            var eventMethodType = eventInfo.GetEventMethodType(methodInfo);
+            if (configs.IncludeTypeDefinitionAspectsToEvents.HasFlag(eventMethodType))
+            {
+                typeDefinitionInterceptors = eventInfo.ExcludeTypeDefinitionAspects<ExcludeAspectsFromTypeDefinitionToThisEventAttribute>(
+                    typeDefinitionInterceptors,
+                    excludeAspectsFromThisEvent => excludeAspectsFromThisEvent.Methods.HasFlag(eventMethodType),
+                    methodInfo).ToList();
+            }
+            else
+            {
+                typeDefinitionInterceptors = eventInfo.IncludeTypeDefinitionAspects<IncludeAspectsFromTypeDefinitionToThisEventAttribute>(
+                    typeDefinitionInterceptors,
+                    includeAspectsFromThisEvent => includeAspectsFromThisEvent.Methods.HasFlag(eventMethodType),
+                    methodInfo).ToList();
+            }
+            return typeDefinitionInterceptors;
         }
 
         private static InterceptedPropertyMethod GetPropertyMethodType(this PropertyInfo propertyInfo, MethodInfo methodInfo)
@@ -270,9 +166,15 @@ namespace AspectSharp.DynamicProxy.Utils
 
         internal sealed class InterceptedTypeData
         {
-            public IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>> Interceptors { get; init; }
+            public IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>> Interceptors { get; }
 
-            public bool IsIntercepted { get; init; }
+            public bool IsIntercepted { get; }
+
+            public InterceptedTypeData(IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>> interceptors)
+            {
+                Interceptors = interceptors;
+                IsIntercepted = !(interceptors is null) && interceptors.Any();
+            }
 
             public bool TryGetMethodInterceptors(MethodInfo methodInfo, out IEnumerable<CustomAttributeData> interceptors)
             {

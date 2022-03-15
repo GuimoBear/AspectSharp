@@ -1,13 +1,11 @@
-﻿using AspectSharp.DynamicProxy.Factories;
+﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy.Factories;
 using AspectSharp.DynamicProxy.Utils;
 using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
 using FluentAssertions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace AspectSharp.Tests.Net5
@@ -20,10 +18,15 @@ namespace AspectSharp.Tests.Net5
             var serviceClass = typeof(IFakeService);
             var targetClass = typeof(FakeService);
 
-            InterceptorTypeCache.TryGetInterceptedTypeData(serviceClass, out var interceptedTypeData)
+            var configs = new DynamicProxyFactoryConfigurations
+            {
+                ExcludeTypeDefinitionAspectsForMethods = true
+            };
+
+            InterceptorTypeCache.TryGetInterceptedTypeData(serviceClass, configs, out var interceptedTypeData)
                 .Should().BeTrue();
 
-            var (proxyClass, pipelineClass) = DynamicProxyFactory.Create(serviceClass, targetClass, interceptedTypeData);
+            var (proxyClass, pipelineClass) = DynamicProxyFactory.Create(serviceClass, targetClass, interceptedTypeData, configs);
 
             var pipelineInstance = Activator.CreateInstance(pipelineClass);
 
@@ -36,7 +39,7 @@ namespace AspectSharp.Tests.Net5
                 .Should().NotBeNull();
 
             pipelineClass.GetProperties()
-                .Length.Should().Be(interceptedTypeData.MethodInterceptors.Keys.Count());
+                .Length.Should().Be(interceptedTypeData.Interceptors.Keys.Count());
         }
     }
 }

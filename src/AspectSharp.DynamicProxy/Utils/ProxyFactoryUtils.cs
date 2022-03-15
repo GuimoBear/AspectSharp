@@ -3,12 +3,11 @@ using AspectSharp.Abstractions.Attributes;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
 
 namespace AspectSharp.DynamicProxy.Utils
 {
-    public static class ProxyFactoryUtils
+    internal static class ProxyFactoryUtils
     {
         public static AspectDelegate EmptyAspectDelegate = _ => Task.CompletedTask;
 
@@ -71,15 +70,17 @@ namespace AspectSharp.DynamicProxy.Utils
             return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
         }
 
-        public static AbstractInterceptorAttribute[] GetInterceptors(Type serviceType, int methodHashCode)
+        public static AbstractInterceptorAttribute[] GetInterceptors(Type serviceType, int previouslyUsedConfigurationsHashCode, int methodHashCode)
         {
-            List<AbstractInterceptorAttribute> interceptors = new List<AbstractInterceptorAttribute>();
-            foreach (var attributeData in serviceType.CustomAttributes.Where(attr => attr.AttributeType.IsAssignableTo(typeof(AbstractInterceptorAttribute))))
-                interceptors.Add(attributeData.CreateInstance() as AbstractInterceptorAttribute);
-            foreach (var attributeData in (serviceType.GetMethods().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode)?.CustomAttributes?.Where(attr => attr.AttributeType.IsAssignableTo(typeof(AbstractInterceptorAttribute))) ?? Enumerable.Empty<CustomAttributeData>()))
-                interceptors.Add(attributeData.CreateInstance() as AbstractInterceptorAttribute);
+            if (!InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, previouslyUsedConfigurationsHashCode, out var interceptedTypeData))
+                return Array.Empty<AbstractInterceptorAttribute>();
 
-            return interceptors.ToArray();
+            var methodInfo = serviceType.GetMethods().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode);
+            if (methodInfo is null || 
+                !interceptedTypeData.TryGetMethodInterceptors(methodInfo, out var interceptors))
+                return Array.Empty<AbstractInterceptorAttribute>();
+
+            return interceptors.Select(attributeData => attributeData.CreateInstance() as AbstractInterceptorAttribute).ToArray();
         }
     }
 }

@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AspectSharp.Abstractions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -17,8 +18,9 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly IDictionary<(Type Service, Type Target), (Type Proxy, Type Pipeline)> _cachedProxyTypes
             = new Dictionary<(Type Service, Type Target), (Type, Type)>();
 
-        public static (Type Proxy, Type Pipelines) Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData)
+        public static (Type Proxy, Type Pipelines) Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
         {
+            configs = configs ?? Configurations;
             if (_cachedProxyTypes.TryGetValue((serviceType, targetType), out var type))
                 return type;
 
@@ -30,7 +32,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
 
             var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}_Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
-            var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData);
+            var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
 
 
             var readonlyFields = DefineReadonlyFields(serviceType, pipelineDefinitionsTypeBuilder, typeBuilder).ToArray();
@@ -90,22 +92,6 @@ namespace AspectSharp.DynamicProxy.Factories
             cil.Emit(OpCodes.Ldarg_3);
             cil.Emit(OpCodes.Stfld, contextFactoryField);
             cil.Emit(OpCodes.Ret);
-        }
-
-        private static Tuple<OpCode, bool> GetLdargFromIndex(int index)
-        {
-            switch (index)
-            {
-                case 0:
-                    return new Tuple<OpCode, bool>(OpCodes.Ldarg_0, false);
-                case 1:
-                    return new Tuple<OpCode, bool>(OpCodes.Ldarg_1, false);
-                case 2:
-                    return new Tuple<OpCode, bool>(OpCodes.Ldarg_2, false);
-                case 3:
-                    return new Tuple<OpCode, bool>(OpCodes.Ldarg_3, false);
-            }
-            return new Tuple<OpCode, bool>(OpCodes.Ldarg_S, true);
         }
 
         private static AssemblyBuilder NewAssemblyBuilder()

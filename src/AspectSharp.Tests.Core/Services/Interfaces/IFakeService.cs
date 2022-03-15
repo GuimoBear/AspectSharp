@@ -10,7 +10,12 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
     {
         event EventHandler OnChanged;
 
-        int ValueTypeProperty { get; set; }
+        int ValueTypeProperty 
+        { 
+            [Aspect1]
+            get; 
+            set; 
+        }
         IEnumerable<string> ReferenceTypeProperty { get; set; }
 
         void DoSomethingWithoutParameterAndWithoutReturn();

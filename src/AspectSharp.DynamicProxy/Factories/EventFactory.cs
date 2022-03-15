@@ -67,6 +67,32 @@ namespace AspectSharp.DynamicProxy.Factories
                         eventBuilder.SetRemoveOnMethod(methodBuilder);
                     }
                 }
+
+                var raiseMethodInfo = @event.GetRaiseMethod();
+                if (raiseMethodInfo != null)
+                {
+                    var attrs = raiseMethodInfo.Attributes ^ MethodAttributes.Abstract;
+                    var previouslyCreatedMethod = methods.FirstOrDefault(mi => mi.Name == raiseMethodInfo.Name && mi.ReturnType == raiseMethodInfo.ReturnType && mi.Attributes == attrs && mi.CallingConvention == raiseMethodInfo.CallingConvention);
+
+                    if (previouslyCreatedMethod is not null)
+                        eventBuilder.SetRaiseMethod(previouslyCreatedMethod);
+                    else
+                    {
+                        var parameters = raiseMethodInfo.GetParameters();
+                        var methodBuilder = typeBuilder.DefineMethod(raiseMethodInfo.Name, attrs, raiseMethodInfo.CallingConvention, raiseMethodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
+
+                        foreach (var parameter in parameters)
+                            methodBuilder.DefineParameter(parameter.Position, parameter.Attributes, parameter.Name);
+
+                        var cil = methodBuilder.GetILGenerator();
+                        cil.Emit(OpCodes.Ldarg_0);
+                        cil.Emit(OpCodes.Ldfld, targetField);
+                        cil.Emit(OpCodes.Ldarg_1);
+                        cil.Emit(OpCodes.Callvirt, raiseMethodInfo);
+                        cil.Emit(OpCodes.Ret);
+                        eventBuilder.SetRaiseMethod(methodBuilder);
+                    }
+                }
             }
         }
     }

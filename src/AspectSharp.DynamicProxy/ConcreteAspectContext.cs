@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace AspectSharp.DynamicProxy
 {
-    public sealed class ConcreteAspectContext : AspectContext
+    internal sealed class ConcreteAspectContext : AspectContext
     {
         public override Type ServiceType { get; }
 

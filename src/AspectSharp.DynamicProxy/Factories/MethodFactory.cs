@@ -27,7 +27,7 @@ namespace AspectSharp.DynamicProxy.Factories
             var pipelinesField = fields[1];
             var contextFactoryField = fields[2];
 
-            var methods = serviceType.GetMethods()/*.Where(mi => !mi.IsSpecialName)*/;
+            var methods = serviceType.GetMethods();
             foreach (var methodInfo in methods)
             {
                 var methodName = methodInfo.Name;

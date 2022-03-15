@@ -40,7 +40,6 @@ namespace AspectSharp.DynamicProxy.Factories
             var index = 1;
 
             var ret = new Dictionary<MethodInfo, FieldInfo>();
-            var indexedInterceptors = interceptedTypeData.AllInterceptors.Select<CustomAttributeData, (CustomAttributeData Interceptor, int Index)>((interceptorType, idx) => (interceptorType, idx + 1)).ToList();
             foreach (var methodInfo in methods)
             {
                 if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))

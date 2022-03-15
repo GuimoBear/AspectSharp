@@ -1,4 +1,5 @@
-﻿using AspectSharp.DynamicProxy;
+﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Factories;
 using AspectSharp.DynamicProxy.Utils;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,8 +11,14 @@ namespace AspectSharp.Extensions.DependencyInjection
 {
     public static class ServiceCollectionExtensions
     {
-        public static IServiceCollection AddAspects(this IServiceCollection services)
+        public static IServiceCollection AddAspects(this IServiceCollection services, Action<IDynamicProxyFactoryConfigurationsBuilder> configure = default)
         {
+            var builder = new DynamicProxyFactoryConfigurationsBuilder();
+            if (configure is not null)
+                configure(builder);
+
+            var configs = builder.Build();
+            InterceptorTypeCache.SetConfigurations(configs);
             services.AddTransient<IAspectContextFactory, AspectContextFactory>();
 
             var serviceProvider = services.BuildServiceProvider(true);
@@ -39,7 +46,7 @@ namespace AspectSharp.Extensions.DependencyInjection
                     {
                         try
                         {
-                            var (proxyType, pipelineType) = DynamicProxyFactory.Create(sd.ServiceType, targetType, interceptorTypeCache);
+                            var (proxyType, pipelineType) = DynamicProxyFactory.Create(sd.ServiceType, targetType, interceptorTypeCache, configs);
                             services.Remove(sd);
                             services.AddSingleton(pipelineType);
                             services.Add(new ServiceDescriptor(targetType, targetType, sd.Lifetime));

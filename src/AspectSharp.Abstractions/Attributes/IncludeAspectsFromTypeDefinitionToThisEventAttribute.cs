@@ -9,6 +9,8 @@ namespace AspectSharp.Abstractions.Attributes
     {
         public InterceptedEventMethod Methods { get; }
 
+        public IncludeAspectsFromTypeDefinitionToThisEventAttribute(params Type[] aspects) : this(InterceptedEventMethod.None, aspects) { }
+
         public IncludeAspectsFromTypeDefinitionToThisEventAttribute(InterceptedEventMethod methods, params Type[] aspects) : base(aspects) 
         { 
             Methods = methods;

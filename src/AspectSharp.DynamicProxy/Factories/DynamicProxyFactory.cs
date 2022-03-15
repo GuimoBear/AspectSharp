@@ -1,4 +1,5 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy.Exceptions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -15,13 +16,19 @@ namespace AspectSharp.DynamicProxy.Factories
         internal static readonly AssemblyBuilder _proxiedClassesAssemblyBuilder = NewAssemblyBuilder();
         internal static readonly ModuleBuilder _proxiedClassesModuleBuilder = NewModuleBuilder(_proxiedClassesAssemblyBuilder);
 
-        private static readonly IDictionary<Tuple<Type, Type>, Tuple<Type , Type>> _cachedProxyTypes
-            = new Dictionary<Tuple<Type, Type>, Tuple<Type, Type>>();
+        private static readonly IDictionary<Tuple<Type, Type, int>, Tuple<Type , Type>> _cachedProxyTypes
+            = new Dictionary<Tuple<Type, Type, int>, Tuple<Type, Type>>();
 
         public static Type Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
         {
-            configs = configs ?? Configurations;
-            if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type>(serviceType, targetType), out var type))
+            if (!serviceType.IsInterface)
+                throw new NotInterfaceTypeException(serviceType);
+
+            configs = configs ?? new DynamicProxyFactoryConfigurations(
+                Configurations.IncludeTypeDefinitionAspectsToEvents,
+                Configurations.IncludeTypeDefinitionAspectsToProperties,
+                Configurations.ExcludeTypeDefinitionAspectsForMethods);
+            if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), out var type))
                 return type.Item1;
 
             var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item2 == targetType);
@@ -54,7 +61,7 @@ namespace AspectSharp.DynamicProxy.Factories
             typeBuilder.AddInterfaceImplementation(serviceType);
 
             var concreteType = typeBuilder.CreateType();
-            _cachedProxyTypes.Add(new Tuple<Type, Type>(serviceType, targetType), new Tuple<Type, Type>(concreteType, concretePipelineType));
+            _cachedProxyTypes.Add(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), new Tuple<Type, Type>(concreteType, concretePipelineType));
             return concreteType;
         }
 

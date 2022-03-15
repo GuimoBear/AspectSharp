@@ -23,9 +23,12 @@ namespace AspectSharp.Abstractions
 
         public override int GetHashCode()
         {
-            return IncludeTypeDefinitionAspectsToEvents.GetHashCode() ^
-                   IncludeTypeDefinitionAspectsToProperties.GetHashCode() ^
-                   ExcludeTypeDefinitionAspectsForMethods.GetHashCode();
+            unchecked
+            {
+                return (IncludeTypeDefinitionAspectsToEvents.GetHashCode() * 3) ^
+                       (IncludeTypeDefinitionAspectsToProperties.GetHashCode() * 8) ^
+                       ExcludeTypeDefinitionAspectsForMethods.GetHashCode();
+            }
         }
     }
 }

@@ -33,7 +33,15 @@ namespace AspectSharp.DynamicProxy.Utils
 
         internal static bool TryGetInterceptedTypeData(Type type, DynamicProxyFactoryConfigurations configs, out InterceptedTypeData interceptedTypeData)
         {
-            configs = configs ?? Configurations;
+            if (!type.IsInterface)
+            {
+                interceptedTypeData = default;
+                return false;
+            }
+            configs = configs ?? new DynamicProxyFactoryConfigurations(
+                Configurations.IncludeTypeDefinitionAspectsToEvents, 
+                Configurations.IncludeTypeDefinitionAspectsToProperties, 
+                Configurations.ExcludeTypeDefinitionAspectsForMethods);
             if (_cachedTypes.TryGetValue(new Tuple<Type, int>(type, configs.GetHashCode()), out interceptedTypeData))
                 return true;
 
@@ -66,9 +74,12 @@ namespace AspectSharp.DynamicProxy.Utils
                     var eventFromMethod = events.FirstOrDefault(evt => evt.GetAddMethod() == methodInfo || evt.GetRemoveMethod() == methodInfo || evt.GetRaiseMethod() == methodInfo);
 
                     if (!(propertyFromMethod is null))
-                        typeDefinitionAttributes = propertyFromMethod.FilterTypeDefinitionInterceptorsFromProperty(methodInfo, configs, typeDefinitionAttributes).ToList();
+                        typeDefinitionInterceptors = propertyFromMethod.FilterTypeDefinitionInterceptorsFromProperty(methodInfo, configs, typeDefinitionInterceptors).ToList();
                     else if (!(eventFromMethod is null))
-                        typeDefinitionAttributes = eventFromMethod.FilterTypeDefinitionInterceptorsFromEvent(methodInfo, configs, typeDefinitionAttributes).ToList();
+                    {
+                        methodInterceptors = eventFromMethod.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).Concat(methodInterceptors).ToList();
+                        typeDefinitionInterceptors = eventFromMethod.FilterTypeDefinitionInterceptorsFromEvent(methodInfo, configs, typeDefinitionInterceptors).ToList();
+                    }
                     else
                     {
                         if (configs.ExcludeTypeDefinitionAspectsForMethods)

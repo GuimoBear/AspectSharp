@@ -34,12 +34,14 @@ namespace AspectSharp.DynamicProxy.Factories
             var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}_Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
             var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
 
+            var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
 
-            var readonlyFields = DefineReadonlyFields(serviceType, pipelineDefinitionsTypeBuilder, typeBuilder).ToArray();
+            var (pipelineField, contextActivatorFields) = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, concretePipelineType, interceptedTypeData);
+
+            var readonlyFields = DefineReadonlyFields(serviceType, pipelineField, typeBuilder).ToArray();
 
             DefineConstructor(targetType, typeBuilder, readonlyFields);
 
-            var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
 
             var methods = MethodFactory.CreateMethods(serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
 
@@ -50,15 +52,14 @@ namespace AspectSharp.DynamicProxy.Factories
             typeBuilder.AddInterfaceImplementation(serviceType);
 
             var concreteType = typeBuilder.CreateType();
-            var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
             _cachedProxyTypes.Add((serviceType, targetType), (concreteType, concretePipelineType));
             return (concreteType, concretePipelineType);
         }
 
-        private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, Type pipelineDefinitionType, TypeBuilder typeBuilder)
+        private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, FieldBuilder pipelineField, TypeBuilder typeBuilder)
         {
             yield return typeBuilder.DefineField("_target", serviceType, FieldAttributes.Private | FieldAttributes.InitOnly);
-            yield return typeBuilder.DefineField("_pipelines", pipelineDefinitionType, FieldAttributes.Private | FieldAttributes.InitOnly);
+            yield return pipelineField;
             yield return typeBuilder.DefineField("_contextFactory", typeof(IAspectContextFactory), FieldAttributes.Private | FieldAttributes.InitOnly);
         }
 
@@ -69,11 +70,11 @@ namespace AspectSharp.DynamicProxy.Factories
             var contextFactoryField = readonlyFields[2];
 
             var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
-            var coonstructorParameters = new Type[] { targetType, pipelinesField.FieldType, contextFactoryField.FieldType };
+            var coonstructorParameters = new Type[] { targetType, contextFactoryField.FieldType };
             var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, coonstructorParameters);
 
             var parameters = new List<ParameterBuilder>();
-            foreach (var (readonlyFieldBuilder, idx) in readonlyFields.Zip(Enumerable.Range(1, readonlyFields.Count()), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
+            foreach (var (readonlyFieldBuilder, idx) in readonlyFields.Where(rf => rf != pipelinesField).Zip(Enumerable.Range(1, readonlyFields.Where(rf => rf != pipelinesField).Count()), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
             {
                 parameters.Add(constructorBuilder.DefineParameter(idx, ParameterAttributes.None, readonlyFieldBuilder.Name.Substring(1)));
             }
@@ -87,9 +88,6 @@ namespace AspectSharp.DynamicProxy.Factories
             cil.Emit(OpCodes.Stfld, targetField);
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Ldarg_2);
-            cil.Emit(OpCodes.Stfld, pipelinesField);
-            cil.Emit(OpCodes.Ldarg_0);
-            cil.Emit(OpCodes.Ldarg_3);
             cil.Emit(OpCodes.Stfld, contextFactoryField);
             cil.Emit(OpCodes.Ret);
         }

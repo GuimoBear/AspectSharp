@@ -93,8 +93,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     cil.Emit(OpCodes.Callvirt, _createContextMethodInfo);
                     if (!isVoid)
                         cil.Emit(OpCodes.Dup);
-                    cil.Emit(OpCodes.Ldarg_0);
-                    cil.Emit(OpCodes.Ldfld, pipelinesField);
+                    cil.Emit(OpCodes.Ldsfld, pipelinesField);
                     cil.Emit(OpCodes.Callvirt, pipelineProperty.GetMethod);
                     cil.Emit(OpCodes.Call, _executePipelineMethodInfo);
                     cil.Emit(OpCodes.Callvirt, _waitTaskMethodInfo);

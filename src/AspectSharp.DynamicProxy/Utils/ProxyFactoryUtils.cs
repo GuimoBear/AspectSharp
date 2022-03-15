@@ -13,36 +13,6 @@ namespace AspectSharp.DynamicProxy.Utils
 
         public static object[] EmptyParameters = Array.Empty<object>();
 
-        public static AspectDelegate DelegateFromAction(Action action)
-        {
-            return _ =>
-            {
-                action();
-                return Task.CompletedTask;
-            };
-        }
-
-        public static AspectDelegate DelegateFromAsyncAction(Func<Task> asyncAction)
-            => async _ => await asyncAction();
-
-        public static AspectDelegate DelegateFromAsyncAction(Func<ValueTask> asyncAction)
-            => async _ => await asyncAction();
-
-        public static AspectDelegate DelegateFromFunction<TReturn>(Func<TReturn> function)
-        {
-            return ctx =>
-            {
-                ctx.ReturnValue = function();
-                return Task.CompletedTask;
-            };
-        }
-
-        public static AspectDelegate DelegateFromAsyncFunction<TReturn>(Func<Task<TReturn>> asyncFunction)
-            => async ctx => ctx.ReturnValue = await asyncFunction();
-
-        public static AspectDelegate DelegateFromAsyncFunction<TReturn>(Func<ValueTask<TReturn>> asyncFunction)
-            => async ctx => ctx.ReturnValue = await asyncFunction();
-
         public static InterceptDelegate FirstDelegate(InterceptDelegate current, AspectDelegate next)
             => (ctx, _) => current.Invoke(ctx, next);
 
@@ -51,6 +21,8 @@ namespace AspectSharp.DynamicProxy.Utils
 
         public static InterceptDelegate CreatePipeline(AspectDelegate root, AbstractInterceptorAttribute[] interceptorAttributes)
         {
+            if (interceptorAttributes.Length == 0)
+                return (ctx, _) => root(ctx);
             var stack = new Stack<InterceptDelegate>(interceptorAttributes.Select(x => (InterceptDelegate)x.Invoke).Reverse());
             var ret = FirstDelegate(stack.Pop(), root);
             while (stack.Any())

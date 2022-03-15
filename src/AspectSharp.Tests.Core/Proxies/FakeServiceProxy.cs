@@ -11,13 +11,11 @@ namespace AspectSharp.Tests.Core.Proxies
     public class FakeServiceProxy : IFakeService
     {
         private readonly IFakeService _target;
-        private readonly FakeServiceProxy_Pipelines _pipelines;
         private readonly IAspectContextFactory _contextFactory;
 
-        public FakeServiceProxy(FakeService target, FakeServiceProxy_Pipelines pipelines, IAspectContextFactory contextFactory)
+        public FakeServiceProxy(FakeService target, IAspectContextFactory contextFactory)
         {
             _target = target;
-            _pipelines = pipelines;
             _contextFactory = contextFactory;
         }
 
@@ -214,6 +212,8 @@ namespace AspectSharp.Tests.Core.Proxies
             return ValueTask.FromResult((IEnumerable<string>)context.ReturnValue);
         }
 
+        private static readonly FakeServiceProxy_Pipelines _pipelines;
+
         private static readonly AspectContextActivator _aspectContextAtivator1;
         private static readonly AspectContextActivator _aspectContextAtivator2;
         private static readonly AspectContextActivator _aspectContextAtivator3;
@@ -234,6 +234,8 @@ namespace AspectSharp.Tests.Core.Proxies
 
         static FakeServiceProxy()
         {
+            _pipelines = new FakeServiceProxy_Pipelines();
+
             Type serviceType = typeof(IFakeService);
             Type proxyType = typeof(FakeServiceProxy);
             Type targetType = typeof(FakeService);

@@ -1,4 +1,5 @@
-﻿using AspectSharp.DynamicProxy;
+﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy;
 using AspectSharp.Tests.Core.Aspects;
 using AspectSharp.Tests.Core.Proxies;
 using AspectSharp.Tests.Core.Services;
@@ -16,6 +17,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         [Fact]
         public void ConcreteAspectContextConstructorFacts()
         {
+
             var serviceType = typeof(IFakeService);
             var serviceMethod = serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithParameterAndReferenceTypeReturn));
             var proxyService = typeof(FakeServiceProxy);
@@ -25,8 +27,11 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
 
             var activator = new AspectContextActivator(serviceType, serviceMethod, proxyService, proxyMethod, targetService, targetMethod);
 
+            var configs = new DynamicProxyFactoryConfigurations();
+            AspectSharp.DynamicProxy.Utils.InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out _);
+
             var target = new FakeService();
-            object proxy = new FakeServiceProxy(target, new FakeServiceProxy_Pipelines(new Aspect1Attribute(), new Aspect2Attribute()), Mock.Of<IAspectContextFactory>());
+            object proxy = new FakeServiceProxy(target, Mock.Of<IAspectContextFactory>());
             var parameters = new object[] { 30, "param", Enumerable.Empty<string>() };
             var provider = Mock.Of<IServiceProvider>();
 

@@ -24,7 +24,7 @@ namespace AspectSharp.DynamicProxy.Utils
         {
             if (interceptorAttributes.Length == 0)
                 return (ctx, _) => root(ctx);
-            var stack = new Stack<InterceptDelegate>(interceptorAttributes.Select(x => (InterceptDelegate)x.Invoke).Reverse());
+            var stack = new Stack<InterceptDelegate>(interceptorAttributes.Select(x => (InterceptDelegate)x.Invoke));
             var ret = FirstDelegate(stack.Pop(), root);
             while (stack.Any())
                 ret = Encapsulate(stack.Pop(), ret);

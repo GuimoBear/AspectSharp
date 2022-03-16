@@ -31,7 +31,7 @@ namespace AspectSharp.DynamicProxy.Utils
             {
                 var genericTypeDefinition = retType.GetGenericTypeDefinition();
 #if NETCOREAPP3_1_OR_GREATER
-                    isValueTask = retType == typeof(ValueTask<>);
+                    isValueTask = genericTypeDefinition == typeof(ValueTask<>);
 #endif
                 isAsync = genericTypeDefinition == typeof(Task<>)
 #if NETCOREAPP3_1_OR_GREATER

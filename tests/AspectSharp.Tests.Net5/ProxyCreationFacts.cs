@@ -1,18 +1,25 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy.Exceptions;
 using AspectSharp.DynamicProxy.Factories;
 using AspectSharp.DynamicProxy.Utils;
 using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
 using FluentAssertions;
-using System;
-using System.Linq;
-using System.Threading;
 using Xunit;
 
 namespace AspectSharp.Tests.Net5
 {
     public class ProxyCreationFacts
     {
+        [Fact]
+        public void Given_AnNotInterfaceType_When_CreateProxy_Then_ThrowNotInterfaceTypeException()
+        {
+            var configs = new DynamicProxyFactoryConfigurations(default, default, true);
+
+            var targetClass = typeof(FakeService);
+            Assert.Throws<NotInterfaceTypeException>(() => DynamicProxyFactory.Create(targetClass, targetClass, new InterceptorTypeCache.InterceptedTypeData(default), configs));
+        }
+
         [Fact]
         public void When_CreateProxy_Then_TypesShouldBeNotNull()
         {

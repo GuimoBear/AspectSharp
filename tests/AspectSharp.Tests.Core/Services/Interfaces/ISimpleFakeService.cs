@@ -16,6 +16,12 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         [EventAspect]
         event EventHandler OnInterceptedEvent;
 
+        [ExcludeAspectsFromTypeDefinition]
+        event EventHandler OnEventWithAnyAspect;
+
+        [IncludeAspectsFromTypeDefinition]
+        event EventHandler OnEventWithAllAspect;
+
         [ExcludeAspectsFromTypeDefinitionToThisProperty(InterceptedPropertyMethod.Get, typeof(TypeDefinitionAspectAttribute))]
         [IncludeAspectsFromTypeDefinitionToThisProperty(InterceptedPropertyMethod.Get, typeof(Aspect1Attribute))]
         int Property { get; set; }
@@ -29,11 +35,20 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
             set; 
         }
 
+        [ExcludeAspectsFromTypeDefinitionToThisProperty]
+        int PropertyWithAnyAspect { get; set; }
+
+        [IncludeAspectsFromTypeDefinitionToThisProperty]
+        int PropertyWithAllAspect { get; set; }
+
         [ExcludeAspectsFromTypeDefinition(typeof(TypeDefinitionAspectAttribute))]
         [IncludeAspectsFromTypeDefinition(typeof(Aspect1Attribute))]
         void Method();
 
         [Aspect3]
         void InterceptedMethod();
+
+        [ExcludeAspectsFromTypeDefinition]
+        void MethodWithAnyAspect();
     }
 }

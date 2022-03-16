@@ -32,7 +32,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 var returnInfo = methodInfo.GetReturnInfo();
 
                 var parameters = methodInfo.GetParameters();
-                var methodBuilder = typeBuilder.DefineMethod(methodInfo.Name, methodInfo.Attributes ^ MethodAttributes.Abstract, methodInfo.CallingConvention, methodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
+                var methodBuilder = typeBuilder.DefineMethod(methodInfo.Name, (methodInfo.Attributes ^ MethodAttributes.Abstract) | MethodAttributes.Final, methodInfo.CallingConvention, methodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
                 var hasParameters = parameters.Length > 0;
                 foreach (var tuple in parameters.Zip(Enumerable.Range(1, parameters.Length), (first, second) => new Tuple<ParameterInfo, int>(first, second)))
                 {

@@ -57,7 +57,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                     var aspectContextAditionalInfo = new List<string>();
                     if (!(interceptorDictionary is null) && interceptorDictionary.TryGetValue(methodInfo, out var interceptors))
                     {
-                        interceptors = interceptors.Reverse();
+                        //interceptors = interceptors.Reverse();
                         aspectContextAditionalInfo.AddRange(
                             interceptors
                                 .Select(attr => string.Format("{0}: {1} {2}", attr.AttributeType.Name.PadRight(9), InterceptMoment.Before.ToString().ToLower(), methodInfo.Name))

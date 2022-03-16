@@ -15,15 +15,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
     {
         public static IEnumerable<Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>> GetInterceptorTypeDataTheoryData()
         {
-            //yield return GetInterceptorTypeDataUsingDefaultConfigs();
-            //yield return GetInterceptorTypeDataWithInterceptOnAddEvent();
-            //yield return GetInterceptorTypeDataWithInterceptOnRemoveEvent();
-            //yield return GetInterceptorTypeDataWithInterceptOnAnyEventMethod();
-            //yield return GetInterceptorTypeDataWithInterceptOnGetProperty();
-            //yield return GetInterceptorTypeDataWithInterceptOnSetProperty();
+            yield return GetInterceptorTypeDataUsingDefaultConfigs();
+            yield return GetInterceptorTypeDataWithInterceptOnAddEvent();
+            yield return GetInterceptorTypeDataWithInterceptOnRemoveEvent();
+            yield return GetInterceptorTypeDataWithInterceptOnAnyEventMethod();
+            yield return GetInterceptorTypeDataWithInterceptOnGetProperty();
+            yield return GetInterceptorTypeDataWithInterceptOnSetProperty();
             yield return GetInterceptorTypeDataWithInterceptOnAnyPropertyMethod();
-            //yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
-            //yield return GetInterceptorTypeDataWithIninspectedInterface();
+            yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
+            yield return GetInterceptorTypeDataWithIninspectedInterface();
         }
 
         private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigs()
@@ -53,6 +53,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
                 },
@@ -75,6 +83,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetGetMethod(),
                     aspect1InterceptorList
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -115,6 +131,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
                 },
@@ -137,6 +161,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetGetMethod(),
                     aspect1InterceptorList
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -177,6 +209,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
                 },
@@ -203,6 +243,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetGetMethod(),
                     aspect1InterceptorList
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -244,6 +292,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
                 },
@@ -270,6 +326,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetGetMethod(),
                     aspect1InterceptorList
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -309,6 +373,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     typeDefinitionInterceptors.Concat(
                         serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
@@ -335,6 +407,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetGetMethod(),
                     aspect1InterceptorList.ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -374,6 +454,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
                 },
@@ -404,6 +492,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetSetMethod(),
                     typeDefinitionInterceptors.ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -443,6 +539,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     typeDefinitionInterceptors.Concat(
                         serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
@@ -477,6 +581,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetSetMethod(),
                     typeDefinitionInterceptors.ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
@@ -516,6 +628,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 },
                 {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetAddMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetEvent(nameof(ISimpleFakeService.OnEventWithAllAspect)).GetRemoveMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
                 },
@@ -538,6 +658,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.Property)).GetGetMethod(),
                     aspect1InterceptorList
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetGetMethod(),
+                    typeDefinitionInterceptors
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleFakeService.PropertyWithAllAspect)).GetSetMethod(),
+                    typeDefinitionInterceptors
                 }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>

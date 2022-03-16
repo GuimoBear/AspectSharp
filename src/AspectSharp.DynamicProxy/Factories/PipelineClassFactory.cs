@@ -171,28 +171,5 @@ namespace AspectSharp.DynamicProxy.Factories
 
             return pipelineProperty;
         }
-
-        private static PropertyBuilder CreatePipelineProperty(TypeBuilder typeBuilder, ILGenerator constructorIlGenerator, FieldInfo aspectDelegateField, FieldInfo aspectsFromDelegateField, int index)
-        {
-            var pipelineField = typeBuilder.DefineField(string.Format("_pipeline{0}", index), _interceptDelegateType, FieldAttributes.Private | FieldAttributes.InitOnly);
-
-            var methodBuilder = typeBuilder.DefineMethod(string.Format("get_pipeline{0}", index), MethodAttributes.Public | MethodAttributes.Virtual | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.SpecialName, CallingConventions.Standard | CallingConventions.HasThis, _interceptDelegateType, null);
-            var cil = methodBuilder.GetILGenerator();
-
-            cil.Emit(OpCodes.Ldarg_0);
-            cil.Emit(OpCodes.Ldfld, pipelineField);
-            cil.Emit(OpCodes.Ret);
-
-            var property = typeBuilder.DefineProperty(string.Format("Pipeline{0}", index), PropertyAttributes.None, _interceptDelegateType, Array.Empty<Type>());
-            property.SetGetMethod(methodBuilder);
-
-            constructorIlGenerator.Emit(OpCodes.Ldarg_0);
-            constructorIlGenerator.Emit(OpCodes.Ldsfld, aspectDelegateField);
-            constructorIlGenerator.Emit(OpCodes.Ldsfld, aspectsFromDelegateField);
-            constructorIlGenerator.Emit(OpCodes.Call, _createPipelineMethodInfo);
-            constructorIlGenerator.Emit(OpCodes.Stfld, pipelineField);
-
-            return property;
-        }
     }
 }

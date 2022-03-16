@@ -137,8 +137,8 @@
       <Project>{a6ecdea0-a9b5-4b2e-be11-028f61a8b6f9}</Project>
       <Name>AspectSharp.Extensions.DependencyInjection</Name>
     </ProjectReference>
-    <ProjectReference Include="..\..\..\src\AspectSharp.Tests.Core\AspectSharp.Tests.Core.csproj">
-      <Project>{aff343ba-97e5-4afa-9f04-3b1072a3d00a}</Project>
+    <ProjectReference Include="..\..\..\tests\AspectSharp.Tests.Core\AspectSharp.Tests.Core.csproj">
+      <Project>{f1191a67-934d-45a1-818f-af28f7bb3171}</Project>
       <Name>AspectSharp.Tests.Core</Name>
     </ProjectReference>
   </ItemGroup>

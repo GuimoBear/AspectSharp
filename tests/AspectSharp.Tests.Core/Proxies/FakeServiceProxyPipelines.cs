@@ -8,164 +8,112 @@ using System.Threading.Tasks;
 
 namespace AspectSharp.Tests.Core.Proxies
 {
-    public sealed class FakeServiceProxy_Pipelines
+    public static class FakeServiceProxyPipelines
     {
-        public InterceptDelegate Pipeline1 { get; }
-        public InterceptDelegate Pipeline2 { get; }
-        public InterceptDelegate Pipeline3 { get; }
+        public static InterceptDelegate Pipeline1 { get; }
+        public static InterceptDelegate Pipeline2 { get; }
+        public static InterceptDelegate Pipeline3 { get; }
 #if NETCOREAPP3_1_OR_GREATER
-        public InterceptDelegate Pipeline4 { get; }
-        public InterceptDelegate Pipeline5 { get; }
+        public static InterceptDelegate Pipeline4 { get; }
+        public static InterceptDelegate Pipeline5 { get; }
 #endif
-        public InterceptDelegate Pipeline6 { get; }
-        public InterceptDelegate Pipeline7 { get; }
-        public InterceptDelegate Pipeline8 { get; }
-        public InterceptDelegate Pipeline9 { get; }
-        public InterceptDelegate Pipeline10 { get; }
-        public InterceptDelegate Pipeline11 { get; }
+        public static InterceptDelegate Pipeline6 { get; }
+        public static InterceptDelegate Pipeline7 { get; }
+        public static InterceptDelegate Pipeline8 { get; }
+        public static InterceptDelegate Pipeline9 { get; }
+        public static InterceptDelegate Pipeline10 { get; }
+        public static InterceptDelegate Pipeline11 { get; }
 #if NETCOREAPP3_1_OR_GREATER
-        public InterceptDelegate Pipeline12 { get; }
-        public InterceptDelegate Pipeline13 { get; }
+        public static InterceptDelegate Pipeline12 { get; }
+        public static InterceptDelegate Pipeline13 { get; }
 #endif
-        public InterceptDelegate Pipeline14 { get; }
-        public InterceptDelegate Pipeline15 { get; }
+        public static InterceptDelegate Pipeline14 { get; }
+        public static InterceptDelegate Pipeline15 { get; }
 #if NETCOREAPP3_1_OR_GREATER
-        public InterceptDelegate Pipeline16 { get; }
-        public InterceptDelegate Pipeline17 { get; }
-#endif
-
-        public FakeServiceProxy_Pipelines()
-        {
-            Pipeline1 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate1, _aspectsFromDelegate1);
-            Pipeline2 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate2, _aspectsFromDelegate2);
-            Pipeline3 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate3, _aspectsFromDelegate3);
-#if NETCOREAPP3_1_OR_GREATER
-            Pipeline4 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate4, _aspectsFromDelegate4);
-            Pipeline5 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate5, _aspectsFromDelegate5);
-#endif
-            Pipeline6 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate6, _aspectsFromDelegate6);
-            Pipeline7 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate7, _aspectsFromDelegate7);
-            Pipeline8 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate8, _aspectsFromDelegate8);
-            Pipeline9 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate9, _aspectsFromDelegate9);
-            Pipeline10 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate10, _aspectsFromDelegate10);
-            Pipeline11 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate11, _aspectsFromDelegate11);
-#if NETCOREAPP3_1_OR_GREATER
-            Pipeline12 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate12, _aspectsFromDelegate12);
-            Pipeline13 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate13, _aspectsFromDelegate13);
-#endif
-            Pipeline14 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate14, _aspectsFromDelegate14);
-            Pipeline15 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate15, _aspectsFromDelegate15);
-#if NETCOREAPP3_1_OR_GREATER
-            Pipeline16 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate16, _aspectsFromDelegate16);
-            Pipeline17 = ProxyFactoryUtils.CreatePipeline(_aspectDelegate17, _aspectsFromDelegate17);
-#endif
-        }
-
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate1;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate2;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate3;
-#if NETCOREAPP3_1_OR_GREATER
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate4;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate5;
-#endif
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate6;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate7;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate8;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate9;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate10;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate11;
-#if NETCOREAPP3_1_OR_GREATER
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate12;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate13;
-#endif
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate14;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate15;
-#if NETCOREAPP3_1_OR_GREATER
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate16;
-        private static readonly AbstractInterceptorAttribute[] _aspectsFromDelegate17;
+        public static InterceptDelegate Pipeline16 { get; }
+        public static InterceptDelegate Pipeline17 { get; }
 #endif
 
-        private static readonly AspectDelegate _aspectDelegate1;
-        private static readonly AspectDelegate _aspectDelegate2;
-        private static readonly AspectDelegate _aspectDelegate3;
-#if NETCOREAPP3_1_OR_GREATER
-        private static readonly AspectDelegate _aspectDelegate4;
-        private static readonly AspectDelegate _aspectDelegate5;
-#endif
-        private static readonly AspectDelegate _aspectDelegate6;
-        private static readonly AspectDelegate _aspectDelegate7;
-        private static readonly AspectDelegate _aspectDelegate8;
-        private static readonly AspectDelegate _aspectDelegate9;
-        private static readonly AspectDelegate _aspectDelegate10;
-        private static readonly AspectDelegate _aspectDelegate11;
-#if NETCOREAPP3_1_OR_GREATER
-        private static readonly AspectDelegate _aspectDelegate12;
-        private static readonly AspectDelegate _aspectDelegate13;
-#endif
-        private static readonly AspectDelegate _aspectDelegate14;
-        private static readonly AspectDelegate _aspectDelegate15;
-#if NETCOREAPP3_1_OR_GREATER
-        private static readonly AspectDelegate _aspectDelegate16;
-        private static readonly AspectDelegate _aspectDelegate17;
-#endif
-
-        static FakeServiceProxy_Pipelines()
+        static FakeServiceProxyPipelines()
         {
             var serviceType = typeof(IFakeService);
+            AspectDelegate aspectDelegate = default;
+            AbstractInterceptorAttribute[] aspectsFromDelegate = default;
 
-            _aspectDelegate1 = AspectDelegate1;
-            _aspectsFromDelegate1 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 43942917);
+            aspectDelegate = AspectDelegate1;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 43942917);
+            Pipeline1 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate2 = AspectDelegate2;
-            _aspectsFromDelegate2 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 59941933);
+            aspectDelegate = AspectDelegate2;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 59941933);
+            Pipeline2 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate3 = AspectDelegate3;
-            _aspectsFromDelegate3 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 2606490);
+            aspectDelegate = AspectDelegate3;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 2606490);
+            Pipeline3 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
+
+            aspectDelegate = AspectDelegate3;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 2606490);
+            Pipeline3 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
 #if NETCOREAPP3_1_OR_GREATER
-            _aspectDelegate4 = AspectDelegate4;
-            _aspectsFromDelegate4 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 23458411);
+            aspectDelegate = AspectDelegate4;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 23458411);
+            Pipeline4 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate5 = AspectDelegate5;
-            _aspectsFromDelegate5 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 9799115);
+            aspectDelegate = AspectDelegate5;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 9799115);
+            Pipeline5 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 #endif
-            _aspectDelegate6 = AspectDelegate6;
-            _aspectsFromDelegate6 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 21083178);
+            aspectDelegate = AspectDelegate6;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 21083178);
+            Pipeline6 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate7 = AspectDelegate7;
-            _aspectsFromDelegate7 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 55530882);
+            aspectDelegate = AspectDelegate7;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 55530882);
+            Pipeline7 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate8 = AspectDelegate8;
-            _aspectsFromDelegate8 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 30015890);
+            aspectDelegate = AspectDelegate8;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 30015890);
+            Pipeline8 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate9 = AspectDelegate9;
-            _aspectsFromDelegate9 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 1707556);
+            aspectDelegate = AspectDelegate9;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 1707556);
+            Pipeline9 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate10 = AspectDelegate10;
-            _aspectsFromDelegate10 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 15368010);
+            aspectDelegate = AspectDelegate10;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 15368010);
+            Pipeline10 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate11 = AspectDelegate11;
-            _aspectsFromDelegate11 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 4094363);
+            aspectDelegate = AspectDelegate11;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 4094363);
+            Pipeline11 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
 #if NETCOREAPP3_1_OR_GREATER
-            _aspectDelegate12 = AspectDelegate12;
-            _aspectsFromDelegate12 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 36849274);
+            aspectDelegate = AspectDelegate12;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 36849274);
+            Pipeline12 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate13 = AspectDelegate13;
-            _aspectsFromDelegate13 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 63208015);
+            aspectDelegate = AspectDelegate13;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 63208015);
+            Pipeline13 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 #endif
-            _aspectDelegate14 = AspectDelegate14;
-            _aspectsFromDelegate14 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 63208015);
+            aspectDelegate = AspectDelegate14;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 63208015);
+            Pipeline14 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate15 = AspectDelegate15;
-            _aspectsFromDelegate15 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 19575591);
+            aspectDelegate = AspectDelegate15;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 19575591);
+            Pipeline15 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
 #if NETCOREAPP3_1_OR_GREATER
-            _aspectDelegate16 = AspectDelegate16;
-            _aspectsFromDelegate16 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 41962596);
+            aspectDelegate = AspectDelegate16;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 41962596);
+            Pipeline16 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 
-            _aspectDelegate17 = AspectDelegate17;
-            _aspectsFromDelegate17 = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 42119052);
+            aspectDelegate = AspectDelegate17;
+            aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 42119052);
+            Pipeline17 = ProxyFactoryUtils.CreatePipeline(aspectDelegate, aspectsFromDelegate);
 #endif
         }
 

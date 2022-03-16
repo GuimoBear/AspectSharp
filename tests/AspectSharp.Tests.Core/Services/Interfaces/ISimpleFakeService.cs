@@ -6,17 +6,17 @@ using System;
 namespace AspectSharp.Tests.Core.Services.Interfaces
 {
     [Aspect1]
-    [TypeDefinitionAspect1]
+    [TypeDefinitionAspect]
     public interface ISimpleFakeService
     {
-        [ExcludeAspectsFromTypeDefinitionToThisEvent(InterceptedEventMethod.Add, typeof(TypeDefinitionAspect1Attribute))]
+        [ExcludeAspectsFromTypeDefinitionToThisEvent(InterceptedEventMethod.Add, typeof(TypeDefinitionAspectAttribute))]
         [IncludeAspectsFromTypeDefinitionToThisEvent(InterceptedEventMethod.Add, typeof(Aspect1Attribute))]
         event EventHandler OnEvent;
 
         [EventAspect]
         event EventHandler OnInterceptedEvent;
 
-        [ExcludeAspectsFromTypeDefinitionToThisProperty(InterceptedPropertyMethod.Get, typeof(TypeDefinitionAspect1Attribute))]
+        [ExcludeAspectsFromTypeDefinitionToThisProperty(InterceptedPropertyMethod.Get, typeof(TypeDefinitionAspectAttribute))]
         [IncludeAspectsFromTypeDefinitionToThisProperty(InterceptedPropertyMethod.Get, typeof(Aspect1Attribute))]
         int Property { get; set; }
 
@@ -29,7 +29,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
             set; 
         }
 
-        [ExcludeAspectsFromTypeDefinition(typeof(TypeDefinitionAspect1Attribute))]
+        [ExcludeAspectsFromTypeDefinition(typeof(TypeDefinitionAspectAttribute))]
         [IncludeAspectsFromTypeDefinition(typeof(Aspect1Attribute))]
         void Method();
 

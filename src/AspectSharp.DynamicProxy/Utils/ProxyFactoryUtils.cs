@@ -58,14 +58,32 @@ namespace AspectSharp.DynamicProxy.Utils
                     .CustomAttributes.Zip(serviceType
                         .GetCustomAttributes(true)
                         .Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType()))
-                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance));
+                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance))
+                    .ToList();
 
-            var methodAttributes =
-                methodInfo
+            var eventInfo = serviceType
+                .GetEvents()
+                .FirstOrDefault(evt => evt.GetAddMethod() == methodInfo ||
+                                       evt.GetRemoveMethod() == methodInfo || 
+                                       evt.GetRaiseMethod() == methodInfo);
+
+            var methodAttributes = Enumerable.Empty<Tuple<CustomAttributeData, AbstractInterceptorAttribute>>();
+            if (!(eventInfo is null))
+            {
+                methodAttributes = eventInfo
+                    .CustomAttributes.Zip(eventInfo
+                        .GetCustomAttributes(true)
+                        .Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType()))
+                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance))
+                    .ToList();
+            }
+            methodAttributes =
+                methodAttributes.Concat(methodInfo
                     .CustomAttributes.Zip(methodInfo
                         .GetCustomAttributes(true)
                         .Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType()))
-                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance));
+                        .Cast<AbstractInterceptorAttribute>(), (data, instance) => new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(data, instance)))
+                    .ToList();
 
             var ret = new List<AbstractInterceptorAttribute>();
             foreach(var tuple in typeDefinitionAttributes.Concat(methodAttributes))

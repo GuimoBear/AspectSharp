@@ -25,8 +25,8 @@ namespace AspectSharp.Abstractions
         {
             unchecked
             {
-                return (IncludeTypeDefinitionAspectsToEvents.GetHashCode() * 3) ^
-                       (IncludeTypeDefinitionAspectsToProperties.GetHashCode() * 8) ^
+                return (IncludeTypeDefinitionAspectsToEvents.GetHashCode() * 17) ^
+                       (IncludeTypeDefinitionAspectsToProperties.GetHashCode() * 37) ^
                        ExcludeTypeDefinitionAspectsForMethods.GetHashCode();
             }
         }

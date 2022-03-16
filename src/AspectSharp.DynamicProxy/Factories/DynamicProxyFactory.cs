@@ -38,16 +38,14 @@ namespace AspectSharp.DynamicProxy.Factories
             else
                 typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
 
-            var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}_Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+            var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
             var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
 
             var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
 
-            var tuple = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, concretePipelineType, interceptedTypeData);
-            var pipelineField = tuple.Item1;
-            var contextActivatorFields = tuple.Item2;
+            var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
 
-            var readonlyFields = DefineReadonlyFields(serviceType, pipelineField, typeBuilder).ToArray();
+            var readonlyFields = DefineReadonlyFields(serviceType, typeBuilder).ToArray();
 
             DefineConstructor(targetType, typeBuilder, readonlyFields);
 
@@ -65,25 +63,23 @@ namespace AspectSharp.DynamicProxy.Factories
             return concreteType;
         }
 
-        private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, FieldBuilder pipelineField, TypeBuilder typeBuilder)
+        private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, TypeBuilder typeBuilder)
         {
             yield return typeBuilder.DefineField("_target", serviceType, FieldAttributes.Private | FieldAttributes.InitOnly);
-            yield return pipelineField;
             yield return typeBuilder.DefineField("_contextFactory", typeof(IAspectContextFactory), FieldAttributes.Private | FieldAttributes.InitOnly);
         }
 
         private static void DefineConstructor(Type targetType, TypeBuilder typeBuilder, FieldBuilder[] readonlyFields)
         {
             var targetField = readonlyFields[0];
-            var pipelinesField = readonlyFields[1];
-            var contextFactoryField = readonlyFields[2];
+            var contextFactoryField = readonlyFields[1];
 
             var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
             var coonstructorParameters = new Type[] { targetType, contextFactoryField.FieldType };
             var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, coonstructorParameters);
 
             var parameters = new List<ParameterBuilder>();
-            foreach (var tuple in readonlyFields.Where(rf => rf != pipelinesField).Zip(Enumerable.Range(1, readonlyFields.Where(rf => rf != pipelinesField).Count()), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
+            foreach (var tuple in readonlyFields.Zip(Enumerable.Range(1, readonlyFields.Length), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
             {
                 var readonlyFieldBuilder = tuple.Item1;
                 var idx = tuple.Item2;

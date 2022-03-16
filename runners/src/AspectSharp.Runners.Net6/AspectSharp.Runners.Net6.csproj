@@ -13,7 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\src\AspectSharp.Extensions.DependencyInjection\AspectSharp.Extensions.DependencyInjection.csproj" />
-    <ProjectReference Include="..\..\..\src\AspectSharp.Tests.Core\AspectSharp.Tests.Core.csproj" />
+    <ProjectReference Include="..\..\..\tests\AspectSharp.Tests.Core\AspectSharp.Tests.Core.csproj" />
   </ItemGroup>
 
 </Project>

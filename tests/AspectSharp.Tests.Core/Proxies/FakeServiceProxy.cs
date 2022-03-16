@@ -43,7 +43,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public void InterceptedDoSomethingWithoutParameterAndWithoutReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator1, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline1).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline1).Wait();
         }
 
         public void DoSomethingWithParameterAndWithoutReturn(int param1, string param2, IEnumerable<string> param3)
@@ -53,7 +53,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator2, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline2).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline2).Wait();
         }
 
         public Task DoSomethingAsyncWithoutParameterAndWithoutReturn()
@@ -62,7 +62,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public Task InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator3, _target, this, ProxyFactoryUtils.EmptyParameters);
-            return ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline3);
+            return ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline3);
         }
 
 #if NETCOREAPP3_1_OR_GREATER
@@ -72,7 +72,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public ValueTask InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator4, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline4).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline4).Wait();
             return default;
         }
 
@@ -83,7 +83,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator5, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline5).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline5).Wait();
             return default;
         }
 #endif
@@ -94,7 +94,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public int InterceptedDoSomethingWithoutParameterAndValueTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator6, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline6).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline6).Wait();
             return (int)context.ReturnValue;
         }
 
@@ -105,7 +105,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator7, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline7).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline7).Wait();
             return (int)context.ReturnValue;
         }
 
@@ -115,7 +115,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public IEnumerable<string> InterceptedDoSomethingWithoutParameterAndReferenceTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator8, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline8).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline8).Wait();
             return (IEnumerable<string>)context.ReturnValue;
         }
 
@@ -126,7 +126,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator9, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline9).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline9).Wait();
             return (IEnumerable<string>)context.ReturnValue;
         }
 
@@ -136,7 +136,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public Task<int> InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator10, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline10).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline10).Wait();
             return Task.FromResult((int)context.ReturnValue);
         }
 
@@ -147,7 +147,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator11, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline11).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline11).Wait();
             return Task.FromResult((int)context.ReturnValue);
         }
 
@@ -158,7 +158,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public ValueTask<int> InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator12, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline12).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline12).Wait();
             return new ValueTask<int>((int)context.ReturnValue);
         }
 
@@ -169,7 +169,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator13, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline13).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline13).Wait();
             return new ValueTask<int>((int)context.ReturnValue);
         }
 #endif
@@ -180,7 +180,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public Task<IEnumerable<string>> InterceptedDoSomethingAsyncWithoutParameterAndReferenceypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator14, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline14).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline14).Wait();
             return Task.FromResult((IEnumerable<string>)context.ReturnValue);
         }
 
@@ -191,7 +191,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator15, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline15).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline15).Wait();
             return Task.FromResult((IEnumerable<string>)context.ReturnValue);
         }
 
@@ -202,7 +202,7 @@ namespace AspectSharp.Tests.Core.Proxies
         public ValueTask<IEnumerable<string>> InterceptedDoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator16, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline16).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline16).Wait();
             return new ValueTask<IEnumerable<string>>((IEnumerable<string>)context.ReturnValue);
         }
 
@@ -213,12 +213,10 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator17, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, _pipelines.Pipeline17).Wait();
+            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline17).Wait();
             return new ValueTask<IEnumerable<string>>((IEnumerable<string>)context.ReturnValue);
         }
 #endif
-
-        private static readonly FakeServiceProxy_Pipelines _pipelines;
 
         private static readonly AspectContextActivator _aspectContextAtivator1;
         private static readonly AspectContextActivator _aspectContextAtivator2;
@@ -246,8 +244,6 @@ namespace AspectSharp.Tests.Core.Proxies
 
         static FakeServiceProxy()
         {
-            _pipelines = new FakeServiceProxy_Pipelines();
-
             Type serviceType = typeof(IFakeService);
             Type proxyType = typeof(FakeServiceProxy);
             Type targetType = typeof(FakeService);

@@ -22,46 +22,14 @@ namespace AspectSharp.DynamicProxy.Factories
         public static IEnumerable<MethodBuilder> CreateMethods(Type serviceType, TypeBuilder typeBuilder, FieldInfo[] fields, IReadOnlyDictionary<MethodInfo, PropertyInfo> pipelineProperties, IReadOnlyDictionary<MethodInfo, FieldInfo> contextActivatorFields)
         {
             var targetField = fields[0];
-            var pipelinesField = fields[1];
-            var contextFactoryField = fields[2];
+            var contextFactoryField = fields[1];
 
             var methods = serviceType.GetMethods();
             foreach (var methodInfo in methods)
             {
                 var methodName = methodInfo.Name;
 
-                var retType = methodInfo.ReturnType;
-#if NETCOREAPP3_1_OR_GREATER
-                var isValueTask = retType == typeof(ValueTask);
-#endif
-                var isAsync = retType == typeof(Task)
-#if NETCOREAPP3_1_OR_GREATER
-                || isValueTask;
-#else
-                ;
-#endif
-
-                var isVoid = retType == typeof(void)
-#if NETCOREAPP3_1_OR_GREATER
-                || isValueTask
-#endif
-                || isAsync;
-
-                if (retType.IsGenericType)
-                {
-                    var genericTypeDefinition = retType.GetGenericTypeDefinition();
-#if NETCOREAPP3_1_OR_GREATER
-                    isValueTask = retType == typeof(ValueTask<>);
-#endif
-                    isAsync = genericTypeDefinition == typeof(Task<>)
-#if NETCOREAPP3_1_OR_GREATER
-                || isValueTask;
-#else
-                ;
-#endif
-                    if (isAsync)
-                        retType = retType.GetGenericArguments()[0];
-                }
+                var returnInfo = methodInfo.GetReturnInfo();
 
                 var parameters = methodInfo.GetParameters();
                 var methodBuilder = typeBuilder.DefineMethod(methodInfo.Name, methodInfo.Attributes ^ MethodAttributes.Abstract, methodInfo.CallingConvention, methodInfo.ReturnType, parameters.Select(p => p.ParameterType).ToArray());
@@ -76,7 +44,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 var cil = methodBuilder.GetILGenerator();
 #if NETCOREAPP3_1_OR_GREATER
                 LocalBuilder valueTaskLocal = default;
-                if (isValueTask && isVoid)
+                if (returnInfo.IsValueTask && returnInfo.IsVoid)
                     valueTaskLocal = cil.DeclareLocal(typeof(ValueTask));
 #endif
 
@@ -113,37 +81,37 @@ namespace AspectSharp.DynamicProxy.Factories
                     else
                         cil.Emit(OpCodes.Ldsfld, _emptyParameterArrayFieldInfo);
                     cil.Emit(OpCodes.Callvirt, _createContextMethodInfo);
-                    if (!isVoid)
+                    if (!returnInfo.IsVoid)
                         cil.Emit(OpCodes.Dup);
-                    cil.Emit(OpCodes.Ldsfld, pipelinesField);
-                    cil.Emit(OpCodes.Callvirt, pipelineProperty.GetMethod);
+                    //cil.Emit(OpCodes.Ldsfld, pipelinesField);
+                    cil.Emit(OpCodes.Call, pipelineProperty.GetMethod);
                     cil.Emit(OpCodes.Call, _executePipelineMethodInfo);
                     cil.Emit(OpCodes.Callvirt, _waitTaskMethodInfo);
-                    if (!isVoid)
+                    if (!returnInfo.IsVoid)
                     {
                         cil.Emit(OpCodes.Callvirt, _getReturnValueMethodInfo);
-                        if (retType.IsValueType)
-                            cil.Emit(OpCodes.Unbox_Any, retType);
+                        if (returnInfo.Type.IsValueType)
+                            cil.Emit(OpCodes.Unbox_Any, returnInfo.Type);
                         else
-                            cil.Emit(OpCodes.Castclass, retType);
-                        if (isAsync)
+                            cil.Emit(OpCodes.Castclass, returnInfo.Type);
+                        if (returnInfo.IsAsync)
                         {
 #if NETCOREAPP3_1_OR_GREATER
-                            if (isValueTask)
-                                cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(retType).GetConstructor(new Type[] { retType }));
+                            if (returnInfo.IsValueTask)
+                                cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetConstructor(new Type[] { returnInfo.Type }));
                             else
 #endif
-                                cil.Emit(OpCodes.Call, typeof(Task).GetMethod(nameof(Task<int>.FromResult)).MakeGenericMethod(retType));
+                            cil.Emit(OpCodes.Call, typeof(Task).GetMethod(nameof(Task<int>.FromResult)).MakeGenericMethod(returnInfo.Type));
                         }
                     }
-                    else if (isAsync
+                    else if (returnInfo.IsAsync
 #if NETCOREAPP3_1_OR_GREATER
-                        && !isValueTask
+                        && !returnInfo.IsValueTask
 #endif
                         )
                         cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
 #if NETCOREAPP3_1_OR_GREATER
-                    else if (isValueTask)
+                    else if (returnInfo.IsValueTask)
                     {
                         cil.Emit(OpCodes.Ldloca_S, 0);
                         cil.Emit(OpCodes.Initobj, typeof(ValueTask));

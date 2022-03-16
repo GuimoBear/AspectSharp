@@ -6,6 +6,7 @@ using AspectSharp.Tests.Core.Services.Interfaces;
 using FluentAssertions;
 using System;
 using System.Linq;
+using System.Threading;
 using Xunit;
 
 namespace AspectSharp.Tests.Net5

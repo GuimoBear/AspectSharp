@@ -42,11 +42,13 @@ namespace AspectSharp.DynamicProxy.Factories
             var staticConstructorBuilder = typeBuilder.DefineConstructor(staticAttrs, CallingConventions.Standard, Type.EmptyTypes);
             var cil = constructorBuilder.GetILGenerator();
             cil.DeclareLocal(typeof(AbstractInterceptorAttribute[]));
+
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Call, _objectConstructorMethodInfo);
 
             var staticCil = staticConstructorBuilder.GetILGenerator();
             var localServiceType = staticCil.DeclareLocal(typeof(Type));
+
             staticCil.Emit(OpCodes.Ldtoken, serviceType);
             staticCil.Emit(OpCodes.Call, _getTypeFromHandleMethodInfo);
             staticCil.Emit(OpCodes.Stloc_0, localServiceType);
@@ -59,11 +61,9 @@ namespace AspectSharp.DynamicProxy.Factories
             {
                 if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))
                 {
-                    var tuple = CreateAspectDelegate(typeBuilder, staticCil, methodInfo, configs, index);
-                    var aspectDelegateField = tuple.Item1;
-                    var aspectsFromDelegateField = tuple.Item2;
+                    var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, staticCil, methodInfo, configs, index);
 
-                    ret.Add(methodInfo, CreatePipelineProperty(typeBuilder, cil, aspectDelegateField, aspectsFromDelegateField, index));
+                    ret.Add(methodInfo, propertyBuilder);
 
                     index++;
                 }
@@ -74,73 +74,49 @@ namespace AspectSharp.DynamicProxy.Factories
             return ret;
         }
 
-        private static Tuple<FieldBuilder, FieldBuilder> CreateAspectDelegate(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
+        private static PropertyBuilder CreateAspectDelegateAndPipelineProperty(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
         {
-            var retType = methodInfo.ReturnType;
-#if NETCOREAPP3_1_OR_GREATER
-            var isValueTask = retType == typeof(ValueTask);
-#endif
-            var isAsync = retType == typeof(Task)
-#if NETCOREAPP3_1_OR_GREATER
-                || isValueTask;
-#else
-                ;
-#endif
+            var returnInfo = methodInfo.GetReturnInfo();
 
-            var isVoid = retType == typeof(void)
-#if NETCOREAPP3_1_OR_GREATER
-                || isValueTask
-#endif
-                || isAsync;
+            var pipelineField = typeBuilder.DefineField(string.Format("_pipeline{0}", index), _interceptDelegateType, FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
 
-            if (retType.IsGenericType)
-            {
-                var genericTypeDefinition = retType.GetGenericTypeDefinition();
-#if NETCOREAPP3_1_OR_GREATER
-                isValueTask = retType == typeof(ValueTask<>);
-#endif
-                isAsync = genericTypeDefinition == typeof(Task<>)
-#if NETCOREAPP3_1_OR_GREATER
-                || isValueTask;
-#else
-                ;
-#endif
-                if (isAsync)
-                    retType = retType.GetGenericArguments()[0];
-            }
-
-            var aspectsFromDelegateFieldBuilder = typeBuilder.DefineField(string.Format("_aspectsFromDelegate{0}", index), typeof(AbstractInterceptorAttribute[]), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
-
-            var delegateFieldBuilder = typeBuilder.DefineField(string.Format("_aspectDelegate{0}", index), typeof(AspectDelegate), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
-
-            var methodBuilder = typeBuilder.DefineMethod(string.Format("AspectDelegate{0}", index), MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard, typeof(Task), new Type[] { typeof(AspectContext) });
-            methodBuilder.DefineParameter(1, ParameterAttributes.None, "context");
-
+            var methodBuilder = typeBuilder.DefineMethod(string.Format("get_Pipeline{0}", index), MethodAttributes.Public | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.NewSlot | MethodAttributes.SpecialName, CallingConventions.Standard, _interceptDelegateType, null);
             var cil = methodBuilder.GetILGenerator();
 
-            if (!isVoid)
+            cil.Emit(OpCodes.Ldsfld, pipelineField);
+            cil.Emit(OpCodes.Ret);
+
+            var pipelineProperty = typeBuilder.DefineProperty(string.Format("Pipeline{0}", index), PropertyAttributes.None, CallingConventions.Standard, _interceptDelegateType, Array.Empty<Type>());
+            pipelineProperty.SetGetMethod(methodBuilder);
+
+            methodBuilder = typeBuilder.DefineMethod(string.Format("AspectDelegate{0}", index), MethodAttributes.Private | MethodAttributes.Static, CallingConventions.Standard, typeof(Task), new Type[] { typeof(AspectContext) });
+            methodBuilder.DefineParameter(1, ParameterAttributes.None, "context");
+
+            cil = methodBuilder.GetILGenerator();
+
+            if (!returnInfo.IsVoid)
                 cil.DeclareLocal(methodInfo.DeclaringType);
             var parameters = methodInfo.GetParameters();
             foreach (var param in parameters)
                 cil.DeclareLocal(param.ParameterType);
 #if NETCOREAPP3_1_OR_GREATER
-            if (isValueTask)
+            if (returnInfo.IsValueTask)
                 cil.DeclareLocal(methodInfo.ReturnType);
 #endif
 
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
             cil.Emit(OpCodes.Isinst, methodInfo.DeclaringType);
-            if (!isVoid)
+            if (!returnInfo.IsVoid)
                 cil.Emit(OpCodes.Stloc_0);
 
-            foreach (var i in Enumerable.Range(isVoid ? 0 : 1, parameters.Length))
+            foreach (var i in Enumerable.Range(returnInfo.IsVoid ? 0 : 1, parameters.Length))
             {
                 cil.Emit(OpCodes.Ldarg_0);
                 cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
-                cil.Emit(OpCodes.Ldc_I4, isVoid ? i : i - 1);
+                cil.Emit(OpCodes.Ldc_I4, returnInfo.IsVoid ? i : i - 1);
                 cil.Emit(OpCodes.Ldelem_Ref);
-                var param = parameters[isVoid ? i : i - 1];
+                var param = parameters[returnInfo.IsVoid ? i : i - 1];
                 if (param.ParameterType.IsValueType)
                     cil.Emit(OpCodes.Unbox_Any, param.ParameterType);
                 else
@@ -148,52 +124,52 @@ namespace AspectSharp.DynamicProxy.Factories
                 cil.Emit(OpCodes.Stloc, i);
             }
 
-            if (!isVoid)
+            if (!returnInfo.IsVoid)
             {
                 cil.Emit(OpCodes.Ldarg_0);
                 cil.Emit(OpCodes.Ldloc_0);
             }
-            foreach (var i in Enumerable.Range(isVoid ? 0 : 1, parameters.Length))
+            foreach (var i in Enumerable.Range(returnInfo.IsVoid ? 0 : 1, parameters.Length))
                 cil.Emit(OpCodes.Ldloc, i);
             cil.Emit(OpCodes.Callvirt, methodInfo);
 
 #if NETCOREAPP3_1_OR_GREATER
-            if (isValueTask)
+            if (returnInfo.IsValueTask)
             {
-                cil.Emit(OpCodes.Stloc_S, parameters.Length + (isVoid ? 0 : 1));
-                cil.Emit(OpCodes.Ldloca_S, parameters.Length + (isVoid ? 0 : 1));
-                if (isVoid)
+                cil.Emit(OpCodes.Stloc_S, parameters.Length + (returnInfo.IsVoid ? 0 : 1));
+                cil.Emit(OpCodes.Ldloca_S, parameters.Length + (returnInfo.IsVoid ? 0 : 1));
+                if (returnInfo.IsVoid)
                     cil.Emit(OpCodes.Call, _asTaskValueTaskMethodInfo);
                 else
-                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(retType).GetConstructor(new Type[] { retType }));
+                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetConstructor(new Type[] { returnInfo.Type }));
             }
             else
 #endif
-            if (isAsync && !isVoid)
-                cil.Emit(OpCodes.Callvirt, typeof(Task<>).MakeGenericType(retType).GetProperty(nameof(Task<int>.Result)).GetGetMethod());
-            if (!isVoid)
+            if (returnInfo.IsAsync && !returnInfo.IsVoid)
+                cil.Emit(OpCodes.Callvirt, typeof(Task<>).MakeGenericType(returnInfo.Type).GetProperty(nameof(Task<int>.Result)).GetGetMethod());
+            if (!returnInfo.IsVoid)
             {
-                if (retType.IsValueType)
-                    cil.Emit(OpCodes.Box, retType);
+                if (returnInfo.Type.IsValueType)
+                    cil.Emit(OpCodes.Box, returnInfo.Type);
                 cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
                 cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
             }
-            else if (!isAsync)
+            else if (!returnInfo.IsAsync)
                 cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
             cil.Emit(OpCodes.Ret);
 
             staticCil.Emit(OpCodes.Ldnull);
             staticCil.Emit(OpCodes.Ldftn, methodBuilder);
             staticCil.Emit(OpCodes.Newobj, _aspectDelegateConstructorInfo);
-            staticCil.Emit(OpCodes.Stsfld, delegateFieldBuilder);
 
             staticCil.Emit(OpCodes.Ldloc_0);
             staticCil.Emit(OpCodes.Ldc_I4, configs.GetHashCode());
             staticCil.Emit(OpCodes.Ldc_I4, methodInfo.GetHashCode());
             staticCil.Emit(OpCodes.Call, _getInterceptorsMethodInfo);
-            staticCil.Emit(OpCodes.Stsfld, aspectsFromDelegateFieldBuilder);
+            staticCil.Emit(OpCodes.Call, _createPipelineMethodInfo);
+            staticCil.Emit(OpCodes.Stsfld, pipelineField);
 
-            return new Tuple<FieldBuilder, FieldBuilder>(delegateFieldBuilder, aspectsFromDelegateFieldBuilder);
+            return pipelineProperty;
         }
 
         private static PropertyBuilder CreatePipelineProperty(TypeBuilder typeBuilder, ILGenerator constructorIlGenerator, FieldInfo aspectDelegateField, FieldInfo aspectsFromDelegateField, int index)

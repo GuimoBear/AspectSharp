@@ -25,4 +25,8 @@
     </PackageReference>
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\AspectSharp.Tests.Core\AspectSharp.Tests.Core.csproj" />
+  </ItemGroup>
+
 </Project>

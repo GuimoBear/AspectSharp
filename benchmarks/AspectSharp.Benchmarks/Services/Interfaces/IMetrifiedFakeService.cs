@@ -3,6 +3,6 @@
     public interface IMetrifiedFakeService
     {
         string SayHello(string param);
-        string SayHelloWithoutAspects(string param);
+        string SayHelloWithoutMetrics(string param);
     }
 }

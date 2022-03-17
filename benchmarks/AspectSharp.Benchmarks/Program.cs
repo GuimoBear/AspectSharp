@@ -6,14 +6,15 @@ namespace AspectSharp.Benchmarks
     {
         static void Main(string[] args)
         {
-            Run(new AspectCoreBenchmark());
-            Run(new AspectSharpBenchmark());
-            Run(new ControlBenchmark());
+            Run(new AspectCoreMetricsBenchmark());
+            Run(new AspectSharpMetricsBenchmark());
+            Run(new ControlMetricsBenchmark());
+            Run(new NoMetricsBenchmark());
 
-            new BenchmarkSwitcher(typeof(BenchmarkBase).Assembly).Run(args, new Config());
+            new BenchmarkSwitcher(typeof(MetricsBenchmarkBase).Assembly).Run(args, new Config());
         }
 
-        private static void Run(BenchmarkBase benchmark)
+        private static void Run(MetricsBenchmarkBase benchmark)
         {
             benchmark.GlobalSetup();
             benchmark.CallFakeService();

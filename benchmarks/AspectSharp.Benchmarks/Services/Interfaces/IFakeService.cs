@@ -10,6 +10,6 @@ namespace AspectSharp.Benchmarks.Services.Interfaces
         [AspectSharpMetrifyMethod]
         string SayHello(string param);
 
-        string SayHelloWithoutAspects(string param);
+        string SayHelloWithoutMetrics(string param);
     }
 }

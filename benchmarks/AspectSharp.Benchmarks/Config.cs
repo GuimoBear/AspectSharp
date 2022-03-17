@@ -13,7 +13,8 @@ namespace AspectSharp.Benchmarks
 {
     public class Config : ManualConfig
     {
-        public const int Iterations = 2000;
+        public const int UnrollFactor = 3000;
+        public const int Iterations = 20;
 
         public Config()
         {
@@ -35,26 +36,60 @@ namespace AspectSharp.Benchmarks
             AddColumnProvider(DefaultColumnProviders.Metrics);
 
             AddJob(Job.Default
+                   .WithRuntime(ClrRuntime.Net461)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+            );
+            AddJob(Job.Default
+                   .WithRuntime(ClrRuntime.Net462)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+            );
+            AddJob(Job.Default
+                   .WithRuntime(ClrRuntime.Net47)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+            );
+            AddJob(Job.Default
+                   .WithRuntime(ClrRuntime.Net472)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+            );
+            AddJob(Job.Default
+                   .WithRuntime(ClrRuntime.Net48)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+            );
+            AddJob(Job.Default
                    .WithRuntime(CoreRuntime.Core31)
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
-                   .WithUnrollFactor(Iterations)
-                   .WithIterationCount(10)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
             );
             AddJob(Job.Default
                    .WithRuntime(CoreRuntime.Core50)
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
-                   .WithUnrollFactor(Iterations)
-                   .WithIterationCount(10)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
             );
-
             AddJob(Job.Default
                    .WithRuntime(CoreRuntime.Core60)
                    .WithLaunchCount(1)
                    .WithWarmupCount(2)
-                   .WithUnrollFactor(Iterations)
-                   .WithIterationCount(10)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
             );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;

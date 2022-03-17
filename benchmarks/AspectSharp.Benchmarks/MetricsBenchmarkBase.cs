@@ -1,11 +1,10 @@
 ﻿using AspectSharp.Benchmarks.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
-using System.Threading.Tasks;
 
 namespace AspectSharp.Benchmarks
 {
-    public abstract class BenchmarkBase
+    public abstract class MetricsBenchmarkBase
     {
         private IServiceProvider ServiceProvider { get; set; }
 

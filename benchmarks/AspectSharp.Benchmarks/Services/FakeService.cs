@@ -16,7 +16,7 @@ namespace AspectSharp.Benchmarks.Services
             return string.Format("Hello {0}", param);
         }
 
-        public string SayHelloWithoutAspects(string param)
+        public string SayHelloWithoutMetrics(string param)
         {
             _logger.LogInformation("SayHelloWithoutAspects called: {0}", param);
             return string.Format("Hello {0}", param);

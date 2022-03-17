@@ -30,14 +30,12 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
 
                     Action<object> action = proxyInstance =>
                     {
-                        try
+                        var ret = methodInfo.Invoke(proxyInstance, parameters);
+                        if (!(ret is null))
                         {
-                            var ret = methodInfo.Invoke(proxyInstance, parameters);
-                            if (!(ret is null))
+                            var retInfo = ret.GetType().GetReturnInfo();
+                            if (retInfo.IsAsync)
                             {
-                                var retInfo = ret.GetType().GetReturnInfo();
-                                if (retInfo.IsAsync)
-                                {
 #if NETCOREAPP3_1_OR_GREATER
                                 if (retInfo.IsValueTask)
                                 {
@@ -52,14 +50,8 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                                 else
 #endif
                                     (ret as Task).Wait();
-                                }
                             }
                         }
-                        catch (Exception ex)
-                        {
-
-                        }
-                        
                     };
 
                     var aspectContextAditionalInfo = new List<string>();

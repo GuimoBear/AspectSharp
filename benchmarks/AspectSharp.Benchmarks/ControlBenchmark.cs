@@ -32,6 +32,14 @@ namespace AspectSharp.Benchmarks
             return service.SayHelloWithoutAspects("Peter");
         }
 
+        [Benchmark]
+        public override string CallUnmetrifiedFakeService()
+        {
+            using var scope = NewScope();
+            var service = scope.ServiceProvider.GetRequiredService<IAnotherFakeService>();
+            return service.SayHello("Peter");
+        }
+
         [GlobalCleanup]
         public override void GlobalCleanup()
         {

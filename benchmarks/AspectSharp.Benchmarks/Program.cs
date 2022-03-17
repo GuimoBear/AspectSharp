@@ -18,6 +18,7 @@ namespace AspectSharp.Benchmarks
             benchmark.GlobalSetup();
             benchmark.CallFakeService();
             benchmark.CallFakeServiceWithoutMetrics();
+            benchmark.CallUnmetrifiedFakeService();
             benchmark.GlobalCleanup();
         }
     }

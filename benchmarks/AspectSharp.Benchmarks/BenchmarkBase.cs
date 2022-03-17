@@ -24,6 +24,7 @@ namespace AspectSharp.Benchmarks
         public abstract void GlobalSetup();
         public abstract string CallFakeService();
         public abstract string CallFakeServiceWithoutMetrics();
+        public abstract string CallUnmetrifiedFakeService();
         public abstract void GlobalCleanup();
     }
 }

@@ -5,6 +5,7 @@ using BenchmarkDotNet.Diagnosers;
 using BenchmarkDotNet.Environments;
 using BenchmarkDotNet.Exporters;
 using BenchmarkDotNet.Exporters.Csv;
+using BenchmarkDotNet.Filters;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Order;
@@ -16,7 +17,7 @@ namespace AspectSharp.Benchmarks
         public const int UnrollFactor = 3000;
         public const int Iterations = 20;
 
-        public Config()
+        public Config(IFilter filter)
         {
             AddLogger(ConsoleLogger.Default);
 
@@ -93,6 +94,9 @@ namespace AspectSharp.Benchmarks
             );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;
+
+            if (!(filter is null))
+                AddFilter(filter);
         }
     }
 }

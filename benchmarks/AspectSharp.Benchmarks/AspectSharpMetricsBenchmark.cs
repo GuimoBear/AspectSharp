@@ -18,6 +18,7 @@ namespace AspectSharp.Benchmarks
         }
 
         [Benchmark]
+        [BenchmarkCategory(nameof(BenchmarkCategory.Metrified))]
         public override string CallFakeService()
         {
             using (var scope = NewScope())
@@ -28,6 +29,7 @@ namespace AspectSharp.Benchmarks
         }
 
         [Benchmark]
+        [BenchmarkCategory(nameof(BenchmarkCategory.Unmetrified))]
         public override string CallFakeServiceWithoutMetrics()
         {
             using (var scope = NewScope())
@@ -38,6 +40,7 @@ namespace AspectSharp.Benchmarks
         }
 
         [Benchmark]
+        [BenchmarkCategory(nameof(BenchmarkCategory.UnmetrifiedClass))]
         public override string CallUnmetrifiedFakeService()
         {
             using (var scope = NewScope())

@@ -11,6 +11,8 @@ namespace AspectSharp.DynamicProxy.Utils
 {
     internal static class InterceptorTypeCache
     {
+        private static readonly object _lock = new object();
+
         private static readonly Type _abstractInterceptorType = typeof(AbstractInterceptorAttribute);
 
         private static readonly ConcurrentDictionary<Tuple<Type, int>, InterceptedTypeData> _cachedTypes = new ConcurrentDictionary<Tuple<Type, int>, InterceptedTypeData>();
@@ -38,85 +40,88 @@ namespace AspectSharp.DynamicProxy.Utils
                 interceptedTypeData = default;
                 return false;
             }
-            configs = configs ?? new DynamicProxyFactoryConfigurations(
-                Configurations.IncludeTypeDefinitionAspectsToEvents, 
-                Configurations.IncludeTypeDefinitionAspectsToProperties, 
-                Configurations.ExcludeTypeDefinitionAspectsForMethods);
-            if (_cachedTypes.TryGetValue(new Tuple<Type, int>(type, configs.GetHashCode()), out interceptedTypeData))
-                return true;
-
-            _ = _previouslyUsedConfigurations.TryAdd(configs.GetHashCode(), configs);
-
-            var typeDefinitionAttributes = type
-                .CustomAttributes
-                    .Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType))
-                    .ToList();
-
-            var methodInterceptorDictionary = type
-                .GetMethods()
-                    .Where(mi => typeDefinitionAttributes.Any() || mi.CustomAttributes.Any(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)))
-                    .ToDictionary(mi => mi, mi => typeDefinitionAttributes.Concat(mi.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).ToList()));
-
-            if (methodInterceptorDictionary.Any())
+            lock (_lock)
             {
-                var properties = type.GetProperties();
-                var events = type.GetEvents();
+                configs = configs ?? new DynamicProxyFactoryConfigurations(
+                    Configurations.IncludeTypeDefinitionAspectsToEvents,
+                    Configurations.IncludeTypeDefinitionAspectsToProperties,
+                    Configurations.ExcludeTypeDefinitionAspectsForMethods);
+                if (_cachedTypes.TryGetValue(new Tuple<Type, int>(type, configs.GetHashCode()), out interceptedTypeData))
+                    return true;
 
-                var interceptors = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>();
-                foreach(var tuple in methodInterceptorDictionary)
+                _ = _previouslyUsedConfigurations.TryAdd(configs.GetHashCode(), configs);
+
+                var typeDefinitionAttributes = type
+                    .CustomAttributes
+                        .Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType))
+                        .ToList();
+
+                var methodInterceptorDictionary = type
+                    .GetMethods()
+                        .Where(mi => typeDefinitionAttributes.Any() || mi.CustomAttributes.Any(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)))
+                        .ToDictionary(mi => mi, mi => typeDefinitionAttributes.Concat(mi.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).ToList()));
+
+                if (methodInterceptorDictionary.Any())
                 {
-                    var methodInfo = tuple.Key;
-                    var allMethodInterceptors = tuple.Value;
-                    var typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList();
-                    var methodInterceptors = allMethodInterceptors.Skip(typeDefinitionAttributes.Count).ToList();
+                    var properties = type.GetProperties();
+                    var events = type.GetEvents();
 
-                    var propertyFromMethod = properties.FirstOrDefault(prop => prop.GetGetMethod() == methodInfo || prop.GetSetMethod() == methodInfo);
-                    var eventFromMethod = events.FirstOrDefault(evt => evt.GetAddMethod() == methodInfo || evt.GetRemoveMethod() == methodInfo || evt.GetRaiseMethod() == methodInfo);
+                    var interceptors = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>();
+                    foreach (var tuple in methodInterceptorDictionary)
+                    {
+                        var methodInfo = tuple.Key;
+                        var allMethodInterceptors = tuple.Value;
+                        var typeDefinitionInterceptors = allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList();
+                        var methodInterceptors = allMethodInterceptors.Skip(typeDefinitionAttributes.Count).ToList();
 
-                    if (!(propertyFromMethod is null))
-                        typeDefinitionInterceptors = propertyFromMethod.FilterTypeDefinitionInterceptorsFromProperty(methodInfo, configs, typeDefinitionInterceptors).ToList();
-                    else if (!(eventFromMethod is null))
-                    {
-                        methodInterceptors = eventFromMethod.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).Concat(methodInterceptors).ToList();
-                        typeDefinitionInterceptors = eventFromMethod.FilterTypeDefinitionInterceptorsFromEvent(methodInfo, configs, typeDefinitionInterceptors).ToList();
-                    }
-                    else
-                    {
-                        if (configs.ExcludeTypeDefinitionAspectsForMethods)
+                        var propertyFromMethod = properties.FirstOrDefault(prop => prop.GetGetMethod() == methodInfo || prop.GetSetMethod() == methodInfo);
+                        var eventFromMethod = events.FirstOrDefault(evt => evt.GetAddMethod() == methodInfo || evt.GetRemoveMethod() == methodInfo || evt.GetRaiseMethod() == methodInfo);
+
+                        if (!(propertyFromMethod is null))
+                            typeDefinitionInterceptors = propertyFromMethod.FilterTypeDefinitionInterceptorsFromProperty(methodInfo, configs, typeDefinitionInterceptors).ToList();
+                        else if (!(eventFromMethod is null))
                         {
-                            typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
-                            var attribute = methodInfo.GetCustomAttributes(true).FirstOrDefault(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute));
-                            if (attribute is IncludeAspectsFromTypeDefinitionAttribute includeAspects)
-                            {
-                                typeDefinitionInterceptors = includeAspects.IncludeAspectsFromTypeDefinition(allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList()).ToList();
-                                if (includeAspects.IncludeAll)
-                                    break;
-                            }
+                            methodInterceptors = eventFromMethod.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).Concat(methodInterceptors).ToList();
+                            typeDefinitionInterceptors = eventFromMethod.FilterTypeDefinitionInterceptorsFromEvent(methodInfo, configs, typeDefinitionInterceptors).ToList();
                         }
                         else
                         {
-                            var attribute = methodInfo.GetCustomAttributes(true).FirstOrDefault(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute));
-                            if (attribute is ExcludeAspectsFromTypeDefinitionAttribute excludeAspects)
+                            if (configs.ExcludeTypeDefinitionAspectsForMethods)
                             {
-                                typeDefinitionInterceptors = excludeAspects.ExcludeAspectsFromTypeDefinition(typeDefinitionInterceptors).ToList();
-                                if (excludeAspects.ExcludeAll)
-                                    break;
+                                typeDefinitionInterceptors = Enumerable.Empty<CustomAttributeData>().ToList();
+                                var attribute = methodInfo.GetCustomAttributes(true).FirstOrDefault(attr => attr.GetType() == typeof(IncludeAspectsFromTypeDefinitionAttribute));
+                                if (attribute is IncludeAspectsFromTypeDefinitionAttribute includeAspects)
+                                {
+                                    typeDefinitionInterceptors = includeAspects.IncludeAspectsFromTypeDefinition(allMethodInterceptors.Take(typeDefinitionAttributes.Count).ToList()).ToList();
+                                    if (includeAspects.IncludeAll)
+                                        break;
+                                }
+                            }
+                            else
+                            {
+                                var attribute = methodInfo.GetCustomAttributes(true).FirstOrDefault(attr => attr.GetType() == typeof(ExcludeAspectsFromTypeDefinitionAttribute));
+                                if (attribute is ExcludeAspectsFromTypeDefinitionAttribute excludeAspects)
+                                {
+                                    typeDefinitionInterceptors = excludeAspects.ExcludeAspectsFromTypeDefinition(typeDefinitionInterceptors).ToList();
+                                    if (excludeAspects.ExcludeAll)
+                                        break;
+                                }
                             }
                         }
+                        var acceptedInterceptors = typeDefinitionInterceptors.Concat(methodInterceptors).ToList();
+                        if (acceptedInterceptors.Any())
+                            interceptors.Add(methodInfo, acceptedInterceptors);
                     }
-                    var acceptedInterceptors = typeDefinitionInterceptors.Concat(methodInterceptors).ToList();
-                    if (acceptedInterceptors.Any())
-                        interceptors.Add(methodInfo, acceptedInterceptors);
+                    if (interceptors.Any())
+                    {
+                        interceptedTypeData = new InterceptedTypeData(interceptors);
+                        _cachedTypes.TryAdd(new Tuple<Type, int>(type, configs.GetHashCode()), interceptedTypeData);
+                        return true;
+                    }
                 }
-                if (interceptors.Any())
-                {
-                    interceptedTypeData = new InterceptedTypeData(interceptors);
-                    _cachedTypes.TryAdd(new Tuple<Type, int>(type, configs.GetHashCode()), interceptedTypeData);
-                    return true;
-                }
+                interceptedTypeData = default;
+                return false;
             }
-            interceptedTypeData = default;
-            return false;
         }
 
         private static IEnumerable<CustomAttributeData> FilterTypeDefinitionInterceptorsFromProperty(this PropertyInfo propertyInfo, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, IEnumerable<CustomAttributeData> typeDefinitionInterceptors)
@@ -184,7 +189,13 @@ namespace AspectSharp.DynamicProxy.Utils
             public InterceptedTypeData(IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>> interceptors)
             {
                 Interceptors = interceptors;
-                IsIntercepted = !(interceptors is null) && interceptors.Any();
+                if (!(interceptors is null))
+                {
+                    Interceptors = Interceptors
+                        .OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length))
+                        .ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+                    IsIntercepted = interceptors.Any();
+                }
             }
 
             public bool TryGetMethodInterceptors(MethodInfo methodInfo, out IEnumerable<CustomAttributeData> interceptors)

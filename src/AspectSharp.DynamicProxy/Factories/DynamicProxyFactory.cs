@@ -11,6 +11,8 @@ namespace AspectSharp.DynamicProxy.Factories
 {
     internal static class DynamicProxyFactory
     {
+        private static readonly object _lock = new object();
+
         private static readonly ConstructorInfo _objectConstructorMethodInfo = typeof(object).GetConstructor(Array.Empty<Type>());
 
         internal static readonly AssemblyBuilder _proxiedClassesAssemblyBuilder = NewAssemblyBuilder();
@@ -31,36 +33,39 @@ namespace AspectSharp.DynamicProxy.Factories
             if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), out var type))
                 return type.Item1;
 
-            var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item2 == targetType);
-            TypeBuilder typeBuilder;
-            if (previouslyDefinedProxyClassFromThisTargetCount == 0)
-                typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
-            else
-                typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
+            lock (_lock)
+            {
+                var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item2 == targetType);
+                TypeBuilder typeBuilder;
+                if (previouslyDefinedProxyClassFromThisTargetCount == 0)
+                    typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+                else
+                    typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
 
-            var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
-            var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
+                var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
 
-            var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
+                var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
 
-            var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
+                var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
 
-            var readonlyFields = DefineReadonlyFields(serviceType, typeBuilder).ToArray();
+                var readonlyFields = DefineReadonlyFields(serviceType, typeBuilder).ToArray();
 
-            DefineConstructor(targetType, typeBuilder, readonlyFields);
+                DefineConstructor(targetType, typeBuilder, readonlyFields);
 
 
-            var methods = MethodFactory.CreateMethods(serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
+                var methods = MethodFactory.CreateMethods(serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
 
-            PropertyFactory.CreateProperties(serviceType, typeBuilder, methods, readonlyFields[0]);
+                PropertyFactory.CreateProperties(serviceType, typeBuilder, methods, readonlyFields[0]);
 
-            EventFactory.CreateEvents(serviceType, typeBuilder, methods, readonlyFields[0]);
+                EventFactory.CreateEvents(serviceType, typeBuilder, methods, readonlyFields[0]);
 
-            typeBuilder.AddInterfaceImplementation(serviceType);
+                typeBuilder.AddInterfaceImplementation(serviceType);
 
-            var concreteType = typeBuilder.CreateType();
-            _cachedProxyTypes.Add(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), new Tuple<Type, Type>(concreteType, concretePipelineType));
-            return concreteType;
+                var concreteType = typeBuilder.CreateType();
+                _cachedProxyTypes.Add(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), new Tuple<Type, Type>(concreteType, concretePipelineType));
+                return concreteType;
+            }
         }
 
         private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, TypeBuilder typeBuilder)

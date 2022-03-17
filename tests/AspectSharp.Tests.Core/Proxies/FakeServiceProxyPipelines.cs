@@ -151,8 +151,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             IFakeService target;
             target = aspectContext.Target as IFakeService;
-            target.InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn().AsTask().Wait();
-            return Task.CompletedTask;
+            return target.InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn().AsTask();
         }
 
         private static Task AspectDelegate5(AspectContext aspectContext)
@@ -165,8 +164,7 @@ namespace AspectSharp.Tests.Core.Proxies
             param1 = (int)aspectContext.Parameters[0];
             param2 = (string)aspectContext.Parameters[1];
             param3 = (IEnumerable<string>)aspectContext.Parameters[2];
-            target.InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn(param1, param2, param3).AsTask().Wait();
-            return Task.CompletedTask;
+            return target.InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn(param1, param2, param3).AsTask();
         }
 #endif
 

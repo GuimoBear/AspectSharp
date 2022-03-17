@@ -1,5 +1,6 @@
 ﻿using AspectSharp.Abstractions;
 using AspectSharp.DynamicProxy.Utils;
+using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Utils;
 using FluentAssertions;
 using System;
@@ -12,6 +13,13 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Utils
 {
     public class InterceptorTypeCacheTests
     {
+        [Fact]
+        public void Given_AnNonInterfaceType_When_TryGetInterceptedTypeData_Then_ReturnFalse()
+        {
+            InterceptorTypeCache.TryGetInterceptedTypeData(typeof(FakeService), out _)
+                .Should().BeFalse();
+        }
+
         [Theory]
         [MemberData(nameof(GetInterceptorTypeDataTheoryData))]
         internal void GetInterceptorTypeDataTheory(Type serviceType, DynamicProxyFactoryConfigurations configs, bool expectedIsIntercepted, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>> expectedInterceptors)

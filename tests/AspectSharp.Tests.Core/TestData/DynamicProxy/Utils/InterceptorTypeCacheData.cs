@@ -23,7 +23,8 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             yield return GetInterceptorTypeDataWithInterceptOnSetProperty();
             yield return GetInterceptorTypeDataWithInterceptOnAnyPropertyMethod();
             yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
-            yield return GetInterceptorTypeDataWithIninspectedInterface();
+            yield return GetInterceptorTypeDataWithUninspectedInterface();
+            yield return GetInterceptorTypeDataWithInterfaceContainingAllScenarios();
         }
 
         private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigs()
@@ -99,7 +100,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(default, default, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -177,7 +178,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(InterceptedEventMethod.Add, default, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -259,7 +260,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(InterceptedEventMethod.Remove, default, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -342,7 +343,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, default, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -423,7 +424,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.Get, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -508,7 +509,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.Set, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -597,7 +598,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.All, default),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
@@ -674,11 +675,11 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 targetType,
                 new DynamicProxyFactoryConfigurations(default, default, true),
                 true,
-                dict
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
 
-        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataWithIninspectedInterface()
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataWithUninspectedInterface()
         {
             var serviceType = typeof(IUninspectedFakeService);
             var targetType = typeof(UninspectedFakeService);
@@ -703,6 +704,247 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 new DynamicProxyFactoryConfigurations(default, default, default),
                 false,
                 null
+            );
+        }
+
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataWithInterfaceContainingAllScenarios()
+        {
+            var serviceType = typeof(IFakeService);
+            var targetType = typeof(FakeService);
+            var typeDefinitionInterceptors = serviceType.CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
+            {
+                {
+                    serviceType.GetEvent(nameof(IFakeService.OnChanged)).GetAddMethod(),
+                    typeDefinitionInterceptors.Concat(
+                        serviceType.GetEvent(nameof(IFakeService.OnChanged)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                            .Concat(serviceType.GetEvent(nameof(IFakeService.OnChanged))
+                                .GetAddMethod()
+                                .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                            .ToList()
+                },
+                {
+                    serviceType.GetEvent(nameof(IFakeService.OnChanged)).GetRemoveMethod(),
+                    typeDefinitionInterceptors.Concat(
+                        serviceType.GetEvent(nameof(IFakeService.OnChanged)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                            .Concat(serviceType.GetEvent(nameof(IFakeService.OnChanged))
+                                .GetRemoveMethod()
+                                .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                            .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(IFakeService.ValueTypeProperty)).GetGetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(IFakeService.ValueTypeProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(IFakeService.ValueTypeProperty)).GetSetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(IFakeService.ValueTypeProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(IFakeService.ReferenceTypeProperty)).GetGetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(IFakeService.ReferenceTypeProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(IFakeService.ReferenceTypeProperty)).GetSetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(IFakeService.ReferenceTypeProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingWithoutParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingWithoutParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithoutParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithoutParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingWithParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingWithParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithoutParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithoutParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+#if NETCOREAPP3_1_OR_GREATER
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithoutParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithoutParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+#endif
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingWithoutParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingWithoutParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithoutParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithoutParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingWithParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingWithParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingWithoutParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingWithoutParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithoutParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithoutParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingWithParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingWithParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingWithParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithoutParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithoutParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+#if NETCOREAPP3_1_OR_GREATER
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithoutParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithoutParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+#endif
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithoutParameterAndReferenceypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithoutParameterAndReferenceypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithoutParameterAndReferenceypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithoutParameterAndReferenceypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingAsyncWithParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+#if NETCOREAPP3_1_OR_GREATER
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.DoSomethingValueAsyncWithParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithParameterAndReferenceTypeReturn)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IFakeService.InterceptedDoSomethingValueAsyncWithParameterAndReferenceTypeReturn)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
+                }
+#endif
+            };
+            return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
+            (
+                serviceType,
+                targetType,
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                true,
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
         }
     }

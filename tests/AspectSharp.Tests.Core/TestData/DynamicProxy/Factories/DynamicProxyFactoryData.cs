@@ -30,12 +30,14 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
 
                     Action<object> action = proxyInstance =>
                     {
-                        var ret = methodInfo.Invoke(proxyInstance, parameters);
-                        if (!(ret is null))
+                        try
                         {
-                            var retInfo = ret.GetType().GetReturnInfo();
-                            if (retInfo.IsAsync)
-                        {
+                            var ret = methodInfo.Invoke(proxyInstance, parameters);
+                            if (!(ret is null))
+                            {
+                                var retInfo = ret.GetType().GetReturnInfo();
+                                if (retInfo.IsAsync)
+                                {
 #if NETCOREAPP3_1_OR_GREATER
                                 if (retInfo.IsValueTask)
                                 {
@@ -49,9 +51,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                                 }
                                 else
 #endif
-                                (ret as Task).Wait();
+                                    (ret as Task).Wait();
+                                }
                             }
                         }
+                        catch (Exception ex)
+                        {
+
+                        }
+                        
                     };
 
                     var aspectContextAditionalInfo = new List<string>();
@@ -80,6 +88,10 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
         {
             if (type.IsValueType)
                 return Activator.CreateInstance(type);
+            else if (type == typeof(string))
+                return "";
+            else if (type.IsGenericType && typeof(IEnumerable<>).IsAssignableFrom(type.GetGenericTypeDefinition()))
+                return Activator.CreateInstance(typeof(List<>).MakeGenericType(type.GetGenericArguments()[0]));
             return null;
         }
     }

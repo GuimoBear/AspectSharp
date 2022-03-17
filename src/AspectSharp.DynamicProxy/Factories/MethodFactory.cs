@@ -42,19 +42,19 @@ namespace AspectSharp.DynamicProxy.Factories
                 }
 
                 var cil = methodBuilder.GetILGenerator();
+                var localVariables = new List<LocalBuilder>();
 #if NETCOREAPP3_1_OR_GREATER
                 LocalBuilder valueTaskLocal = default;
                 if (returnInfo.IsValueTask && returnInfo.IsVoid)
-                    valueTaskLocal = cil.DeclareLocal(typeof(ValueTask));
+                    localVariables.Add(valueTaskLocal = cil.DeclareLocal(typeof(ValueTask)));
 #endif
-
 
                 if (pipelineProperties.TryGetValue(methodInfo, out var pipelineProperty) &&
                     contextActivatorFields.TryGetValue(methodInfo, out var aspectContextActivatorField))
                 {
                     if (hasParameters)
                     {
-                        cil.DeclareLocal(typeof(object[]));
+                        localVariables.Add(cil.DeclareLocal(typeof(object[])));
                         cil.Emit(OpCodes.Ldc_I4, parameters.Length);
                         cil.Emit(OpCodes.Newarr, typeof(object));
                         foreach (var tuple in parameters.Zip(Enumerable.Range(1, parameters.Length), (first, second) => new Tuple<ParameterInfo, int>(first, second)))
@@ -68,7 +68,7 @@ namespace AspectSharp.DynamicProxy.Factories
                                 cil.Emit(OpCodes.Box, parameter.ParameterType);
                             cil.Emit(OpCodes.Stelem_Ref);
                         }
-                        cil.Emit(OpCodes.Stloc_0);
+                        cil.Emit(OpCodes.Stloc, localVariables.Count - 1);
                     }
                     cil.Emit(OpCodes.Ldarg_0);
                     cil.Emit(OpCodes.Ldfld, contextFactoryField);
@@ -77,13 +77,12 @@ namespace AspectSharp.DynamicProxy.Factories
                     cil.Emit(OpCodes.Ldfld, targetField);
                     cil.Emit(OpCodes.Ldarg_0);
                     if (hasParameters)
-                        cil.Emit(OpCodes.Ldloc_0);
+                        cil.Emit(OpCodes.Ldloc, localVariables.Count - 1);
                     else
                         cil.Emit(OpCodes.Ldsfld, _emptyParameterArrayFieldInfo);
                     cil.Emit(OpCodes.Callvirt, _createContextMethodInfo);
                     if (!returnInfo.IsVoid)
                         cil.Emit(OpCodes.Dup);
-                    //cil.Emit(OpCodes.Ldsfld, pipelinesField);
                     cil.Emit(OpCodes.Call, pipelineProperty.GetMethod);
                     cil.Emit(OpCodes.Call, _executePipelineMethodInfo);
                     cil.Emit(OpCodes.Callvirt, _waitTaskMethodInfo);
@@ -98,7 +97,7 @@ namespace AspectSharp.DynamicProxy.Factories
                         {
 #if NETCOREAPP3_1_OR_GREATER
                             if (returnInfo.IsValueTask)
-                                cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetConstructor(new Type[] { returnInfo.Type }));
+                                cil.Emit(OpCodes.Newobj, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetConstructor(new Type[] { returnInfo.Type }));
                             else
 #endif
                             cil.Emit(OpCodes.Call, typeof(Task).GetMethod(nameof(Task<int>.FromResult)).MakeGenericMethod(returnInfo.Type));

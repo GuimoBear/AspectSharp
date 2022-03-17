@@ -94,14 +94,15 @@ namespace AspectSharp.DynamicProxy.Factories
 
             cil = methodBuilder.GetILGenerator();
 
+            var localVariables = new List<LocalBuilder>();
             if (!returnInfo.IsVoid)
-                cil.DeclareLocal(methodInfo.DeclaringType);
+                localVariables.Add(cil.DeclareLocal(methodInfo.DeclaringType));
             var parameters = methodInfo.GetParameters();
             foreach (var param in parameters)
-                cil.DeclareLocal(param.ParameterType);
+                localVariables.Add(cil.DeclareLocal(param.ParameterType));
 #if NETCOREAPP3_1_OR_GREATER
             if (returnInfo.IsValueTask)
-                cil.DeclareLocal(methodInfo.ReturnType);
+                localVariables.Add(cil.DeclareLocal(methodInfo.ReturnType));
 #endif
 
             cil.Emit(OpCodes.Ldarg_0);
@@ -136,12 +137,12 @@ namespace AspectSharp.DynamicProxy.Factories
 #if NETCOREAPP3_1_OR_GREATER
             if (returnInfo.IsValueTask)
             {
-                cil.Emit(OpCodes.Stloc_S, parameters.Length + (returnInfo.IsVoid ? 0 : 1));
-                cil.Emit(OpCodes.Ldloca_S, parameters.Length + (returnInfo.IsVoid ? 0 : 1));
+                cil.Emit(OpCodes.Stloc_S, localVariables.Count - 1);
+                cil.Emit(OpCodes.Ldloca_S, localVariables.Count - 1);
                 if (returnInfo.IsVoid)
                     cil.Emit(OpCodes.Call, _asTaskValueTaskMethodInfo);
                 else
-                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetConstructor(new Type[] { returnInfo.Type }));
+                    cil.Emit(OpCodes.Call, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod());
             }
             else
 #endif

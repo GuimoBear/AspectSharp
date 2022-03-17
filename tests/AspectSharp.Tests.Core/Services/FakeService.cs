@@ -82,7 +82,7 @@ namespace AspectSharp.Tests.Core.Services
         public ValueTask DoSomethingValueAsyncWithParameterAndWithoutReturn(int param1, string param2, IEnumerable<string> param3)
         {
             ValueTypeProperty = param1 ^ (param2?.GetHashCode() ?? default);
-            return default;
+            return new ValueTask();
         }
 
         public ValueTask InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn(int param1, string param2, IEnumerable<string> param3)

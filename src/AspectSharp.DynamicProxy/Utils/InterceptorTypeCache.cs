@@ -78,7 +78,10 @@ namespace AspectSharp.DynamicProxy.Utils
                         var eventFromMethod = events.FirstOrDefault(evt => evt.GetAddMethod() == methodInfo || evt.GetRemoveMethod() == methodInfo || evt.GetRaiseMethod() == methodInfo);
 
                         if (!(propertyFromMethod is null))
+                        {
+                            methodInterceptors = propertyFromMethod.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).Concat(methodInterceptors).ToList();
                             typeDefinitionInterceptors = propertyFromMethod.FilterTypeDefinitionInterceptorsFromProperty(methodInfo, configs, typeDefinitionInterceptors).ToList();
+                        }
                         else if (!(eventFromMethod is null))
                         {
                             methodInterceptors = eventFromMethod.CustomAttributes.Where(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)).Concat(methodInterceptors).ToList();

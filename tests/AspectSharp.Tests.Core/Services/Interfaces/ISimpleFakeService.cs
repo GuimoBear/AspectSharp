@@ -27,6 +27,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         int Property { get; set; }
 
         [PropertyAspect]
+        [Aspect2]
         int InterceptedProperty 
         { 
             [Aspect2]

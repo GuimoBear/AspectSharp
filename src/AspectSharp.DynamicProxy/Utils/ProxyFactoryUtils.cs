@@ -65,12 +65,25 @@ namespace AspectSharp.DynamicProxy.Utils
                 .FirstOrDefault(evt => evt.GetAddMethod() == methodInfo ||
                                        evt.GetRemoveMethod() == methodInfo || 
                                        evt.GetRaiseMethod() == methodInfo);
+            var propertyInfo = serviceType
+                .GetProperties()
+                .FirstOrDefault(pi => pi.GetGetMethod() == methodInfo ||
+                                      pi.GetSetMethod() == methodInfo);
             var methodAttributes = new List<Tuple<CustomAttributeData, AbstractInterceptorAttribute>>();
             if (!(eventInfo is null))
             {
                 foreach (var interceptorInstance in eventInfo.GetCustomAttributes(true).Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType())))
                 {
                     var interceptorData = eventInfo.CustomAttributes.FirstOrDefault(attr => attr.AttributeType == interceptorInstance.GetType());
+                    if (!(interceptorData is null))
+                        methodAttributes.Add(new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(interceptorData, interceptorInstance as AbstractInterceptorAttribute));
+                }
+            }
+            if (!(propertyInfo is null))
+            {
+                foreach (var interceptorInstance in propertyInfo.GetCustomAttributes(true).Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType())))
+                {
+                    var interceptorData = propertyInfo.CustomAttributes.FirstOrDefault(attr => attr.AttributeType == interceptorInstance.GetType());
                     if (!(interceptorData is null))
                         methodAttributes.Add(new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(interceptorData, interceptorInstance as AbstractInterceptorAttribute));
                 }
@@ -91,8 +104,6 @@ namespace AspectSharp.DynamicProxy.Utils
                     ret.Add(instance);
             }
             return ret.ToArray();
-
-            //return interceptors.Select(attributeData => attributeData.CreateInstance() as AbstractInterceptorAttribute).ToArray();
         }
 
         private static bool IsEquals(CustomAttributeData left, CustomAttributeData right)

@@ -23,30 +23,30 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
             {
                 var proxyType = DynamicProxyFactory.Create(serviceType, targetType, interceptedTypeData, configs);
 
-                foreach(var (method, methodData) in methodCallData)
+                var services = new ServiceCollection();
+                services
+                    .AddSingleton<IAspectContextFactory, FakeAspectContextFactory>()
+                    .AddSingleton(targetType)
+                    .AddSingleton(serviceType, proxyType);
+
+                using (var serviceProvider = services.BuildServiceProvider(true))
                 {
-                    var (methodDelegate, expectedAditionalDataKeys) = methodData;
-                    var contextActivator = new AspectContextActivator(serviceType, method, proxyType, proxyType.GetMethod(method.Name), targetType, targetType.GetMethod(method.Name));
-                    
-                    var services = new ServiceCollection();
-                    services
-                        .AddSingleton<IAspectContextFactory, FakeAspectContextFactory>()
-                        .AddSingleton(targetType)
-                        .AddSingleton(serviceType, proxyType);
-
-                    using var serviceProvider = services.BuildServiceProvider(true);
-
-                    var contextFactory = serviceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory;
-                    var proxyInstance = serviceProvider.GetService(serviceType);
-                    methodDelegate(proxyInstance);
-                    if (expectedAditionalDataKeys.Any())
+                    foreach (var (method, methodData) in methodCallData)
                     {
-                        var aditionalDataKeys = contextFactory.Context.AdditionalData.Keys;
-                        aditionalDataKeys
-                            .Should().HaveCount(expectedAditionalDataKeys.Count());
+                        var (methodDelegate, expectedAditionalDataKeys) = methodData;
 
-                        foreach (var (key, expectedKey) in aditionalDataKeys.Zip(expectedAditionalDataKeys))
-                            key.Should().Be(expectedKey);
+                        var contextFactory = serviceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory;
+                        var proxyInstance = serviceProvider.GetService(serviceType);
+                        methodDelegate(proxyInstance);
+                        if (expectedAditionalDataKeys.Any())
+                        {
+                            var aditionalDataKeys = contextFactory.Context.AdditionalData.Keys;
+                            aditionalDataKeys
+                                .Should().HaveCount(expectedAditionalDataKeys.Count());
+
+                            foreach (var (key, expectedKey) in aditionalDataKeys.Zip(expectedAditionalDataKeys))
+                                key.Should().Be(expectedKey);
+                        }
                     }
                 }
             }

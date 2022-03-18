@@ -63,11 +63,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetMethod(nameof(ISimpleFakeService.Method)),
@@ -141,11 +151,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetMethod(nameof(ISimpleFakeService.Method)),
@@ -219,11 +239,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetMethod(nameof(ISimpleFakeService.Method)),
@@ -302,11 +332,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetMethod(nameof(ISimpleFakeService.Method)),
@@ -385,13 +425,20 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     typeDefinitionInterceptors.Concat(
                         serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
-                            .GetGetMethod()
-                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                            .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                                .GetGetMethod()
+                                .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
                         .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetMethod(nameof(ISimpleFakeService.Method)),
@@ -464,14 +511,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
                     typeDefinitionInterceptors.Concat(
                         serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
-                            .GetSetMethod()
-                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                            .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                                .GetSetMethod()
+                                .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
                         .ToList()
                 },
                 {
@@ -551,16 +605,20 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
                     typeDefinitionInterceptors.Concat(
                         serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
-                            .GetGetMethod()
-                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                            .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                                .GetGetMethod()
+                                .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
                         .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
                     typeDefinitionInterceptors.Concat(
                         serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
-                            .GetSetMethod()
-                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                            .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                                .GetSetMethod()
+                                .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
                         .ToList()
                 },
                 {
@@ -638,11 +696,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetGetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod(),
-                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty)).GetSetMethod().CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList()
+                    serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleFakeService.InterceptedProperty))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)))
+                        .ToList()
                 },
                 {
                     serviceType.GetMethod(nameof(ISimpleFakeService.Method)),

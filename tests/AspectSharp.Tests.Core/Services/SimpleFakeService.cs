@@ -1,5 +1,7 @@
 ﻿using AspectSharp.Tests.Core.Services.Interfaces;
 using System;
+using System.Runtime.CompilerServices;
+using System.Threading.Tasks;
 
 namespace AspectSharp.Tests.Core.Services
 {
@@ -29,5 +31,19 @@ namespace AspectSharp.Tests.Core.Services
         {
 
         }
+
+        public async Task<string> WaitMethod(string param)
+        {
+            await Task.Delay(10);
+            return string.Format("Hello {0}: the random number is {1}", param, new Random().Next(0, 100));
+        }
+
+#if NETCOREAPP3_1_OR_GREATER
+        public async ValueTask<string> ValueWaitMethod(string param)
+        {
+            await Task.Delay(10);
+            return string.Format("Hello {0}: the random number is {1}", param, new Random().Next(0, 100));
+        }
+#endif
     }
 }

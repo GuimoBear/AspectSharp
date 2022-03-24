@@ -43,7 +43,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
 
                 var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
-                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
+                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, _proxiedClassesModuleBuilder, interceptedTypeData, configs);
 
                 var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
 

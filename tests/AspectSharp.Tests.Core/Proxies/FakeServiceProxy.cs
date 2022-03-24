@@ -133,22 +133,22 @@ namespace AspectSharp.Tests.Core.Proxies
         public Task<int> DoSomethingAsyncWithoutParameterAndValueTypeReturn()
             => _target.DoSomethingAsyncWithoutParameterAndValueTypeReturn();
 
-        public Task<int> InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn()
+        public async Task<int> InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator10, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline10).Wait();
-            return Task.FromResult((int)context.ReturnValue);
+            await ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline10);
+            return (int)context.ReturnValue;
         }
 
         public Task<int> DoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
             => _target.DoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3);
 
-        public Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
+        public async Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator11, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline11).Wait();
-            return Task.FromResult((int)context.ReturnValue);
+            await ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline11);
+            return (int)(context.ReturnValue ?? 0);
         }
 
 #if NETCOREAPP3_1_OR_GREATER

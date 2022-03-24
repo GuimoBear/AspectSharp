@@ -1,5 +1,4 @@
 ﻿using AspectSharp.Abstractions;
-using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Utils;
 using AspectSharp.Tests.Core.Enums;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Utils;
@@ -7,7 +6,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories

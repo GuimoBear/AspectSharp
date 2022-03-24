@@ -48,8 +48,11 @@ namespace AspectSharp.Tests.Core.Services
         public Task<IEnumerable<string>> InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn(int param1, string param2, IEnumerable<string> param3)
             => DoSomethingAsyncWithParameterAndReferenceTypeReturn(param1, param2, param3);
 
-        public Task<int> DoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
-            => Task.FromResult(_random.Next() ^ param1 ^ (param2?.GetHashCode() ?? 0));
+        public async Task<int> DoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
+        { 
+            await Task.Delay(500);
+            return _random.Next() ^ param1 ^ (param2?.GetHashCode() ?? 0);
+        }
 
         public Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
             => DoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3);

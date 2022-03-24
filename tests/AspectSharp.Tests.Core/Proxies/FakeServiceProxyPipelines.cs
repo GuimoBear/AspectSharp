@@ -1,15 +1,108 @@
 ﻿using AspectSharp.Abstractions;
 using AspectSharp.Abstractions.Attributes;
 using AspectSharp.DynamicProxy;
+using AspectSharp.DynamicProxy.StateMachines;
+using AspectSharp.DynamicProxy.StateMachines.Interfaces;
 using AspectSharp.DynamicProxy.Utils;
 using AspectSharp.Tests.Core.Services.Interfaces;
+using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AspectSharp.Tests.Core.Proxies
 {
     public static class FakeServiceProxyPipelines
     {
+        public struct AspectDelegate11AsyncStateMachine : IAspectDelegateTaskAsyncStateMachine<int>
+        {
+            public int state;
+            public AsyncTaskMethodBuilder builder;
+            public AspectContext context;
+            private TaskAwaiter<int> _awaiter;
+
+            public TaskAwaiter<int> Awaiter { get => _awaiter; set => _awaiter = value; }
+            public int State { get => state; set => state = value; }
+            public AspectContext Context { get => context; set => context = value; }
+
+            public void AwaitUnsafeOnCompleted()
+                => builder.AwaitUnsafeOnCompleted(ref _awaiter, ref this);
+
+            public void MoveNext()
+                => AspectDelegateTaskAsyncStateMachineManager.MoveNext<AspectDelegate11AsyncStateMachine, int>(ref this);
+            /*
+            {
+                var state = this.state;
+                int result;
+                try
+                {
+                    TaskAwaiter<int> awaiter;
+                    if (state != 0)
+                    {
+                        _contextWrap = context;
+                        IFakeService target;
+                        int param1;
+                        string param2;
+                        IEnumerable<string> param3;
+                        target = _contextWrap.Target as IFakeService;
+                        param1 = (int)_contextWrap.Parameters[0];
+                        param2 = (string)_contextWrap.Parameters[1];
+                        param3 = (IEnumerable<string>)_contextWrap.Parameters[2];
+                        awaiter = target.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3).GetAwaiter();
+
+                        if (!awaiter.IsCompleted)
+                        {
+                            state = this.state = 0;
+                            _awaiter = awaiter;
+                            builder.AwaitUnsafeOnCompleted(ref awaiter, ref this);
+                            return;
+                        }
+                    }
+                    else
+                    {
+                        awaiter = _awaiter;
+                        _awaiter = default;
+                        state = this.state = -1;
+                    }
+                    result = awaiter.GetResult();
+
+                    _contextWrap.ReturnValue = result;
+                    _contextWrap = null;
+                }
+                catch (Exception ex)
+                {
+                    this.state = -2;
+                    builder.SetException(ex);
+                    return;
+                }
+                this.state = -2;
+                builder.SetResult();
+            }
+            */
+
+            public TaskAwaiter<int> PrepareAwaiter()
+            {
+                IFakeService target;
+                int param1;
+                string param2;
+                IEnumerable<string> param3;
+                target = context.Target as IFakeService;
+                param1 = (int)context.Parameters[0];
+                param2 = (string)context.Parameters[1];
+                param3 = (IEnumerable<string>)context.Parameters[2];
+                return target.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3).GetAwaiter();
+            }
+
+            public void SetException(Exception ex)
+                => builder.SetException(ex);
+
+            public void SetResult()
+                => builder.SetResult();
+
+            public void SetStateMachine(IAsyncStateMachine stateMachine)
+                => builder.SetStateMachine(stateMachine);
+        }
+
         public static InterceptDelegate Pipeline1 { get; }
         public static InterceptDelegate Pipeline2 { get; }
         public static InterceptDelegate Pipeline3 { get; }
@@ -139,11 +232,11 @@ namespace AspectSharp.Tests.Core.Proxies
             return Task.CompletedTask;
         }
 
-        private static Task AspectDelegate3(AspectContext aspectContext)
+        private static async Task AspectDelegate3(AspectContext aspectContext)
         {
             IFakeService target;
             target = aspectContext.Target as IFakeService;
-            return target.InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn();
+            await target.InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn();
         }
 
 #if NETCOREAPP3_1_OR_GREATER
@@ -154,7 +247,7 @@ namespace AspectSharp.Tests.Core.Proxies
             return target.InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn().AsTask();
         }
 
-        private static Task AspectDelegate5(AspectContext aspectContext)
+        private static async Task AspectDelegate5(AspectContext aspectContext)
         {
             IFakeService target;
             int param1;
@@ -164,7 +257,7 @@ namespace AspectSharp.Tests.Core.Proxies
             param1 = (int)aspectContext.Parameters[0];
             param2 = (string)aspectContext.Parameters[1];
             param3 = (IEnumerable<string>)aspectContext.Parameters[2];
-            return target.InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn(param1, param2, param3).AsTask();
+            await target.InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn(param1, param2, param3);
         }
 #endif
 
@@ -212,16 +305,24 @@ namespace AspectSharp.Tests.Core.Proxies
             return Task.CompletedTask;
         }
 
-        private static Task AspectDelegate10(AspectContext aspectContext)
+        private static async Task AspectDelegate10(AspectContext aspectContext)
         {
             IFakeService target;
             target = aspectContext.Target as IFakeService;
-            aspectContext.ReturnValue = target.InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn().Result;
-            return Task.CompletedTask;
+            aspectContext.ReturnValue = await target.InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn();
+            //return Task.CompletedTask;
         }
 
+        [AsyncStateMachine(typeof(AspectDelegate11AsyncStateMachine))]
         private static Task AspectDelegate11(AspectContext aspectContext)
         {
+            var stateMachine = new AspectDelegate11AsyncStateMachine();
+            stateMachine.builder = AsyncTaskMethodBuilder.Create();
+            stateMachine.context = aspectContext;
+            stateMachine.state = -1;
+            stateMachine.builder.Start(ref stateMachine);
+            return stateMachine.builder.Task;
+            /*
             IFakeService target;
             int param1;
             string param2;
@@ -230,8 +331,9 @@ namespace AspectSharp.Tests.Core.Proxies
             param1 = (int)aspectContext.Parameters[0];
             param2 = (string)aspectContext.Parameters[1];
             param3 = (IEnumerable<string>)aspectContext.Parameters[2];
-            aspectContext.ReturnValue = target.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3).Result;
-            return Task.CompletedTask;
+            aspectContext.ReturnValue = await target.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3);
+            //return Task.CompletedTask;
+            */
         }
 
 #if NETCOREAPP3_1_OR_GREATER
@@ -266,7 +368,7 @@ namespace AspectSharp.Tests.Core.Proxies
             return Task.CompletedTask;
         }
 
-        private static Task AspectDelegate15(AspectContext aspectContext)
+        private static async Task AspectDelegate15(AspectContext aspectContext)
         {
             IFakeService target;
             int param1;
@@ -276,8 +378,7 @@ namespace AspectSharp.Tests.Core.Proxies
             param1 = (int)aspectContext.Parameters[0];
             param2 = (string)aspectContext.Parameters[1];
             param3 = (IEnumerable<string>)aspectContext.Parameters[2];
-            aspectContext.ReturnValue = target.InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn(param1, param2, param3).Result;
-            return Task.CompletedTask;
+            aspectContext.ReturnValue = await target.InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn(param1, param2, param3);
         }
 
 #if NETCOREAPP3_1_OR_GREATER

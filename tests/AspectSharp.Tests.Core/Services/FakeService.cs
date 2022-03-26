@@ -28,7 +28,9 @@ namespace AspectSharp.Tests.Core.Services
             => DoSomethingAsyncWithoutParameterAndValueTypeReturn();
 
         public async Task DoSomethingAsyncWithoutParameterAndWithoutReturn()
-            => await Task.Delay(1);
+        { 
+            await Task.Delay(10);
+        }
 
         public Task InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn()
             => DoSomethingAsyncWithoutParameterAndWithoutReturn();
@@ -50,8 +52,9 @@ namespace AspectSharp.Tests.Core.Services
 
         public async Task<int> DoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
         { 
-            await Task.Delay(500);
-            return _random.Next() ^ param1 ^ (param2?.GetHashCode() ?? 0);
+            await Task.Delay(10);
+            var vlr = _random.Next() ^ param1 ^ (param2?.GetHashCode() ?? 0);
+            return vlr;
         }
 
         public Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)

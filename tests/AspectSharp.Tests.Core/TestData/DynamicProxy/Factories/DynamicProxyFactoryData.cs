@@ -28,6 +28,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
 
                     Action<object> action = proxyInstance =>
                     {
+                        var methodName = methodInfo.Name;
                         var ret = methodInfo.Invoke(proxyInstance, parameters);
                         if (!(ret is null))
                         {

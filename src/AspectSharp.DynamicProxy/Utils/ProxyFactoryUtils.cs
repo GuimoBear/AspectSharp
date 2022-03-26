@@ -15,10 +15,10 @@ namespace AspectSharp.DynamicProxy.Utils
         public static object[] EmptyParameters = Array.Empty<object>();
 
         public static InterceptDelegate FirstDelegate(InterceptDelegate current, AspectDelegate next)
-            => (ctx, _) => current.Invoke(ctx, next);
+            => async (ctx, _) => await current.Invoke(ctx, next);
 
         public static InterceptDelegate Encapsulate(InterceptDelegate current, InterceptDelegate inner)
-            => (ctx, next) => current.Invoke(ctx, _ctx => inner(_ctx, next));
+            => async (ctx, next) => await current.Invoke(ctx, async _ctx => await inner(_ctx, next));
 
         public static InterceptDelegate CreatePipeline(AspectDelegate root, AbstractInterceptorAttribute[] interceptorAttributes)
         {

@@ -24,29 +24,10 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
         [MemberData(nameof(ProxyClassAspectsPipelineTheoryData))]
         internal async Task ProxyClassAspectsPipelineExecutionTheory(Type serviceType, Type targetType, DynamicProxyFactoryConfigurations configs, IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData)
         {
-
             if (InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData))
             {
                 var proxyType = DynamicProxyFactory.Create(serviceType, targetType, interceptedTypeData, configs);
-                try
-                {
-                    var generator = new Lokad.ILPack.AssemblyGenerator();
-                    var bytes = generator.GenerateAssemblyBytes(DynamicProxyFactory._proxiedClassesAssemblyBuilder);
-                    if (File.Exists(@"C:\projetos\teste.dll"))
-                        File.Delete(@"C:\projetos\teste.dll");
-                    using (var file = File.Create(@"C:\projetos\teste.dll"))
-                    {
-                        file.Write(bytes);
-                        file.Flush();
-                        file.Close();
-                    }
-                }
-                catch (Exception ex)
-                {
-
-                }
                 var services = new ServiceCollection();
-                /*
                 if (targetType == typeof(FakeService))
                 {
                     services
@@ -61,9 +42,12 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
 
                         try
                         {
-                            var asyncStateMachine = typeof(FakeServiceProxyPipelines).GetMembers(BindingFlags.NonPublic)[0];
+                            //var asyncStateMachine = typeof(FakeServiceProxyPipelines).GetMembers(BindingFlags.NonPublic)[0];
                             await proxyInstance.InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn();
                             var vlr = await proxyInstance.InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(5, "", Enumerable.Empty<string>());
+                            vlr = await proxyInstance.InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn(5, "", Enumerable.Empty<string>());
+
+                            var t = await proxyInstance.InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn(5, "", Enumerable.Empty<string>());
                         }
                         catch (Exception ex)
                         {
@@ -72,7 +56,6 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
                     }
                     services = new ServiceCollection();
                 }
-                */
                 services
                     .AddSingleton<IAspectContextFactory, FakeAspectContextFactory>()
                     .AddSingleton(targetType)
@@ -91,10 +74,10 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
                         {
                             var aditionalDataKeys = contextFactory.Context.AdditionalData.Keys;
                             aditionalDataKeys
-                                .Should().HaveCount(expectedAditionalDataKeys.Count());
+                                .Should().HaveCount(expectedAditionalDataKeys.Count(), because: string.Format("method '{0}' should be the same number of aspects", method.Name));
 
                             foreach (var (key, expectedKey) in aditionalDataKeys.Zip(expectedAditionalDataKeys))
-                                key.Should().Be(expectedKey);
+                                key.Should().Be(expectedKey, because: string.Format("method '{0}' should be added '{1}' in aspected context, but founded {2}", method.Name, key, expectedKey));
                         }
                     }
                 }

@@ -12,13 +12,13 @@ namespace AspectSharp.DynamicProxy.Utils
     {
         public static AspectDelegate EmptyAspectDelegate = _ => Task.CompletedTask;
 
-        public static object[] EmptyParameters = Array.Empty<object>();
+        public static readonly object[] EmptyParameters = Array.Empty<object>();
 
         public static InterceptDelegate FirstDelegate(InterceptDelegate current, AspectDelegate next)
-            => async (ctx, _) => await current.Invoke(ctx, next);
+            => (ctx, _) => current.Invoke(ctx, next);
 
         public static InterceptDelegate Encapsulate(InterceptDelegate current, InterceptDelegate inner)
-            => async (ctx, next) => await current.Invoke(ctx, async _ctx => await inner(_ctx, next));
+            => (ctx, next) => current.Invoke(ctx, _ctx => inner(_ctx, next));
 
         public static InterceptDelegate CreatePipeline(AspectDelegate root, AbstractInterceptorAttribute[] interceptorAttributes)
         {
@@ -31,8 +31,8 @@ namespace AspectSharp.DynamicProxy.Utils
             return ret;
         }
 
-        public static async Task ExecutePipeline(AspectContext context, InterceptDelegate pipeline)
-            => await pipeline(context, EmptyAspectDelegate);
+        public static Task ExecutePipeline(AspectContext context, InterceptDelegate pipeline)
+            => pipeline(context, EmptyAspectDelegate);
 
         public static AspectContextActivator NewContextActivator(Type serviceType, Type proxyType, Type targetType, string methodName, Type[] parameterTypes = default)
         {

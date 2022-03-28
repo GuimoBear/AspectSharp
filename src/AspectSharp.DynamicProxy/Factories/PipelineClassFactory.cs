@@ -39,7 +39,7 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly ParameterInfo[] _aspectDelegateParameters = typeof(AspectDelegate).GetMethod(nameof(AspectDelegate.Invoke)).GetParameters();
         private static readonly Type _asyncStateMachineType = typeof(IAsyncStateMachine);
 
-        public static IReadOnlyDictionary<MethodInfo, PropertyInfo> CreatePipelineClass(Type serviceType, TypeBuilder typeBuilder, ModuleBuilder moduleBuilder, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
+        public static IReadOnlyDictionary<MethodInfo, PropertyInfo> CreatePipelineClass(Type targetType, Type serviceType, TypeBuilder typeBuilder, ModuleBuilder moduleBuilder, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
         {
             var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
             var staticAttrs = MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
@@ -62,13 +62,14 @@ namespace AspectSharp.DynamicProxy.Factories
             var index = 1;
 
             var ret = new Dictionary<MethodInfo, PropertyInfo>();
-            foreach (var methodInfo in methods)
+            foreach (var interfaceMethodInfo in methods)
             {
-                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))
+                var methodInfo = targetType.GetMethod(interfaceMethodInfo.Name, interfaceMethodInfo.GetParameters().Select(pi => pi.ParameterType).ToArray());
+                if (interceptedTypeData.TryGetMethodInterceptors(interfaceMethodInfo, out _))
                 {
-                    var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, moduleBuilder, staticCil, methodInfo, configs, index);
+                    var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, moduleBuilder, staticCil, interfaceMethodInfo, methodInfo, configs, index);
 
-                    ret.Add(methodInfo, propertyBuilder);
+                    ret.Add(interfaceMethodInfo, propertyBuilder);
 
                     index++;
                 }
@@ -79,7 +80,7 @@ namespace AspectSharp.DynamicProxy.Factories
             return ret;
         }
 
-        private static PropertyBuilder CreateAspectDelegateAndPipelineProperty(TypeBuilder typeBuilder, ModuleBuilder moduleBuilder, ILGenerator staticCil, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
+        private static PropertyBuilder CreateAspectDelegateAndPipelineProperty(TypeBuilder typeBuilder, ModuleBuilder moduleBuilder, ILGenerator staticCil, MethodInfo interfaceMethodInfo, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
         {
             var returnInfo = methodInfo.GetReturnInfo();
 
@@ -157,7 +158,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
             staticCil.Emit(OpCodes.Ldloc_0);
             staticCil.Emit(OpCodes.Ldc_I4, configs.GetHashCode());
-            staticCil.Emit(OpCodes.Ldc_I4, methodInfo.GetHashCode());
+            staticCil.Emit(OpCodes.Ldc_I4, interfaceMethodInfo.GetHashCode());
             staticCil.Emit(OpCodes.Call, _getInterceptorsMethodInfo);
             staticCil.Emit(OpCodes.Call, _createPipelineMethodInfo);
             staticCil.Emit(OpCodes.Stsfld, pipelineField);

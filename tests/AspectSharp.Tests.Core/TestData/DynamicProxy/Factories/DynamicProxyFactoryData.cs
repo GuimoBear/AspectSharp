@@ -29,28 +29,36 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                     Action<object> action = proxyInstance =>
                     {
                         var methodName = methodInfo.Name;
-                        var ret = methodInfo.Invoke(proxyInstance, parameters);
-                        if (!(ret is null))
+                        try
                         {
-                            var retInfo = ret.GetType().GetReturnInfo();
-                            if (retInfo.IsAsync)
+                            var ret = methodInfo.Invoke(proxyInstance, parameters);
+                            if (!(ret is null))
                             {
-#if NETCOREAPP3_1_OR_GREATER
-                                if (retInfo.IsValueTask)
+                                var retInfo = methodInfo.GetReturnInfo();
+                                if (retInfo.IsAsync)
                                 {
-                                    if (!retInfo.IsVoid)
+#if NETCOREAPP3_1_OR_GREATER
+                                    if (retInfo.IsValueTask)
                                     {
-                                        var getResultMethod = typeof(ValueTask<>).MakeGenericType(retInfo.Type).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod();
-                                        getResultMethod.Invoke(ret, Array.Empty<object>());
+                                        if (!retInfo.IsVoid)
+                                        {
+                                            var getResultMethod = typeof(ValueTask<>).MakeGenericType(retInfo.Type).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod();
+                                            getResultMethod.Invoke(ret, Array.Empty<object>());
+                                        }
+                                        else
+                                            ((ValueTask)ret).AsTask().Wait();
                                     }
                                     else
-                                        ((ValueTask)ret).AsTask().Wait();
-                                }
-                                else
 #endif
-                                    (ret as Task).Wait();
+                                        (ret as Task).Wait();
+                                }
                             }
                         }
+                        catch (Exception ex)
+                        {
+                            throw;
+                        }
+
                     };
 
                     var aspectContextAditionalInfo = new List<string>();

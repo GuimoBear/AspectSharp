@@ -40,11 +40,12 @@ namespace AspectSharp.DynamicProxy.Factories
             var index = 1;
 
             var ret = new Dictionary<MethodInfo, FieldInfo>();
-            foreach (var methodInfo in methods)
+            foreach (var interfaceMethodInfo in methods)
             {
-                if (interceptedTypeData.TryGetMethodInterceptors(methodInfo, out _))
+                var methodInfo = targetType.GetMethod(interfaceMethodInfo.Name, interfaceMethodInfo.GetParameters().Select(pi => pi.ParameterType).ToArray());
+                if (interceptedTypeData.TryGetMethodInterceptors(interfaceMethodInfo, out _))
                 {
-                    var field = typeBuilder.DefineField(string.Format("_aspectContextAtivator{0}", index), typeof(AspectContextActivator), FieldAttributes.Private | FieldAttributes.Static | FieldAttributes.InitOnly);
+                    var field = typeBuilder.DefineField(string.Format("_aspectContextAtivator{0}", index), typeof(AspectContextActivator), FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly);
 
                     var parameters = methodInfo.GetParameters();
                     var hasParameters = parameters.Length > 0;
@@ -76,7 +77,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     cil.Emit(OpCodes.Call, _newContextActivatorMethodInfo);
                     cil.Emit(OpCodes.Stsfld, field);
 
-                    ret.Add(methodInfo, field);
+                    ret.Add(interfaceMethodInfo, field);
 
                     index++;
                 }

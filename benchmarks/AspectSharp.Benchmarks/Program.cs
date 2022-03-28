@@ -6,13 +6,18 @@ using CommandLine.Text;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace AspectSharp.Benchmarks
 {
     internal class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            await Run(new AspectCoreMetricsBenchmark());
+            await Run(new AspectSharpMetricsBenchmark());
+            await Run(new ControlMetricsBenchmark());
+            await Run(new NoMetricsBenchmark());
             using (var parser = new Parser(with =>
              {
                  with.CaseSensitive = Parser.Default.Settings.CaseSensitive;
@@ -29,22 +34,75 @@ namespace AspectSharp.Benchmarks
                 parser.ParseArguments<BenchmarkOptions>(args)
                     .WithParsed(filter =>
                     {
-                        Run(new AspectCoreMetricsBenchmark());
-                        Run(new AspectSharpMetricsBenchmark());
-                        Run(new ControlMetricsBenchmark());
-                        Run(new NoMetricsBenchmark());
-
-                        BenchmarkRunner.Run(typeof(MetricsBenchmarkBase).Assembly, new Config(filter), Array.Empty<string>());
+                        BenchmarkRunner.Run(typeof(MetricsBenchmarkBase).Assembly, new Config(filter, filter.CreateScopeDuringBenchmark), Array.Empty<string>());
                     });
             }
         }
 
-        private static void Run(MetricsBenchmarkBase benchmark)
+        private static async Task Run(MetricsBenchmarkBase benchmark)
         {
             benchmark.GlobalSetup();
+            Console.WriteLine("{0} benchmarks started", benchmark.GetType().Name);
+#if DEBUG
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var actionSw = System.Diagnostics.Stopwatch.StartNew();
+#endif
+            benchmark.IterationSetup();
             benchmark.CallFakeService();
+            benchmark.IterationCleanup();
+#if DEBUG
+            actionSw.Stop();
+            var elapsed = actionSw.Elapsed;
+            Console.WriteLine("\t{0}.{1}: Elapsed time {2}", benchmark.GetType().Name, nameof(MetricsBenchmarkBase.CallFakeService), elapsed.ToString());
+            actionSw = System.Diagnostics.Stopwatch.StartNew();
+#endif
+            benchmark.IterationSetup();
             benchmark.CallFakeServiceWithoutMetrics();
+            benchmark.IterationCleanup();
+#if DEBUG
+            actionSw.Stop();
+            elapsed = actionSw.Elapsed;
+            Console.WriteLine("\t{0}.{1}: Elapsed time {2}", benchmark.GetType().Name, nameof(MetricsBenchmarkBase.CallFakeServiceWithoutMetrics), elapsed.ToString());
+            actionSw = System.Diagnostics.Stopwatch.StartNew();
+#endif
+            benchmark.IterationSetup();
             benchmark.CallUnmetrifiedFakeService();
+            benchmark.IterationCleanup();
+#if DEBUG
+            actionSw.Stop();
+            elapsed = actionSw.Elapsed;
+            Console.WriteLine("\t{0}.{1}: Elapsed time {2}", benchmark.GetType().Name, nameof(MetricsBenchmarkBase.CallUnmetrifiedFakeService), elapsed.ToString());
+            actionSw = System.Diagnostics.Stopwatch.StartNew();
+#endif
+            benchmark.IterationSetup();
+            await benchmark.CallFakeServiceAsync();
+            benchmark.IterationCleanup();
+#if DEBUG
+            actionSw.Stop();
+            elapsed = actionSw.Elapsed;
+            Console.WriteLine("\t{0}.{1}: Elapsed time {2}", benchmark.GetType().Name, nameof(MetricsBenchmarkBase.CallFakeServiceAsync), elapsed.ToString());
+            actionSw = System.Diagnostics.Stopwatch.StartNew();
+#endif
+            benchmark.IterationSetup();
+            await benchmark.CallFakeServiceWithoutMetricsAsync();
+            benchmark.IterationCleanup();
+#if DEBUG
+            actionSw.Stop();
+            elapsed = actionSw.Elapsed;
+            Console.WriteLine("\t{0}.{1}: Elapsed time {2}", benchmark.GetType().Name, nameof(MetricsBenchmarkBase.CallFakeServiceWithoutMetricsAsync), elapsed.ToString());
+            actionSw = System.Diagnostics.Stopwatch.StartNew();
+#endif
+            benchmark.IterationSetup();
+            await benchmark.CallUnmetrifiedFakeServiceAsync();
+            benchmark.IterationCleanup();
+#if DEBUG
+            actionSw.Stop();
+            elapsed = actionSw.Elapsed;
+            Console.WriteLine("\t{0}.{1}: Elapsed time {2}", benchmark.GetType().Name, nameof(MetricsBenchmarkBase.CallUnmetrifiedFakeServiceAsync), elapsed.ToString());
+            sw.Stop();
+            elapsed = sw.Elapsed;
+            Console.WriteLine("{0}: Elapsed time {1}", benchmark.GetType().Name, elapsed.ToString());
+#endif
             benchmark.GlobalCleanup();
         }
     }
@@ -65,11 +123,13 @@ namespace AspectSharp.Benchmarks
 
         private readonly BenchmarkRuntime _runtime;
         private readonly IEnumerable<Runtime> _runtimes;
+        private readonly bool _createScopeDuringBenchmark;
         private readonly BenchmarkCategory _category;
         private readonly IEnumerable<string> _categories;
 
-        public BenchmarkOptions(BenchmarkRuntime runtime, BenchmarkCategory category)
+        public BenchmarkOptions(bool createScopeDuringBenchmark, BenchmarkRuntime runtime, BenchmarkCategory category)
         {
+            _createScopeDuringBenchmark = createScopeDuringBenchmark;
             _runtime = runtime;
             var runtimeList = new List<Runtime>();
             foreach(var _runtime in Enum.GetValues(runtime.GetType()).Cast<Enum>().Where(runtime.HasFlag).Cast<BenchmarkRuntime>())
@@ -86,6 +146,9 @@ namespace AspectSharp.Benchmarks
                 .Select(e => e.ToString());
         }
 
+        [Option('s', "create-scope", Required = false, HelpText = "Create scope during benchmark method")]
+        public bool CreateScopeDuringBenchmark { get => _createScopeDuringBenchmark; }
+
         [Option('r', "runtime", Required = true, HelpText = "Benchmark runtime")]
         public BenchmarkRuntime Runtime { get => _runtime; }
 
@@ -99,9 +162,9 @@ namespace AspectSharp.Benchmarks
             {
                 return new List<Example>() 
                 {
-                    new Example("Run metrified methods in a single runtime", new BenchmarkOptions(BenchmarkRuntime.Net47, BenchmarkCategory.Metrified)),
-                    new Example("Run metrified and unmetrified methods in a multiple runtimes", new BenchmarkOptions(BenchmarkRuntime.Net48 | BenchmarkRuntime.Net5 | BenchmarkRuntime.Net6, BenchmarkCategory.Metrified | BenchmarkCategory.Unmetrified)),
-                    new Example("Run all methods in all supported runtimes(maybe take a lot of time)", new BenchmarkOptions(BenchmarkRuntime.All, BenchmarkCategory.All))
+                    new Example("Run metrified methods in a single runtime", new BenchmarkOptions(false, BenchmarkRuntime.Net47, BenchmarkCategory.Metrified)),
+                    new Example("Creating scope during benchmark method, run metrified and unmetrified methods in a multiple runtimes", new BenchmarkOptions(true, BenchmarkRuntime.Net48 | BenchmarkRuntime.Net5 | BenchmarkRuntime.Net6, BenchmarkCategory.Metrified | BenchmarkCategory.Unmetrified)),
+                    new Example("Run all methods in all supported runtimes(maybe take a lot of time)", new BenchmarkOptions(false, BenchmarkRuntime.All, BenchmarkCategory.All))
                 };
             }
         }
@@ -131,6 +194,11 @@ namespace AspectSharp.Benchmarks
         Metrified = 1, 
         Unmetrified = 2,
         UnmetrifiedClass = 4,
-        All = Metrified | Unmetrified | UnmetrifiedClass
+        AsyncMetrified= 8,
+        AsyncUnmetrified = 16,
+        AsyncUnmetrifiedClass = 32,
+        AllSync = Metrified | Unmetrified | UnmetrifiedClass, 
+        AllAsync = AsyncMetrified | AsyncUnmetrified | AsyncUnmetrifiedClass, 
+        All = AllSync | AllAsync
     }
 }

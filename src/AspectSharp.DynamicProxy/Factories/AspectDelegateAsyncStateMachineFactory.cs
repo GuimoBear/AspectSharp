@@ -328,9 +328,7 @@ namespace AspectSharp.DynamicProxy.Factories
 #endif
             )
             {
-                if (returnType == typeof(Task))
-                    return typeof(TaskAwaiter);
-                else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+                if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
                     return typeof(TaskAwaiter<>).MakeGenericType(returnType.GetGenericArguments());
 #if NETCOREAPP3_1_OR_GREATER
                 else if (returnType == typeof(ValueTask))
@@ -339,7 +337,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     return typeof(ValueTaskAwaiter<>).MakeGenericType(returnType.GetGenericArguments());
 #endif
             }
-            return default;
+            return typeof(TaskAwaiter);
         }
 
         private static Type GetAsyncMethodBuilderType(Type returnType)
@@ -354,9 +352,7 @@ namespace AspectSharp.DynamicProxy.Factories
 #endif
             )
             {
-                if (returnType == typeof(Task))
-                    return typeof(AsyncTaskMethodBuilder);
-                else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+                if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
                     return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments());
 #if NETCOREAPP3_1_OR_GREATER
                 else if (returnType == typeof(ValueTask))
@@ -365,7 +361,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments());
 #endif
             }
-            return default;
+            return typeof(AsyncTaskMethodBuilder);
         }
 
         private static MethodInfo GetAwaitUnsafeOnCompletedOnAsyncMethodBuilderMethod(TypeBuilder typeBuilder, FieldBuilder builderField, FieldBuilder awaiterField)

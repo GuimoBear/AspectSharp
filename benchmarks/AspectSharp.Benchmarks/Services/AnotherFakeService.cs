@@ -1,5 +1,7 @@
 ﻿using AspectSharp.Benchmarks.Services.Interfaces;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Threading.Tasks;
 
 namespace AspectSharp.Benchmarks.Services
 {
@@ -16,8 +18,22 @@ namespace AspectSharp.Benchmarks.Services
             return string.Format("Hello {0}", param);
         }
 
+        public async Task<string> SayHelloAsync(string param)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(0.005));
+            _logger.LogInformation("Another SayHello called: {0}", param);
+            return string.Format("Hello {0}", param);
+        }
+
         public string SayHelloWithoutMetrics(string param)
         {
+            _logger.LogInformation("SayHelloWithoutAspects called: {0}", param);
+            return string.Format("Hello {0}", param);
+        }
+
+        public async Task<string> SayHelloWithoutMetricsAsync(string param)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(0.005));
             _logger.LogInformation("SayHelloWithoutAspects called: {0}", param);
             return string.Format("Hello {0}", param);
         }

@@ -169,10 +169,6 @@ namespace AspectSharp.DynamicProxy.Factories
             cil.EndExceptionBlock();
             cil.MarkLabel(afterCatchLabel);
 
-            //cil.Emit(OpCodes.Ldarg_0);
-            //cil.Emit(OpCodes.Ldc_I4_S, -2);
-            //cil.Emit(OpCodes.Stfld, stateField);
-
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Ldnull);
             cil.Emit(OpCodes.Stfld, contextField);
@@ -269,14 +265,6 @@ namespace AspectSharp.DynamicProxy.Factories
             cil.Emit(OpCodes.Callvirt, _createContextMethodInfo);
             cil.Emit(OpCodes.Stfld, contextField);
 
-            /*
-	IL_0027: ldarg.0
-	IL_0028: ldfld class [AspectSharp.Abstractions]AspectSharp.Abstractions.AspectContext AspectSharp.Tests.Core.Proxies.InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturnAsyncStateMachine::_context
-	IL_002d: call class [AspectSharp.DynamicProxy]AspectSharp.DynamicProxy.InterceptDelegate AspectSharp.Tests.Core.Proxies.FakeServiceProxyPipelines::get_Pipeline10()
-	IL_0032: call class [System.Runtime]System.Threading.Tasks.Task [AspectSharp.DynamicProxy]AspectSharp.DynamicProxy.Utils.ProxyFactoryUtils::ExecutePipeline(class [AspectSharp.Abstractions]AspectSharp.Abstractions.AspectContext, class [AspectSharp.DynamicProxy]AspectSharp.DynamicProxy.InterceptDelegate)
-	IL_0037: callvirt instance valuetype [System.Runtime]System.Runtime.CompilerServices.TaskAwaiter [System.Runtime]System.Threading.Tasks.Task::GetAwaiter()
-	IL_003c: ret
-             */
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Ldfld, contextField);
             cil.Emit(OpCodes.Call, pipelineProperty.GetMethod);
@@ -361,9 +349,7 @@ namespace AspectSharp.DynamicProxy.Factories
 #endif
             )
             {
-                if (returnType == typeof(Task))
-                    return typeof(AsyncTaskMethodBuilder);
-                else if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
+                if (returnType.IsGenericType && returnType.GetGenericTypeDefinition() == typeof(Task<>))
                     return typeof(AsyncTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments());
 #if NETCOREAPP3_1_OR_GREATER
                 else if (returnType == typeof(ValueTask))
@@ -372,7 +358,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     return typeof(AsyncValueTaskMethodBuilder<>).MakeGenericType(returnType.GetGenericArguments());
 #endif
             }
-            return default;
+            return typeof(AsyncTaskMethodBuilder);
         }
 
         private static MethodInfo GetAwaitUnsafeOnCompletedOnAsyncMethodBuilderMethod(TypeBuilder typeBuilder, FieldBuilder builderField, FieldBuilder awaiterField)
@@ -474,12 +460,6 @@ namespace AspectSharp.DynamicProxy.Factories
                 cil.Emit(OpCodes.Ldloca_S, localAwaiterStateMachine.LocalIndex);
                 cil.Emit(OpCodes.Ldflda, BuilderField);
                 cil.Emit(OpCodes.Call, GetTaskGetterOnAsyncMethodBuilderMethod(BuilderField));
-
-                /*
-                 	IL_0066: ldloca.s 0
-	IL_0068: ldflda valuetype [System.Runtime]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<class [System.Runtime]System.Collections.Generic.IEnumerable`1<string>> AspectSharp.Tests.Core.Proxies.InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturnAsyncStateMachine::builder
-	IL_006d: call instance class [System.Runtime]System.Threading.Tasks.Task`1<!0> valuetype [System.Runtime]System.Runtime.CompilerServices.AsyncTaskMethodBuilder`1<class [System.Runtime]System.Collections.Generic.IEnumerable`1<string>>::get_Task()
-                 */
 
                 cil.Emit(OpCodes.Ret);
             }

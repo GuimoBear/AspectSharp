@@ -2,15 +2,11 @@
 using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Factories;
 using AspectSharp.DynamicProxy.Utils;
-using AspectSharp.Tests.Core.Proxies;
-using AspectSharp.Tests.Core.Services;
-using AspectSharp.Tests.Core.Services.Interfaces;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Factories;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;

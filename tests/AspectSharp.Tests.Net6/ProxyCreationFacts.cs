@@ -36,7 +36,8 @@ namespace AspectSharp.Tests.Net6
             proxyClass
                 .Should().NotBeNull();
 
-            proxyClass.IsAssignableTo(serviceClass);
+            serviceClass.IsAssignableFrom(proxyClass)
+                .Should().BeTrue();
         }
     }
 }

@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AspectSharp.DynamicProxy.Factories
@@ -53,7 +54,6 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 ILGenerator cil;
                 List<LocalBuilder> localVariables;
-                LocalBuilder valueTaskLocal = default;
 
                 if (pipelineProperties.TryGetValue(interfaceMethodInfo, out var pipelineProperty) &&
                     contextActivatorFields.TryGetValue(interfaceMethodInfo, out var aspectContextActivatorField))
@@ -70,10 +70,6 @@ namespace AspectSharp.DynamicProxy.Factories
                     {
                         cil = methodBuilder.GetILGenerator();
                         localVariables = new List<LocalBuilder>();
-#if NETCOREAPP3_1_OR_GREATER
-                        if (returnInfo.IsValueTask && returnInfo.IsVoid)
-                            localVariables.Add(valueTaskLocal = cil.DeclareLocal(typeof(ValueTask)));
-#endif
                         if (hasParameters)
                         {
                             localVariables.Add(cil.DeclareLocal(typeof(object[])));
@@ -115,30 +111,7 @@ namespace AspectSharp.DynamicProxy.Factories
                                 cil.Emit(OpCodes.Unbox_Any, returnInfo.Type);
                             else
                                 cil.Emit(OpCodes.Castclass, returnInfo.Type);
-                            if (returnInfo.IsAsync)
-                            {
-#if NETCOREAPP3_1_OR_GREATER
-                            if (returnInfo.IsValueTask)
-                                cil.Emit(OpCodes.Newobj, typeof(ValueTask<>).MakeGenericType(returnInfo.Type).GetConstructor(new Type[] { returnInfo.Type }));
-                            else
-#endif
-                                cil.Emit(OpCodes.Call, typeof(Task).GetMethod(nameof(Task<int>.FromResult)).MakeGenericMethod(returnInfo.Type));
-                            }
                         }
-                        else if (returnInfo.IsAsync
-#if NETCOREAPP3_1_OR_GREATER
-                        && !returnInfo.IsValueTask
-#endif
-                        )
-                            cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
-#if NETCOREAPP3_1_OR_GREATER
-                    else if (returnInfo.IsValueTask)
-                    {
-                        cil.Emit(OpCodes.Ldloca_S, 0);
-                        cil.Emit(OpCodes.Initobj, typeof(ValueTask));
-                        cil.Emit(OpCodes.Ldloc_0);
-                    }
-#endif
                         cil.Emit(OpCodes.Ret);
                     }
                     typeBuilder.DefineMethodOverride(methodBuilder, interfaceMethodInfo);
@@ -148,10 +121,6 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 cil = methodBuilder.GetILGenerator();
                 localVariables = new List<LocalBuilder>();
-#if NETCOREAPP3_1_OR_GREATER
-                if (returnInfo.IsValueTask && returnInfo.IsVoid)
-                    localVariables.Add(valueTaskLocal = cil.DeclareLocal(typeof(ValueTask)));
-#endif
                 cil.Emit(OpCodes.Ldarg_0);
                 cil.Emit(OpCodes.Ldfld, targetField);
                 if (hasParameters)

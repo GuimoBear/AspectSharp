@@ -2,18 +2,14 @@
 using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Factories;
 using AspectSharp.DynamicProxy.Utils;
-using AspectSharp.Tests.Core.Proxies;
-using AspectSharp.Tests.Core.Services;
-using AspectSharp.Tests.Core.Services.Interfaces;
+using AspectSharp.Tests.Core.Fakes;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Factories;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Xunit;
 
 namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
@@ -22,7 +18,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
     {
         [Theory]
         [MemberData(nameof(ProxyClassAspectsPipelineTheoryData))]
-        internal async Task ProxyClassAspectsPipelineExecutionTheory(Type serviceType, Type targetType, DynamicProxyFactoryConfigurations configs, IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData)
+        internal void ProxyClassAspectsPipelineExecutionTheory(Type serviceType, Type targetType, DynamicProxyFactoryConfigurations configs, IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData)
         {
             if (InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData))
             {
@@ -55,19 +51,6 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
                     }
                 }
             }
-        }
-
-        private class FakeAspectContextFactory : IAspectContextFactory
-        {
-            private readonly IServiceProvider _serviceProvider;
-
-            public AspectContext Context { get; private set; }
-
-            public FakeAspectContextFactory(IServiceProvider serviceProvider)
-                => _serviceProvider = serviceProvider;
-
-            public AspectContext CreateContext(AspectContextActivator activator, object target, object proxy, object[] parameters)
-                => Context = new ConcreteAspectContext(activator, target, proxy, parameters, _serviceProvider);
         }
 
         public static IEnumerable<object[]> ProxyClassAspectsPipelineTheoryData()

@@ -12,7 +12,7 @@ namespace AspectSharp.DynamicProxy.Utils
         public static ReturnData GetReturnInfo(this Type retType)
         {
 #if NETCOREAPP3_1_OR_GREATER
-                var isValueTask = retType == typeof(ValueTask);
+            var isValueTask = retType == typeof(ValueTask);
 #endif
             var isAsync = retType == typeof(Task)
 #if NETCOREAPP3_1_OR_GREATER

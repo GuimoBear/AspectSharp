@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "AspectSharp.Benchmarks": {
+      "commandName": "Project",
+      "commandLineArgs": "benchmark --runtime NEt6 --category AsyncMetrified --create-scope"
+    }
+  }
+}

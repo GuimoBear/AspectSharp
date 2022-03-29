@@ -17,7 +17,7 @@ namespace AspectSharp.Benchmarks
         public const int UnrollFactor = 3000;
         public const int Iterations = 20;
 
-        public Config(IFilter filter)
+        public Config(IFilter filter, bool createScopeDuringBenchmark)
         {
             AddLogger(ConsoleLogger.Default);
 
@@ -42,6 +42,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(ClrRuntime.Net462)
@@ -49,6 +50,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(ClrRuntime.Net47)
@@ -56,6 +58,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(ClrRuntime.Net472)
@@ -63,6 +66,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(ClrRuntime.Net48)
@@ -70,6 +74,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(CoreRuntime.Core31)
@@ -77,6 +82,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(CoreRuntime.Core50)
@@ -84,6 +90,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             AddJob(Job.Default
                    .WithRuntime(CoreRuntime.Core60)
@@ -91,6 +98,7 @@ namespace AspectSharp.Benchmarks
                    .WithWarmupCount(2)
                    .WithUnrollFactor(UnrollFactor)
                    .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;

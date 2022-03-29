@@ -15,6 +15,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
     {
         public static IEnumerable<Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>> GetInterceptorTypeDataTheoryData()
         {
+            yield return GetInterceptorTypeDataWithInterfaceContainingAllScenarios();
             yield return GetInterceptorTypeDataUsingDefaultConfigs();
             yield return GetInterceptorTypeDataWithInterceptOnAddEvent();
             yield return GetInterceptorTypeDataWithInterceptOnRemoveEvent();
@@ -24,7 +25,6 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             yield return GetInterceptorTypeDataWithInterceptOnAnyPropertyMethod();
             yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
             yield return GetInterceptorTypeDataWithUninspectedInterface();
-            yield return GetInterceptorTypeDataWithInterfaceContainingAllScenarios();
         }
 
         private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigs()

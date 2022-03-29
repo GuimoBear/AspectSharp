@@ -16,6 +16,9 @@
       <_Parameter1>AspectSharp.Tests.Net5</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
+      <_Parameter1>AspectSharp.Tests.Net6</_Parameter1>
+    </AssemblyAttribute>
+    <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
       <_Parameter1>AspectSharp.Tests.NetCore31</_Parameter1>
     </AssemblyAttribute>
 

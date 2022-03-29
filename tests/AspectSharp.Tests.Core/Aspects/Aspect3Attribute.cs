@@ -13,7 +13,8 @@ namespace AspectSharp.Tests.Core.Aspects
 
         public override async Task Invoke(AspectContext context, AspectDelegate next)
         {
-            var key = string.Format("{0}: {1} {2}", _aspectName, InterceptMoment.Before.ToString().ToLower(), context.ServiceMethod.Name);
+            var methodName = context.ServiceMethod.Name;
+            var key = string.Format("{0}: {1} {2}", _aspectName, InterceptMoment.Before.ToString().ToLower(), methodName);
             int count = 1;
             if (context.AdditionalData.TryGetValue(key, out var value))
             {

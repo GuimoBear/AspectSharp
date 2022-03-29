@@ -2,6 +2,7 @@
 using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Factories;
 using AspectSharp.DynamicProxy.Utils;
+using AspectSharp.Tests.Core.Fakes;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Factories;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -22,8 +23,8 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
             if (InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData))
             {
                 var proxyType = DynamicProxyFactory.Create(serviceType, targetType, interceptedTypeData, configs);
-
                 var services = new ServiceCollection();
+                
                 services
                     .AddSingleton<IAspectContextFactory, FakeAspectContextFactory>()
                     .AddSingleton(targetType)
@@ -42,27 +43,14 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
                         {
                             var aditionalDataKeys = contextFactory.Context.AdditionalData.Keys;
                             aditionalDataKeys
-                                .Should().HaveCount(expectedAditionalDataKeys.Count());
+                                .Should().HaveCount(expectedAditionalDataKeys.Count(), because: string.Format("method '{0}' should be the same number of aspects", method.Name));
 
                             foreach (var (key, expectedKey) in aditionalDataKeys.Zip(expectedAditionalDataKeys))
-                                key.Should().Be(expectedKey);
+                                key.Should().Be(expectedKey, because: string.Format("method '{0}' should be added '{1}' in aspected context, but founded {2}", method.Name, key, expectedKey));
                         }
                     }
                 }
             }
-        }
-
-        private class FakeAspectContextFactory : IAspectContextFactory
-        {
-            private readonly IServiceProvider _serviceProvider;
-
-            public AspectContext Context { get; private set; }
-
-            public FakeAspectContextFactory(IServiceProvider serviceProvider)
-                => _serviceProvider = serviceProvider;
-
-            public AspectContext CreateContext(AspectContextActivator activator, object target, object proxy, object[] parameters)
-                => Context = new ConcreteAspectContext(activator, target, proxy, parameters, _serviceProvider);
         }
 
         public static IEnumerable<object[]> ProxyClassAspectsPipelineTheoryData()

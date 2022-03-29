@@ -38,23 +38,22 @@ namespace AspectSharp.DynamicProxy.Factories
                 var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item2 == targetType);
                 TypeBuilder typeBuilder;
                 if (previouslyDefinedProxyClassFromThisTargetCount == 0)
-                    typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+                    typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Proxies.{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
                 else
-                    typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Proxy_{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
-
-                var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("{0}Pipelines", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
-                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
+                    typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Proxies.{0}Proxy{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
+                var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Pipelines.{0}", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, _proxiedClassesModuleBuilder, interceptedTypeData, configs);
 
                 var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
 
                 var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
 
-                var readonlyFields = DefineReadonlyFields(serviceType, typeBuilder).ToArray();
+                var readonlyFields = DefineReadonlyFields(targetType, typeBuilder).ToArray();
 
                 DefineConstructor(targetType, typeBuilder, readonlyFields);
 
 
-                var methods = MethodFactory.CreateMethods(serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
+                var methods = MethodFactory.CreateMethods(_proxiedClassesModuleBuilder, targetType, serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
 
                 PropertyFactory.CreateProperties(serviceType, typeBuilder, methods, readonlyFields[0]);
 
@@ -68,9 +67,9 @@ namespace AspectSharp.DynamicProxy.Factories
             }
         }
 
-        private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type serviceType, TypeBuilder typeBuilder)
+        private static IEnumerable<FieldBuilder> DefineReadonlyFields(Type targetType, TypeBuilder typeBuilder)
         {
-            yield return typeBuilder.DefineField("_target", serviceType, FieldAttributes.Private | FieldAttributes.InitOnly);
+            yield return typeBuilder.DefineField("_target", targetType, FieldAttributes.Private | FieldAttributes.InitOnly);
             yield return typeBuilder.DefineField("_contextFactory", typeof(IAspectContextFactory), FieldAttributes.Private | FieldAttributes.InitOnly);
         }
 
@@ -81,7 +80,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
             var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
             var coonstructorParameters = new Type[] { targetType, contextFactoryField.FieldType };
-            var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.Standard | CallingConventions.HasThis, coonstructorParameters);
+            var constructorBuilder = typeBuilder.DefineConstructor(attrs, CallingConventions.HasThis, coonstructorParameters);
 
             var parameters = new List<ParameterBuilder>();
             foreach (var tuple in readonlyFields.Zip(Enumerable.Range(1, readonlyFields.Length), (first, second) => new Tuple<FieldBuilder, int>(first, second)))
@@ -113,7 +112,6 @@ namespace AspectSharp.DynamicProxy.Factories
         private static ModuleBuilder NewModuleBuilder(AssemblyBuilder assemblyBuilder)
         {
             var moduleBuilder = assemblyBuilder.DefineDynamicModule("Impl");
-
             return moduleBuilder;
         }
     }

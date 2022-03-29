@@ -4,6 +4,7 @@ using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AspectSharp.Tests.Core.Proxies
@@ -135,42 +136,49 @@ namespace AspectSharp.Tests.Core.Proxies
 
         public Task<int> InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn()
         {
-            var context = _contextFactory.CreateContext(_aspectContextAtivator10, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline10).Wait();
-            return Task.FromResult((int)context.ReturnValue);
+            var stateMachine = new InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturnAsyncStateMachine
+            {
+                state = -1,
+                builder = AsyncTaskMethodBuilder<int>.Create(),
+                contextFactory = _contextFactory,
+                target = _target,
+                proxy = this
+            };
+            stateMachine.builder.Start(ref stateMachine);
+            return stateMachine.builder.Task;
         }
 
         public Task<int> DoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
             => _target.DoSomethingAsyncWithParameterAndValueTypeReturn(param1, param2, param3);
 
-        public Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
+        public async Task<int> InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator11, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline11).Wait();
-            return Task.FromResult((int)context.ReturnValue);
+            await ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline11);
+            return (int)(context.ReturnValue ?? 0);
         }
 
 #if NETCOREAPP3_1_OR_GREATER
         public ValueTask<int> DoSomethingValueAsyncWithoutParameterAndValueTypeReturn()
             => _target.DoSomethingValueAsyncWithoutParameterAndValueTypeReturn();
 
-        public ValueTask<int> InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn()
+        public async ValueTask<int> InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn()
         {
             var context = _contextFactory.CreateContext(_aspectContextAtivator12, _target, this, ProxyFactoryUtils.EmptyParameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline12).Wait();
-            return new ValueTask<int>((int)context.ReturnValue);
+            await ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline12);
+            return (int)context.ReturnValue;
         }
 
         public ValueTask<int> DoSomethingValueAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
             => _target.DoSomethingValueAsyncWithParameterAndValueTypeReturn(param1, param2, param3);
 
-        public ValueTask<int> InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
+        public async ValueTask<int> InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn(int param1, string param2, IEnumerable<string> param3)
         {
             var parameters = new object[] { param1, param2, param3 };
             var context = _contextFactory.CreateContext(_aspectContextAtivator13, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline13).Wait();
-            return new ValueTask<int>((int)context.ReturnValue);
+            await ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline13);
+            return (int)context.ReturnValue;
         }
 #endif
 
@@ -189,10 +197,19 @@ namespace AspectSharp.Tests.Core.Proxies
 
         public Task<IEnumerable<string>> InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn(int param1, string param2, IEnumerable<string> param3)
         {
-            var parameters = new object[] { param1, param2, param3 };
-            var context = _contextFactory.CreateContext(_aspectContextAtivator15, _target, this, parameters);
-            ProxyFactoryUtils.ExecutePipeline(context, FakeServiceProxyPipelines.Pipeline15).Wait();
-            return Task.FromResult((IEnumerable<string>)context.ReturnValue);
+            var stateMachine = new InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturnAsyncStateMachine
+            {
+                state = -1,
+                builder = AsyncTaskMethodBuilder<IEnumerable<string>>.Create(),
+                contextFactory = _contextFactory,
+                target = _target,
+                proxy = this, 
+                param1 = param1,
+                param2 = param2,
+                param3 = param3
+            };
+            stateMachine.builder.Start(ref stateMachine);
+            return stateMachine.builder.Task;
         }
 
 #if NETCOREAPP3_1_OR_GREATER
@@ -218,28 +235,28 @@ namespace AspectSharp.Tests.Core.Proxies
         }
 #endif
 
-        private static readonly AspectContextActivator _aspectContextAtivator1;
-        private static readonly AspectContextActivator _aspectContextAtivator2;
-        private static readonly AspectContextActivator _aspectContextAtivator3;
+        internal static readonly AspectContextActivator _aspectContextAtivator1;
+        internal static readonly AspectContextActivator _aspectContextAtivator2;
+        internal static readonly AspectContextActivator _aspectContextAtivator3;
 #if NETCOREAPP3_1_OR_GREATER
-        private static readonly AspectContextActivator _aspectContextAtivator4;
-        private static readonly AspectContextActivator _aspectContextAtivator5;
+        internal static readonly AspectContextActivator _aspectContextAtivator4;
+        internal static readonly AspectContextActivator _aspectContextAtivator5;
 #endif
-        private static readonly AspectContextActivator _aspectContextAtivator6;
-        private static readonly AspectContextActivator _aspectContextAtivator7;
-        private static readonly AspectContextActivator _aspectContextAtivator8;
-        private static readonly AspectContextActivator _aspectContextAtivator9;
-        private static readonly AspectContextActivator _aspectContextAtivator10;
-        private static readonly AspectContextActivator _aspectContextAtivator11;
+        internal static readonly AspectContextActivator _aspectContextAtivator6;
+        internal static readonly AspectContextActivator _aspectContextAtivator7;
+        internal static readonly AspectContextActivator _aspectContextAtivator8;
+        internal static readonly AspectContextActivator _aspectContextAtivator9;
+        internal static readonly AspectContextActivator _aspectContextAtivator10;
+        internal static readonly AspectContextActivator _aspectContextAtivator11;
 #if NETCOREAPP3_1_OR_GREATER
-        private static readonly AspectContextActivator _aspectContextAtivator12;
-        private static readonly AspectContextActivator _aspectContextAtivator13;
+        internal static readonly AspectContextActivator _aspectContextAtivator12;
+        internal static readonly AspectContextActivator _aspectContextAtivator13;
 #endif
-        private static readonly AspectContextActivator _aspectContextAtivator14;
-        private static readonly AspectContextActivator _aspectContextAtivator15;
+        internal static readonly AspectContextActivator _aspectContextAtivator14;
+        internal static readonly AspectContextActivator _aspectContextAtivator15;
 #if NETCOREAPP3_1_OR_GREATER
-        private static readonly AspectContextActivator _aspectContextAtivator16;
-        private static readonly AspectContextActivator _aspectContextAtivator17;
+        internal static readonly AspectContextActivator _aspectContextAtivator16;
+        internal static readonly AspectContextActivator _aspectContextAtivator17;
 #endif
 
         static FakeServiceProxy()

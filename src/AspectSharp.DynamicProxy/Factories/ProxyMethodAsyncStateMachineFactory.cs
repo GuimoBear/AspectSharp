@@ -39,7 +39,7 @@ namespace AspectSharp.DynamicProxy.Factories
             DefineMoveNext(typeBuilder, methodInfo, stateField, builderField, targetField, proxyField, originContextActivatorField, contextFactoryField, contextField, parameterFields, pipelineProperty, awaiterField);
             DefineSetStateMachine(typeBuilder, builderField);
 
-            var awaiterType = typeBuilder.CreateType();
+            var awaiterType = typeBuilder.CreateTypeInfo().AsType();
 
             return new GeneratedAsyncStateMachine(awaiterType, stateField, builderField, targetField, proxyField, contextFactoryField, parameterFields);
         }

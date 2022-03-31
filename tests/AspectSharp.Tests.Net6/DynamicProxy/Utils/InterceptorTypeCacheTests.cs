@@ -32,10 +32,10 @@ namespace AspectSharp.Tests.Net6.DynamicProxy.Utils
                 interceptedTypeData.IsIntercepted
                     .Should().Be(expectedIsIntercepted);
 
-                interceptedTypeData.Interceptors
+                interceptedTypeData.InterceptorAttributes
                     .Should().HaveCount(expectedInterceptors.Count());
 
-                foreach (var (kvp, expectedKvp) in interceptedTypeData.Interceptors.Zip(expectedInterceptors))
+                foreach (var (kvp, expectedKvp) in interceptedTypeData.InterceptorAttributes.Zip(expectedInterceptors))
                 {
                     var (key, values) = kvp;
                     var (expectedKey, expectedValues) = expectedKvp;

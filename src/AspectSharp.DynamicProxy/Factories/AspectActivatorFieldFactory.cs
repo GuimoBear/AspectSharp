@@ -43,7 +43,8 @@ namespace AspectSharp.DynamicProxy.Factories
             foreach (var interfaceMethodInfo in methods)
             {
                 var methodInfo = targetType.GetMethod(interfaceMethodInfo.Name, interfaceMethodInfo.GetParameters().Select(pi => pi.ParameterType).ToArray());
-                if (interceptedTypeData.TryGetMethodInterceptors(interfaceMethodInfo, out _))
+                if (interceptedTypeData.TryGetMethodInterceptorAttributes(interfaceMethodInfo, out _) ||
+                    interceptedTypeData.TryGetMethodGlobalInterceptors(interfaceMethodInfo, out _))
                 {
                     var field = typeBuilder.DefineField(string.Format("_aspectContextAtivator{0}", index), typeof(AspectContextActivator), FieldAttributes.Public | FieldAttributes.Static | FieldAttributes.InitOnly);
 

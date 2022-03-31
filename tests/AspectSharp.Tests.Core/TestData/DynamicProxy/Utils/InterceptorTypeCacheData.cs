@@ -108,7 +108,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, default, default),
+                new DynamicProxyFactoryConfigurations(default, default, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -196,7 +196,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.Add, default, default),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.Add, default, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -288,7 +288,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.Remove, default, default),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.Remove, default, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -381,7 +381,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, default, default),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, default, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -469,7 +469,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.Get, default),
+                new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.Get, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -561,7 +561,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.Set, default),
+                new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.Set, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -654,7 +654,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.All, default),
+                new DynamicProxyFactoryConfigurations(default, InterceptedPropertyMethod.All, default, default),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -737,11 +737,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     typeDefinitionInterceptors
                 }
             };
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, default, true),
+                new DynamicProxyFactoryConfigurations(default, default, true, globalAspects),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -755,7 +759,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, default, default),
+                new DynamicProxyFactoryConfigurations(default, default, default, default),
                 false,
                 null
             );
@@ -769,7 +773,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(default, default, default),
+                new DynamicProxyFactoryConfigurations(default, default, default, default),
                 false,
                 null
             );
@@ -1006,11 +1010,16 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 }
 #endif
             };
+
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false, globalAspects),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );

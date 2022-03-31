@@ -24,6 +24,13 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                 IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData = new Dictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>();
                 foreach(var methodInfo in serviceType.GetMethods())
                 {
+                    var globalInterceptors = new List<IInterceptor>();
+                    foreach (var globalInterceptorConfig in configs.GlobalInterceptors)
+                    {
+                        if (globalInterceptorConfig.TryGetInterceptor(methodInfo, out var interceptor))
+                            globalInterceptors.Add(interceptor);
+                    }
+
                     var parameters = methodInfo.GetParameters().Select(p => p.ParameterType.GetDefault()).ToArray();
 
                     Action<object> action = proxyInstance =>
@@ -62,32 +69,34 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                     };
 
                     var aspectContextAditionalInfo = new List<string>();
-                    if (!(interceptorDictionary is null) && interceptorDictionary.TryGetValue(methodInfo, out var interceptors))
-                    {
-                        var beforeInterceptorKey = new Dictionary<string, int>();
+                    IEnumerable<CustomAttributeData> interceptors = default;
+                    interceptorDictionary?.TryGetValue(methodInfo, out interceptors);
+                    //if (!)
+                    //{
+                    var beforeInterceptorKey = new Dictionary<string, int>();
                         var afterInterceptorKey = new Dictionary<string, int>();
-                        foreach (var interceptor in interceptors)
+                        foreach (var interceptor in (globalInterceptors.Select(interceptor => interceptor.GetType()) ?? Enumerable.Empty<Type>()).Concat(( interceptors?.Select(attr => attr.AttributeType) ?? Enumerable.Empty<Type>())))
                         {
-                            var key = string.Format("{0}: {1} {2}", interceptor.AttributeType.Name, InterceptMoment.Before.ToString().ToLower(), methodInfo.Name);
+                            var key = string.Format("{0}: {1} {2}", interceptor.Name, InterceptMoment.Before.ToString().ToLower(), methodInfo.Name);
                             int count = 1;
                             if (beforeInterceptorKey.TryGetValue(key, out var value))
                             {
                                 count += value;
                                 beforeInterceptorKey[key] = count;
                             }
-                            beforeInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.AttributeType.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.Before.ToString().ToLower(), methodInfo.Name), count);
+                            beforeInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.Before.ToString().ToLower(), methodInfo.Name), count);
 
-                            key = string.Format("{0}: {1} {2}", interceptor.AttributeType.Name, InterceptMoment.After.ToString().ToLower(), methodInfo.Name);
+                            key = string.Format("{0}: {1} {2}", interceptor.Name, InterceptMoment.After.ToString().ToLower(), methodInfo.Name);
                             count = 1;
                             if (afterInterceptorKey.TryGetValue(key, out value))
                             {
                                 count += value;
                                 afterInterceptorKey[key] = count;
                             }
-                            afterInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.AttributeType.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.After.ToString().ToLower(), methodInfo.Name), count);
+                            afterInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.After.ToString().ToLower(), methodInfo.Name), count);
                         }
                         aspectContextAditionalInfo.AddRange(beforeInterceptorKey.Keys.Concat(afterInterceptorKey.Keys.Reverse()));
-                    }
+                    //}
                     methodCallData.Add(methodInfo, new Tuple<Action<object>, IEnumerable<string>>(action, aspectContextAditionalInfo));
                 }
 

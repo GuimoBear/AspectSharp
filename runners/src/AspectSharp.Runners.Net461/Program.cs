@@ -30,9 +30,6 @@ namespace AspectSharp.Runners.Net461
             services
                 .AddLogging(logging => logging.AddConsole().SetMinimumLevel(LogLevel.Debug))
                 .AddTransient<IAspectContextFactory, AspectContextFactory>()
-                .AddSingleton<Aspect1Attribute>()
-                .AddSingleton<Aspect2Attribute>()
-                .AddSingleton<Aspect3Attribute>()
                 .AddScoped<FakeService>()
                 .AddScoped(typeof(IFakeService), proxyType);
 

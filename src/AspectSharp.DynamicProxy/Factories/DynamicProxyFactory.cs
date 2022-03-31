@@ -27,9 +27,10 @@ namespace AspectSharp.DynamicProxy.Factories
                 throw new NotInterfaceTypeException(serviceType);
 
             configs = configs ?? new DynamicProxyFactoryConfigurations(
-                Configurations.IncludeTypeDefinitionAspectsToEvents,
-                Configurations.IncludeTypeDefinitionAspectsToProperties,
-                Configurations.ExcludeTypeDefinitionAspectsForMethods);
+                Configurations.IncludeAspectsToEvents,
+                Configurations.IncludeAspectsToProperties,
+                Configurations.ExcludeAspectsForMethods, 
+                Configurations.GlobalInterceptors);
             if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), out var type))
                 return type.Item1;
 
@@ -44,7 +45,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Pipelines.{0}", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
                 var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, _proxiedClassesModuleBuilder, interceptedTypeData, configs);
 
-                var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateType();
+                var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateTypeInfo().AsType();
 
                 var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
 
@@ -61,7 +62,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 typeBuilder.AddInterfaceImplementation(serviceType);
 
-                var concreteType = typeBuilder.CreateType();
+                var concreteType = typeBuilder.CreateTypeInfo().AsType();
                 _cachedProxyTypes.Add(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), new Tuple<Type, Type>(concreteType, concretePipelineType));
                 return concreteType;
             }

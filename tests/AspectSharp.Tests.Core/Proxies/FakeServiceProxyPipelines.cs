@@ -39,7 +39,7 @@ namespace AspectSharp.Tests.Core.Proxies
         {
             var serviceType = typeof(IFakeService);
             AspectDelegate aspectDelegate = default;
-            AbstractInterceptorAttribute[] aspectsFromDelegate = default;
+            IInterceptor[] aspectsFromDelegate = default;
 
             aspectDelegate = AspectDelegate1;
             aspectsFromDelegate = ProxyFactoryUtils.GetInterceptors(serviceType, -1349792768, 43942917);

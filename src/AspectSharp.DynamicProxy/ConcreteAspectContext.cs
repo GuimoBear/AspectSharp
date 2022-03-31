@@ -7,6 +7,8 @@ namespace AspectSharp.DynamicProxy
 {
     internal sealed class ConcreteAspectContext : AspectContext
     {
+        public override MemberTypes MemberType { get; }
+
         public override Type ServiceType { get; }
 
         public override MethodInfo ServiceMethod { get; }
@@ -38,6 +40,7 @@ namespace AspectSharp.DynamicProxy
             object[] parameters,
             IServiceProvider serviceProvider)
         {
+            MemberType = activator.MemberType;
             ServiceType = activator.ServiceType;
             ServiceMethod = activator.ServiceMethod;
             ProxyType = activator.ProxyType;

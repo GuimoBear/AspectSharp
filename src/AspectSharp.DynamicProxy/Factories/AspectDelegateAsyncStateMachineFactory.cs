@@ -31,7 +31,7 @@ namespace AspectSharp.DynamicProxy.Factories
             DefineMoveNext(typeBuilder, methodInfo, stateField, builderField, contextField, contextWrapField, awaiterField);
             DefineSetStateMachine(typeBuilder, builderField);
 
-            var awaiterType = typeBuilder.CreateType();
+            var awaiterType = typeBuilder.CreateTypeInfo().AsType();
 
             return new GeneratedAsyncStateMachine(callerMethod, awaiterType, stateField, builderField, contextField);
         }
@@ -229,20 +229,25 @@ namespace AspectSharp.DynamicProxy.Factories
                 cil.Emit(OpCodes.Stfld, contextWrapField);
             }
 
+            cil.Emit(OpCodes.Ldarg_0);
+            cil.Emit(OpCodes.Ldfld, contextField);
+            cil.Emit(OpCodes.Ldc_I4_1);
+            cil.Emit(OpCodes.Callvirt, _setTargetMethodCalledMethodInfo);
+
             foreach (var parameter in parameters)
                 cil.Emit(OpCodes.Ldloc, parameter.LocalIndex);
             cil.Emit(OpCodes.Callvirt, methodInfo);
 
 #if NETCOREAPP3_1_OR_GREATER
-        if (returnInfo.IsValueTask)
-        {
-            cil.Emit(OpCodes.Stloc_S, localValueTask.LocalIndex);
-            cil.Emit(OpCodes.Ldloca_S, localValueTask.LocalIndex);
-            cil.Emit(OpCodes.Call, methodInfo.ReturnType.GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes));
-        }
-        else
+            if (returnInfo.IsValueTask)
+            {
+                cil.Emit(OpCodes.Stloc_S, localValueTask.LocalIndex);
+                cil.Emit(OpCodes.Ldloca_S, localValueTask.LocalIndex);
+                cil.Emit(OpCodes.Call, methodInfo.ReturnType.GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes));
+            }
+            else
 #endif
-            cil.Emit(OpCodes.Callvirt, methodInfo.ReturnType.GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes));
+                cil.Emit(OpCodes.Callvirt, methodInfo.ReturnType.GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes));
             cil.Emit(OpCodes.Ret);
             return methodBuilder;
         }
@@ -463,6 +468,8 @@ namespace AspectSharp.DynamicProxy.Factories
 
         private static readonly MethodInfo _getTargetMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Target)).GetGetMethod();
         private static readonly MethodInfo _getParametersMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Parameters)).GetGetMethod();
+
+        private static readonly MethodInfo _setTargetMethodCalledMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.TargetMethodCalled)).GetSetMethod(true);
 
         //private static readonly MethodInfo _setStateMachineOnBuilderMethod = _taskMethodBuilderType.GetMethod(nameof(AsyncTaskMethodBuilder.SetStateMachine));
         //private static readonly MethodInfo _setExceptionOnBuilderMethod = _taskMethodBuilderType.GetMethod(nameof(AsyncTaskMethodBuilder.SetException));

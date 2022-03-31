@@ -22,6 +22,8 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _getParametersMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Parameters)).GetGetMethod();
         private static readonly MethodInfo _waitTaskMethodInfo = typeof(Task).GetMethod(nameof(Task.Wait), Array.Empty<Type>());
         private static readonly MethodInfo _setReturnValueMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.ReturnValue)).GetSetMethod();
+
+        private static readonly MethodInfo _setTargetMethodCalledMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.TargetMethodCalled)).GetSetMethod(true);
 #if NETCOREAPP3_1_OR_GREATER
         private static readonly MethodInfo _asTaskValueTaskMethodInfo = typeof(ValueTask).GetMethod(nameof(ValueTask.AsTask));
 #endif
@@ -29,7 +31,6 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly Type _exceptionType = typeof(Exception);
 
         private static readonly Type _interceptDelegateType = typeof(InterceptDelegate);
-        private static readonly Type _abstractInterceptorAttributeType = typeof(AbstractInterceptorAttribute);
 
         private static readonly MethodInfo _createPipelineMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.CreatePipeline), new Type[] { typeof(AspectDelegate), typeof(AbstractInterceptorAttribute[]) });
         private static readonly MethodInfo _getInterceptorsMethodInfo = typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.GetInterceptors), new Type[] { typeof(Type), typeof(int), typeof(int) });
@@ -65,7 +66,8 @@ namespace AspectSharp.DynamicProxy.Factories
             foreach (var interfaceMethodInfo in methods)
             {
                 var methodInfo = targetType.GetMethod(interfaceMethodInfo.Name, interfaceMethodInfo.GetParameters().Select(pi => pi.ParameterType).ToArray());
-                if (interceptedTypeData.TryGetMethodInterceptors(interfaceMethodInfo, out _))
+                if (interceptedTypeData.TryGetMethodInterceptorAttributes(interfaceMethodInfo, out _) ||
+                    interceptedTypeData.TryGetMethodGlobalInterceptors(interfaceMethodInfo, out _))
                 {
                     var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, moduleBuilder, staticCil, interfaceMethodInfo, methodInfo, configs, index);
 
@@ -139,6 +141,11 @@ namespace AspectSharp.DynamicProxy.Factories
                     cil.Emit(OpCodes.Ldarg_0);
                     cil.Emit(OpCodes.Ldloc_0);
                 }
+
+                cil.Emit(OpCodes.Ldarg_0);
+                cil.Emit(OpCodes.Ldc_I4_1);
+                cil.Emit(OpCodes.Callvirt, _setTargetMethodCalledMethodInfo);
+
                 foreach (var i in Enumerable.Range(returnInfo.IsVoid ? 0 : 1, parameters.Length))
                     cil.Emit(OpCodes.Ldloc, i);
                 cil.Emit(OpCodes.Callvirt, methodInfo);

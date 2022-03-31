@@ -11,7 +11,6 @@ namespace AspectSharp.Tests.Net5.Abstractions.Attributes
         [InlineData(InterceptedEventMethod.None)]
         [InlineData(InterceptedEventMethod.Add)]
         [InlineData(InterceptedEventMethod.Remove)]
-        [InlineData(InterceptedEventMethod.Raise)]
         [InlineData(InterceptedEventMethod.All)]
         public void Given_AnEventMethodMethod_When_CreateAttribute_Then_MethodsShouldBeSetted(InterceptedEventMethod expectedMethod)
         {

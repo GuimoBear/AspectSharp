@@ -1072,11 +1072,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
             };
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false, globalAspects),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -1125,11 +1129,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
             };
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false, globalAspects),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -1181,11 +1189,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
             };
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false, globalAspects),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );
@@ -1234,11 +1246,15 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
             };
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (
                 serviceType,
                 targetType,
-                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false, globalAspects),
                 true,
                 dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
             );

@@ -25,6 +25,10 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             yield return GetInterceptorTypeDataWithInterceptOnAnyPropertyMethod();
             yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
             yield return GetInterceptorTypeDataWithUninspectedInterface();
+            yield return GetInterceptorTypeDataUsingDefaultConfigsAndGenericReferenceType();
+            yield return GetInterceptorTypeDataUsingDefaultConfigsAndGenericValueType();
+            yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericReferenceType();
+            yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericValueType();
         }
 
         private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigs()
@@ -1005,6 +1009,221 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                         .ToList()
                 }
 #endif
+            };
+            return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
+            (
+                serviceType,
+                targetType,
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                true,
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            );
+        }
+
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigsAndGenericReferenceType()
+        {
+            var serviceType = typeof(ISimpleGenericFakeService<Dictionary<string, int>>);
+            var targetType = typeof(SimpleGenericReferenceTypeFakeService);
+            var typeDefinitionInterceptors = serviceType.CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
+            {
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetGetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetSetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)),
+                    aspect1InterceptorList.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                }
+            };
+            return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
+            (
+                serviceType,
+                targetType,
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                true,
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            );
+        }
+        
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigsAndGenericValueType()
+        {
+            var serviceType = typeof(ISimpleGenericFakeService<int>);
+            var targetType = typeof(SimpleGenericValueTypeFakeService);
+            var typeDefinitionInterceptors = serviceType.CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
+            {
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetGetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetSetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)),
+                    aspect1InterceptorList.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                }
+            };
+            return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
+            (
+                serviceType,
+                targetType,
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                true,
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            );
+        }
+
+
+
+
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericReferenceType()
+        {
+            var serviceType = typeof(ISimpleGenericFakeService<List<int>>);
+            var targetType = typeof(SimpleInheritedGenericReferenceTypeFakeService<List<int>, int>);
+            var typeDefinitionInterceptors = serviceType.CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
+            {
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetGetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetSetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)),
+                    aspect1InterceptorList.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                }
+            };
+            return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
+            (
+                serviceType,
+                targetType,
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false),
+                true,
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            );
+        }
+
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericValueType()
+        {
+            var serviceType = typeof(ISimpleGenericFakeService<int>);
+            var targetType = typeof(SimpleInheritedGenericValueTypeFakeService<int>);
+            var typeDefinitionInterceptors = serviceType.CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
+            {
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetGetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetGetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value)).GetSetMethod(),
+                    typeDefinitionInterceptors.Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                        .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))
+                        .Concat(serviceType.GetProperty(nameof(ISimpleGenericFakeService<int>.Value))
+                            .GetSetMethod()
+                            .CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))))
+                        .ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.GetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)),
+                    aspect1InterceptorList.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.SetValue)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                }
             };
             return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
             (

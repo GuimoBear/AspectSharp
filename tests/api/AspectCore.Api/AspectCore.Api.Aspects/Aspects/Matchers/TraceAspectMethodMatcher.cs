@@ -15,11 +15,11 @@ namespace AspectCore.Api.Trace.Aspects.Matchers
         public bool Interceptable(MethodInfo methodInfo)
             => _assemblesToIntercept.Contains(methodInfo.DeclaringType?.Assembly);
 
-        private static readonly IEnumerable<Assembly> _assemblesToIntercept = new List<Assembly>
+        private static readonly IEnumerable<Assembly> _assemblesToIntercept = new HashSet<Assembly>(new List<Assembly>
         {
             typeof(WeatherForecast).Assembly,
             typeof(CityRepository).Assembly,
             typeof(Delay).Assembly
-        };
+        });
     }
 }

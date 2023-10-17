@@ -21,7 +21,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         {
             var serviceType = typeof(IService);
             var targetType = typeof(Service);
-            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false);
+            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData);
 
@@ -53,7 +53,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         {
             var serviceType = typeof(IService);
             var targetType = typeof(Service);
-            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false);
+            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData);
 
@@ -85,7 +85,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         {
             var serviceType = typeof(IService);
             var targetType = typeof(Service);
-            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false);
+            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData);
 

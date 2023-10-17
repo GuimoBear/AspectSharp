@@ -1,10 +1,13 @@
 ﻿using System;
+using System.Linq;
 using System.Reflection;
 
 namespace AspectSharp.DynamicProxy
 {
     public sealed class AspectContextActivator
     {
+        public MemberTypes MemberType { get; }
+
         public Type ServiceType { get; }
 
         public MethodInfo ServiceMethod { get; }
@@ -31,6 +34,15 @@ namespace AspectSharp.DynamicProxy
             ProxyMethod = proxyMethod;
             TargetType = targetType;
             TargetMethod = TtrgetMethod;
+
+            MemberType = MemberTypes.Method;
+            if (ServiceMethod.IsSpecialName)
+            {
+                if (!(ServiceType.GetProperties().FirstOrDefault(prop => prop.GetGetMethod() == ServiceMethod || prop.GetSetMethod() == ServiceMethod) is null))
+                    MemberType = MemberTypes.Property;
+                else if (!(ServiceType.GetEvents().FirstOrDefault(evt => evt.GetAddMethod() == ServiceMethod || evt.GetRemoveMethod() == ServiceMethod) is null))
+                    MemberType = MemberTypes.Event;
+            }
         }
     }
 }

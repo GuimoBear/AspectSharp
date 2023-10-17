@@ -8,7 +8,6 @@ namespace AspectSharp.Abstractions.Enums
         None = 0,
         Add = 1,
         Remove = 2,
-        Raise = 4,
-        All = Add | Remove | Raise
+        All = Add | Remove
     }
 }

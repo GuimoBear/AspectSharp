@@ -6,6 +6,8 @@ namespace AspectSharp.Abstractions
 {
     public abstract class AspectContext
     {
+        public abstract MemberTypes MemberType { get; }
+
         public abstract Type ServiceType { get; }
 
         public abstract MethodInfo ServiceMethod { get; }
@@ -29,5 +31,8 @@ namespace AspectSharp.Abstractions
         public abstract IDictionary<string, object> AdditionalData { get; }
 
         public abstract object ReturnValue { get; set; }
+
+        public bool TargetMethodCalled { get; internal set; }
+
     }
 }

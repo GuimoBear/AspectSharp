@@ -34,11 +34,11 @@ namespace AspectSharp.DynamicProxy.Utils
         public static Task ExecutePipeline(AspectContext context, InterceptDelegate pipeline)
             => pipeline(context, EmptyAspectDelegate);
 
-        public static AspectContextActivator NewContextActivator(Type serviceType, Type proxyType, Type targetType, string methodName, Type[] parameterTypes = default)
+        public static AspectContextActivator NewContextActivator(Type serviceType, Type proxyType, Type targetType, string methodName, Type[] parameterTypes = default, string[] parameterNames = default, bool[] parametersIsRefOrOut = default)
         {
-            var serviceMethod = serviceType.GetMethod(methodName, parameterTypes ?? Array.Empty<Type>());
-            var proxyMethod = proxyType.GetMethod(methodName, parameterTypes ?? Array.Empty<Type>());
-            var targetMethod = targetType.GetMethod(methodName, parameterTypes ?? Array.Empty<Type>());
+            var serviceMethod = serviceType.GetMethodExactly(methodName, parameterTypes ?? Array.Empty<Type>(), parameterNames ?? Array.Empty<string>(), parametersIsRefOrOut ?? Array.Empty<bool>());
+            var proxyMethod = proxyType.GetMethodExactly(methodName, parameterTypes ?? Array.Empty<Type>(), parameterNames ?? Array.Empty<string>(), parametersIsRefOrOut ?? Array.Empty<bool>());
+            var targetMethod = targetType.GetMethodExactly(methodName, parameterTypes ?? Array.Empty<Type>(), parameterNames ?? Array.Empty<string>(), parametersIsRefOrOut ?? Array.Empty<bool>());
 
             return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
         }
@@ -50,7 +50,7 @@ namespace AspectSharp.DynamicProxy.Utils
             if (!InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, previouslyUsedConfigurationsHashCode, out var interceptedTypeData))
                 return Array.Empty<AbstractInterceptorAttribute>();
 
-            var methodInfo = serviceType.GetMethods().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode);
+            var methodInfo = serviceType.GetMethodsRecursively().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode);
             if (methodInfo is null)
                 return Array.Empty<AbstractInterceptorAttribute>();
 
@@ -67,11 +67,11 @@ namespace AspectSharp.DynamicProxy.Utils
                     typeDefinitionAttributes.Add(new Tuple<CustomAttributeData, AbstractInterceptorAttribute>(interceptorData, interceptorInstance as AbstractInterceptorAttribute));
             }
             var eventInfo = serviceType
-                .GetEvents()
+                .GetEventsRecursively()
                 .FirstOrDefault(evt => evt.GetAddMethod() == methodInfo ||
                                        evt.GetRemoveMethod() == methodInfo);
             var propertyInfo = serviceType
-                .GetProperties()
+                .GetPropertiesRecursively()
                 .FirstOrDefault(pi => pi.GetGetMethod() == methodInfo ||
                                       pi.GetSetMethod() == methodInfo);
             var methodAttributes = new List<Tuple<CustomAttributeData, AbstractInterceptorAttribute>>();

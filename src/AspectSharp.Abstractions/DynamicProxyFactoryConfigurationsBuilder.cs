@@ -12,6 +12,7 @@ namespace AspectSharp.Abstractions
         private InterceptedPropertyMethod _includeAspectsToProperties;
         private bool _excludeAspectsForMethods;
         private ICollection<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig> _globalInterceptor = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>();
+        private bool _ignoreErrorsWhileTryingInjectAspects;
 
         public IDynamicProxyFactoryConfigurationsBuilder IncludeAspectsToEvents(InterceptedEventMethod eventMethodsToIntercept = InterceptedEventMethod.All)
         {
@@ -37,7 +38,8 @@ namespace AspectSharp.Abstractions
                 _includeAspectsToEvents, 
                 _includeAspectsToProperties, 
                 _excludeAspectsForMethods, 
-                _globalInterceptor);
+                _globalInterceptor,
+                _ignoreErrorsWhileTryingInjectAspects);
         }
 
         public IDynamicProxyFactoryConfigurationsBuilder WithInterceptor<TInterceptor>() where TInterceptor : class, IInterceptor, new()
@@ -65,6 +67,12 @@ namespace AspectSharp.Abstractions
             var configurations = new InterceptorConfig<TInterceptor>(instance);
             configure(configurations);
             _globalInterceptor.Add(new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(configurations.Interceptor, configurations));
+            return this;
+        }
+
+        public IDynamicProxyFactoryConfigurationsBuilder IgnoreErrorsWhileTryingInjectAspects()
+        {
+            _ignoreErrorsWhileTryingInjectAspects = true;
             return this;
         }
     }

@@ -1,6 +1,7 @@
 ﻿using AspectCore.Api.Trace.ValueObjects;
 using AspectSharp.Abstractions;
 using Microsoft.Extensions.DependencyInjection;
+using System.Threading.Tasks;
 
 namespace AspectCore.Api.Trace.Aspects
 {
@@ -18,11 +19,21 @@ namespace AspectCore.Api.Trace.Aspects
             var parent = traceContext.Data;
             traceContext.Data = current;
 
-            using (current.Start())
+            try
             {
-                await next(context);
+
+                using (current.Start())
+                {
+                    await next(context);
+                }
+                traceContext.Data = parent;
             }
-            traceContext.Data = parent;
+            catch
+            {
+                traceContext.Data = parent;
+
+                throw;
+            }
         }
     }
 }

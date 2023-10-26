@@ -30,12 +30,12 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                         if (globalInterceptorConfig.TryGetInterceptor(methodInfo, out var interceptor))
                             globalInterceptors.Add(interceptor);
                     }
+                    var methodName = methodInfo.Name;
 
                     var parameters = methodInfo.GetParameters().Select(p => p.ParameterType.GetDefault()).ToArray();
 
                     Action<object> action = proxyInstance =>
                     {
-                        var methodName = methodInfo.Name;
                         try
                         {
                             var ret = methodInfo.Invoke(proxyInstance, parameters);
@@ -65,7 +65,6 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                         {
                             throw;
                         }
-
                     };
 
                     var aspectContextAditionalInfo = new List<string>();
@@ -111,7 +110,9 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
         }
         private static object GetDefault(this Type type)
         {
-            if (type.IsValueType)
+            if (type.IsByRef && type.IsAutoLayout && type.Name.EndsWith("&"))
+                return GetDefault(type.GetElementType());
+            else if (type.IsValueType)
                 return Activator.CreateInstance(type);
             else if (type == typeof(string))
                 return "";

@@ -56,7 +56,8 @@ namespace AspectSharp.DynamicProxy.Utils
                     Configurations.IncludeAspectsToEvents,
                     Configurations.IncludeAspectsToProperties,
                     Configurations.ExcludeAspectsForMethods,
-                    Configurations.GlobalInterceptors.ToList());
+                    Configurations.GlobalInterceptors.ToList(),
+                    Configurations.IgnoreErrorsWhileTryingInjectAspects);
                 if (_cachedTypes.TryGetValue(new Tuple<Type, int>(type, configs.GetHashCode()), out interceptedTypeData))
                     return true;
 
@@ -71,7 +72,7 @@ namespace AspectSharp.DynamicProxy.Utils
                         .ToList();
 
                 var methodInterceptorDictionary = type
-                    .GetMethods()
+                    .GetMethodsRecursively()
                         .Where(mi => configs.GlobalInterceptors.Any() ||
                                      typeDefinitionAttributes.Any() || 
                                      mi.CustomAttributes.Any(attr => _abstractInterceptorType.IsAssignableFrom(attr.AttributeType)))
@@ -79,8 +80,8 @@ namespace AspectSharp.DynamicProxy.Utils
 
                 if (methodInterceptorDictionary.Any())
                 {
-                    var properties = type.GetProperties();
-                    var events = type.GetEvents();
+                    var properties = type.GetPropertiesRecursively().ToList();
+                    var events = type.GetEventsRecursively().ToList();
 
                     var globalInterceptors = new Dictionary<MethodInfo, IEnumerable<IInterceptor>>();
                     var interceptors = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>();

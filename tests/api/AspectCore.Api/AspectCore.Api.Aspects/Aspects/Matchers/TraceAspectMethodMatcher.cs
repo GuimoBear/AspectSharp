@@ -1,7 +1,9 @@
-﻿using AspectCore.Api.Domain.Responses;
-using AspectCore.Api.Infrastructure.Repositories;
-using AspectCore.Api.Utils;
+﻿//using AspectCore.Api.Domain.Responses;
+//using AspectCore.Api.Infrastructure.Repositories;
+//using AspectCore.Api.Utils;
 using AspectSharp.Abstractions.Global;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace AspectCore.Api.Trace.Aspects.Matchers
@@ -13,13 +15,22 @@ namespace AspectCore.Api.Trace.Aspects.Matchers
         private TraceAspectMethodMatcher() { }
 
         public bool Interceptable(MethodInfo methodInfo)
-            => _assemblesToIntercept.Contains(methodInfo.DeclaringType?.Assembly);
+            => methodInfo.DeclaringType.Namespace.StartsWith("Lifecycle.Core");
+        //{
+        //    if (methodInfo.DeclaringType.Namespace.StartsWith("Lifecycle.Core.Workflows") ||
+        //        methodInfo.DeclaringType.Namespace.StartsWith("Lifecycle.Core.Services"))
+        //    {
+        //        return true;
+        //    }
+        //    return false;
+        //}
 
         private static readonly IEnumerable<Assembly> _assemblesToIntercept = new HashSet<Assembly>(new List<Assembly>
         {
-            typeof(WeatherForecast).Assembly,
-            typeof(CityRepository).Assembly,
-            typeof(Delay).Assembly
+            //typeof(WeatherForecast).Assembly,
+            //typeof(CityRepository).Assembly,
+            //typeof(Delay).Assembly
+
         });
     }
 }

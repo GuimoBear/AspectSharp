@@ -1,9 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
@@ -13,9 +11,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\AspectSharp.Extensions.DependencyInjection\AspectSharp.Extensions.DependencyInjection.csproj" />
-    <ProjectReference Include="..\AspectCore.Api.Domain\AspectCore.Api.Domain.csproj" />
-    <ProjectReference Include="..\AspectCore.Api.Infrastructure\AspectCore.Api.Infrastructure.csproj" />
-    <ProjectReference Include="..\AspectCore.Api.Utils\AspectCore.Api.Utils.csproj" />
   </ItemGroup>
 
 </Project>

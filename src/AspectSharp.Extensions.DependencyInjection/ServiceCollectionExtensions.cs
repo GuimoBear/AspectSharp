@@ -26,27 +26,36 @@ namespace AspectSharp.Extensions.DependencyInjection
                 {
                     ServiceDescriptor targetServiceDescriptor = default;
                     var targetType = sd.ImplementationType;
-                    if (targetType is null && !(sd.ImplementationInstance is null))
+                    try
                     {
-                        var instance = sd.ImplementationInstance;
-                        targetType = instance.GetType();
-                        targetServiceDescriptor = new ServiceDescriptor(targetType, instance);
-                    }
-                    else if (!(sd.ImplementationFactory is null))
-                    {
-                        var instance = sd.ImplementationFactory(serviceProvider);
-                        if (!(instance is null))
+                        if (targetType is null && !(sd.ImplementationInstance is null))
                         {
+                            var instance = sd.ImplementationInstance;
                             targetType = instance.GetType();
-                            targetServiceDescriptor = new ServiceDescriptor(targetType, sd.ImplementationFactory, sd.Lifetime);
+                            targetServiceDescriptor = new ServiceDescriptor(targetType, instance);
                         }
-                        if (instance is IDisposable disposable)
-                            try { disposable.Dispose(); } catch { }
-                        else if (instance is IAsyncDisposable asyncDisposable)
-                            try { asyncDisposable.DisposeAsync().GetAwaiter().GetResult(); } catch { }
+                        else if (!(sd.ImplementationFactory is null))
+                        {
+                            var instance = sd.ImplementationFactory(serviceProvider);
+                            if (!(instance is null))
+                            {
+                                targetType = instance.GetType();
+                                targetServiceDescriptor = new ServiceDescriptor(targetType, sd.ImplementationFactory, sd.Lifetime);
+                            }
+                            if (instance is IDisposable disposable)
+                                try { disposable.Dispose(); } catch { }
+                            else if (instance is IAsyncDisposable asyncDisposable)
+                                try { asyncDisposable.DisposeAsync().GetAwaiter().GetResult(); } catch { }
+                        }
+                        else
+                            targetServiceDescriptor = new ServiceDescriptor(targetType, targetType, sd.Lifetime);
                     }
-                    else
-                        targetServiceDescriptor = new ServiceDescriptor(targetType, targetType, sd.Lifetime);
+                    catch
+                    {
+                        if (configs.IgnoreErrorsWhileTryingInjectAspects)
+                            continue;
+                        throw;
+                    }
                     if (!(targetType is null))
                     {
                         try
@@ -56,9 +65,11 @@ namespace AspectSharp.Extensions.DependencyInjection
                             services.Add(targetServiceDescriptor);
                             services.Add(new ServiceDescriptor(sd.ServiceType, proxyType, sd.Lifetime));
                         }
-                        catch
+                        catch (Exception ex)
                         {
-
+                            if (configs.IgnoreErrorsWhileTryingInjectAspects)
+                                continue;
+                            throw;
                         }
                     }
 

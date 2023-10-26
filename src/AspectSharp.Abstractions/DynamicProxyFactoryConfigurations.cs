@@ -13,6 +13,7 @@ namespace AspectSharp.Abstractions
         internal InterceptedPropertyMethod IncludeAspectsToProperties { get; }
         internal bool ExcludeAspectsForMethods { get; }
         internal IEnumerable<GlobalInterceptorConfig> GlobalInterceptors { get; }
+        internal bool IgnoreErrorsWhileTryingInjectAspects { get; }
 
         public DynamicProxyFactoryConfigurations() 
         {
@@ -23,7 +24,8 @@ namespace AspectSharp.Abstractions
             InterceptedEventMethod includeAspectsToEvents,
             InterceptedPropertyMethod includeAspectsToProperties,
             bool excludeAspectsForMethods,
-            IEnumerable<GlobalInterceptorConfig> globalInterceptors)
+            IEnumerable<GlobalInterceptorConfig> globalInterceptors, 
+            bool ignoreErrorsWhileTryingInjectAspects = false)
         {
             if (globalInterceptors is null)
                 globalInterceptors = new List<GlobalInterceptorConfig>();
@@ -31,6 +33,7 @@ namespace AspectSharp.Abstractions
             IncludeAspectsToProperties = includeAspectsToProperties;
             ExcludeAspectsForMethods = excludeAspectsForMethods;
             GlobalInterceptors = globalInterceptors;
+            IgnoreErrorsWhileTryingInjectAspects = ignoreErrorsWhileTryingInjectAspects;
         }
 
         public override int GetHashCode()

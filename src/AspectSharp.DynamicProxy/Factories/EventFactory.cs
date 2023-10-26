@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AspectSharp.DynamicProxy.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +11,7 @@ namespace AspectSharp.DynamicProxy.Factories
     {
         public static void CreateEvents(Type serviceType, TypeBuilder typeBuilder, IEnumerable<MethodBuilder> methods, FieldInfo targetField)
         {
-            foreach (var @event in serviceType.GetEvents())
+            foreach (var @event in serviceType.GetEventsRecursively())
             {
                 var eventBuilder = typeBuilder.DefineEvent(@event.Name, @event.Attributes, @event.EventHandlerType);
 

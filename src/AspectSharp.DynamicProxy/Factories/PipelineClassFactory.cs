@@ -59,26 +59,24 @@ namespace AspectSharp.DynamicProxy.Factories
             staticCil.Emit(OpCodes.Call, _getTypeFromHandleMethodInfo);
             staticCil.Emit(OpCodes.Stloc_0, localServiceType);
 
-            var methods = serviceType.GetMethods();
+            var methods = serviceType.GetMethodsRecursively();
             var index = 1;
 
             var ret = new Dictionary<MethodInfo, PropertyInfo>();
             foreach (var interfaceMethodInfo in methods)
             {
-                var methodInfo = targetType.GetMethod(interfaceMethodInfo.Name, interfaceMethodInfo.GetParameters().Select(pi => pi.ParameterType).ToArray());
+                
+                var methodInfo = targetType.GetMethod(interfaceMethodInfo);
                 if (interceptedTypeData.TryGetMethodInterceptorAttributes(interfaceMethodInfo, out _) ||
-                    interceptedTypeData.TryGetMethodGlobalInterceptors(interfaceMethodInfo, out _))
+                interceptedTypeData.TryGetMethodGlobalInterceptors(interfaceMethodInfo, out _))
                 {
                     var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, moduleBuilder, staticCil, interfaceMethodInfo, methodInfo, configs, index);
-
                     ret.Add(interfaceMethodInfo, propertyBuilder);
-
                     index++;
                 }
             }
             cil.Emit(OpCodes.Ret);
             staticCil.Emit(OpCodes.Ret);
-
             return ret;
         }
 
@@ -110,50 +108,76 @@ namespace AspectSharp.DynamicProxy.Factories
                 cil = methodBuilder.GetILGenerator();
 
                 var localVariables = new List<LocalBuilder>();
-                if (!returnInfo.IsVoid)
-                    localVariables.Add(cil.DeclareLocal(methodInfo.DeclaringType));
                 var parameters = methodInfo.GetParameters();
                 foreach (var param in parameters)
-                    localVariables.Add(cil.DeclareLocal(param.ParameterType));
+                    localVariables.Add(cil.DeclareLocal(param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&") ? param.ParameterType.GetElementType() : param.ParameterType));
 
-                cil.Emit(OpCodes.Ldarg_0);
-                cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
-                cil.Emit(OpCodes.Isinst, methodInfo.DeclaringType);
-                if (!returnInfo.IsVoid)
-                    cil.Emit(OpCodes.Stloc_0);
-
-                foreach (var i in Enumerable.Range(returnInfo.IsVoid ? 0 : 1, parameters.Length))
+                foreach (var i in Enumerable.Range(0, parameters.Length))
                 {
+                    var param = parameters[i];
+                    if (param.IsOut)
+                        continue;
                     cil.Emit(OpCodes.Ldarg_0);
                     cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
-                    cil.Emit(OpCodes.Ldc_I4, returnInfo.IsVoid ? i : i - 1);
+                    cil.Emit(OpCodes.Ldc_I4, i);
                     cil.Emit(OpCodes.Ldelem_Ref);
-                    var param = parameters[returnInfo.IsVoid ? i : i - 1];
                     if (param.ParameterType.IsValueType)
                         cil.Emit(OpCodes.Unbox_Any, param.ParameterType);
+                    else if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
+                    {
+                        var innerType = param.ParameterType.GetElementType();
+                        if (innerType.IsValueType)
+                            cil.Emit(OpCodes.Unbox_Any, innerType);
+                        else
+                            cil.Emit(OpCodes.Castclass, innerType);
+                    }
                     else
                         cil.Emit(OpCodes.Castclass, param.ParameterType);
                     cil.Emit(OpCodes.Stloc, i);
                 }
 
                 if (!returnInfo.IsVoid)
-                {
                     cil.Emit(OpCodes.Ldarg_0);
-                    cil.Emit(OpCodes.Ldloc_0);
+
+                cil.Emit(OpCodes.Ldarg_0);
+                cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
+                cil.Emit(OpCodes.Castclass, methodInfo.DeclaringType);
+
+                foreach (var i in Enumerable.Range(0, parameters.Length))
+                {
+                    var param = parameters[i];
+                    if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
+                        cil.Emit(OpCodes.Ldloca_S, i);
+                    else
+                        cil.Emit(OpCodes.Ldloc, i);
+                }
+                cil.Emit(OpCodes.Callvirt, methodInfo);
+
+                if (!returnInfo.IsVoid)
+                {
+                    if (returnInfo.Type.IsValueType)
+                        cil.Emit(OpCodes.Box, returnInfo.Type);
+                    cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
                 }
 
                 cil.Emit(OpCodes.Ldarg_0);
                 cil.Emit(OpCodes.Ldc_I4_1);
                 cil.Emit(OpCodes.Callvirt, _setTargetMethodCalledMethodInfo);
 
-                foreach (var i in Enumerable.Range(returnInfo.IsVoid ? 0 : 1, parameters.Length))
-                    cil.Emit(OpCodes.Ldloc, i);
-                cil.Emit(OpCodes.Callvirt, methodInfo);
-                if (!returnInfo.IsVoid)
+                foreach (var i in Enumerable.Range(0, parameters.Length))
                 {
-                    if (returnInfo.Type.IsValueType)
-                        cil.Emit(OpCodes.Box, returnInfo.Type);
-                    cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
+                    var param = parameters[i];
+                    if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
+                    {
+                        cil.Emit(OpCodes.Ldarg_0);
+                        cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
+                        cil.Emit(OpCodes.Ldc_I4, i);
+                        cil.Emit(OpCodes.Ldloc, i);
+                        var innerType = param.ParameterType.GetElementType();
+                        if (innerType.IsValueType)
+                            cil.Emit(OpCodes.Box, innerType);
+                        cil.Emit(OpCodes.Stelem_Ref);
+                    }
                 }
                 cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
                 cil.Emit(OpCodes.Ret);

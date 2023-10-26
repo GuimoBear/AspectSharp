@@ -1,6 +1,9 @@
 ﻿using AspectSharp.Abstractions;
+using System;
 using System.Collections.Concurrent;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Text.Json;
 using System.Text.Json.Serialization;
@@ -13,16 +16,16 @@ namespace AspectCore.Api.Trace.ValueObjects
         private readonly AspectContext _context;
 
         [JsonIgnore]
-        public MemberTypes MemberType { get; init; }
+        public MemberTypes MemberType { get; set; }
         [JsonIgnore]
-        public string TargetName { get; init; }
+        public string TargetName { get; set; }
         
-        public string Name { get; init; }
+        public string Name { get; set; }
 
         [JsonIgnore]
-        public object[] Parameters { get; init; }
+        public object[] Parameters { get; set; }
         [JsonIgnore]
-        public Dictionary<int, string> ParameterNames { get; init; }
+        public Dictionary<int, string> ParameterNames { get; set; }
         [JsonIgnore]
         public object Return { get; private set; }
         public IEnumerable<TraceItem> Childrens => _childrens;
@@ -59,25 +62,37 @@ namespace AspectCore.Api.Trace.ValueObjects
                 var parents = string.Join("\r\n", _childrens.Select(item => item.ToString(depth + 4)));
                 return string.Format("{0}{1}: {2}\r\n{3}{{\r\n{4}\r\n{5}}}", padLeft, Name, Duration.ToString(), padLeft, parents, padLeft);
             }
-            return string.Format("{0}{1}({2}): {3}", padLeft, Name, string.Join(", ", Parameters.Select((x, idx) => string.Format("{0}: {1}", ParameterNames[idx], JsonSerializer.Serialize(x)))), Duration.ToString());
+            return string.Format("{0}{1}({2}): {3}", padLeft, Name, string.Join(", ", Parameters.Select(
+                (x, idx) =>
+                {
+                    try
+                    {
+                        return string.Format("{0}: {1}", ParameterNames[idx], JsonSerializer.Serialize(x));
+                    }
+                    catch
+                    {
+                        return ParameterNames[idx];
+                    }
+                })),
+                Duration.ToString()
+            );
         }
 
         private sealed class StopwatchDisposable : IDisposable
         {
             private readonly TraceItem _parent;
-            private readonly Stopwatch _stopwatch = new Stopwatch();
+            private readonly long _startTimestamp;
 
             public StopwatchDisposable(TraceItem parent)
             {
                 _parent = parent;
                 _parent.StartedAt = DateTime.UtcNow;
-                _stopwatch.Start();
+                _startTimestamp = Stopwatch.GetTimestamp();
             }
 
             public void Dispose()
             {
-                _stopwatch.Stop();
-                _parent.Duration = _stopwatch.Elapsed;
+                _parent.Duration = TimeSpan.FromTicks(Stopwatch.GetTimestamp() - _startTimestamp);
                 _parent.Return = _parent._context.ReturnValue;
             }
         }

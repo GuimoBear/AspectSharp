@@ -5,7 +5,7 @@ using System.Reflection;
 
 namespace AspectSharp.DynamicProxy
 {
-    internal sealed class ConcreteAspectContext : AspectContext
+    internal class ConcreteAspectContext : AspectContext
     {
         public override MemberTypes MemberType { get; }
 

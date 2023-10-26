@@ -265,11 +265,16 @@ namespace AspectSharp.Tests.Core.Proxies
             Type proxyType = typeof(FakeServiceProxy);
             Type targetType = typeof(FakeService);
             Type[] parameterTypes;
+            string[] parameterNames;
+            bool[] parametersIsRefOrOut;
+
+            parameterNames = new string[] { "param1", "param2", "param3" };
+            parametersIsRefOrOut = new bool[] { false, false, false };
 
             _aspectContextAtivator1 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithoutParameterAndWithoutReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator2 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithParameterAndWithoutReturn", parameterTypes);
+            _aspectContextAtivator2 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithParameterAndWithoutReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 
             _aspectContextAtivator3 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithoutParameterAndWithoutReturn");
 
@@ -277,41 +282,41 @@ namespace AspectSharp.Tests.Core.Proxies
             _aspectContextAtivator4 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithoutParameterAndWithoutReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator5 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn", parameterTypes);
+            _aspectContextAtivator5 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndWithoutReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 #endif
 
             _aspectContextAtivator6 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithoutParameterAndValueTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator7 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithParameterAndValueTypeReturn", parameterTypes);
+            _aspectContextAtivator7 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithParameterAndValueTypeReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 
             _aspectContextAtivator8 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithoutParameterAndReferenceTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator9 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithParameterAndReferenceTypeReturn", parameterTypes);
+            _aspectContextAtivator9 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingWithParameterAndReferenceTypeReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 
             _aspectContextAtivator10 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithoutParameterAndValueTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator11 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn", parameterTypes);
+            _aspectContextAtivator11 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithParameterAndValueTypeReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 
 #if NETCOREAPP3_1_OR_GREATER
             _aspectContextAtivator12 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithoutParameterAndValueTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator13 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn", parameterTypes);
+            _aspectContextAtivator13 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndValueTypeReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 #endif
 
             _aspectContextAtivator14 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithoutParameterAndReferenceypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator15 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn", parameterTypes);
+            _aspectContextAtivator15 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingAsyncWithParameterAndReferenceTypeReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 
 #if NETCOREAPP3_1_OR_GREATER
             _aspectContextAtivator16 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithoutParameterAndReferenceTypeReturn");
 
             parameterTypes = new Type[] { typeof(int), typeof(string), typeof(IEnumerable<string>) };
-            _aspectContextAtivator17 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndReferenceTypeReturn", parameterTypes);
+            _aspectContextAtivator17 = ProxyFactoryUtils.NewContextActivator(serviceType, proxyType, targetType, "InterceptedDoSomethingValueAsyncWithParameterAndReferenceTypeReturn", parameterTypes, parameterNames, parametersIsRefOrOut);
 #endif
         }
     }

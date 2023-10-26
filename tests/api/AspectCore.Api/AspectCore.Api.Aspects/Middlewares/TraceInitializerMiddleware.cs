@@ -3,8 +3,10 @@ using AspectSharp.Abstractions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 using System.Reflection;
-using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace AspectCore.Api.Trace.Middlewares
 {
@@ -19,12 +21,24 @@ namespace AspectCore.Api.Trace.Middlewares
         {
             var traceContext = context.RequestServices.GetRequiredService<TraceContext>();
             traceContext.Data = new TraceItem(new TraceAspectContext(this, context, next));
-            using (traceContext.Data.Start())
+            try
             {
-                await next(context);
+                using (traceContext.Data.Start())
+                {
+                    await next(context);
+                }
+                _logger.LogWarning(traceContext.Data.ToString(0));
+                //Console.WriteLine(traceContext.Data.ToString(0));
+                //JsonSerializer.Serialize(traceContext.Data, new JsonSerializerOptions { WriteIndented = true }))
+                //Task.Factory.StartNew(() => Console.WriteLine(traceContext.Data.ToString(0))/* _logger.LogInformation(traceContext.Data.ToString(0))*/);
             }
-            //JsonSerializer.Serialize(traceContext.Data, new JsonSerializerOptions { WriteIndented = true }))
-            Task.Factory.StartNew(() => _logger.LogInformation(traceContext.Data.ToString(0)));
+            catch
+            {
+                _logger.LogWarning(traceContext.Data.ToString(0));
+                //Console.WriteLine(traceContext.Data.ToString(0));
+                //Task.Factory.StartNew(() => Console.WriteLine(traceContext.Data.ToString(0)));
+                throw;
+            }
         }
 
         private sealed class TraceAspectContext : AspectContext

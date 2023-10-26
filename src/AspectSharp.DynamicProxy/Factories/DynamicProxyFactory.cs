@@ -1,5 +1,6 @@
 ﻿using AspectSharp.Abstractions;
 using AspectSharp.DynamicProxy.Exceptions;
+using AspectSharp.DynamicProxy.Utils;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -18,7 +19,7 @@ namespace AspectSharp.DynamicProxy.Factories
         internal static readonly AssemblyBuilder _proxiedClassesAssemblyBuilder = NewAssemblyBuilder();
         internal static readonly ModuleBuilder _proxiedClassesModuleBuilder = NewModuleBuilder(_proxiedClassesAssemblyBuilder);
 
-        private static readonly IDictionary<Tuple<Type, Type, int>, Tuple<Type , Type>> _cachedProxyTypes
+        public static readonly IDictionary<Tuple<Type, Type, int>, Tuple<Type , Type>> _cachedProxyTypes
             = new Dictionary<Tuple<Type, Type, int>, Tuple<Type, Type>>();
 
         public static Type Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
@@ -30,7 +31,8 @@ namespace AspectSharp.DynamicProxy.Factories
                 Configurations.IncludeAspectsToEvents,
                 Configurations.IncludeAspectsToProperties,
                 Configurations.ExcludeAspectsForMethods, 
-                Configurations.GlobalInterceptors);
+                Configurations.GlobalInterceptors, 
+                Configurations.IgnoreErrorsWhileTryingInjectAspects);
             if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type, int>(serviceType, targetType, configs.GetHashCode()), out var type))
                 return type.Item1;
 
@@ -43,6 +45,8 @@ namespace AspectSharp.DynamicProxy.Factories
                 else
                     typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Proxies.{0}Proxy{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
                 var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Pipelines.{0}", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+                GenericParameterUtils.DefineGenericParameter(targetType, pipelineDefinitionsTypeBuilder);
+
                 var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, _proxiedClassesModuleBuilder, interceptedTypeData, configs);
 
                 var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateTypeInfo().AsType();
@@ -52,7 +56,6 @@ namespace AspectSharp.DynamicProxy.Factories
                 var readonlyFields = DefineReadonlyFields(targetType, typeBuilder).ToArray();
 
                 DefineConstructor(targetType, typeBuilder, readonlyFields);
-
 
                 var methods = MethodFactory.CreateMethods(_proxiedClassesModuleBuilder, targetType, serviceType, typeBuilder, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
 

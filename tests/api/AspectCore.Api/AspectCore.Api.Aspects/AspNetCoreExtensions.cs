@@ -17,7 +17,9 @@ namespace AspectCore.Api.Trace
                 .AddScoped<TraceContext>()
                 .AddAspects(configs =>
                 {
-                    configs.WithInterceptor(TraceAspect.Instance, interceptorConfig => interceptorConfig.WithMatcher(TraceAspectMethodMatcher.Instance));
+                    configs
+                        .WithInterceptor(TraceAspect.Instance, interceptorConfig => interceptorConfig.WithMatcher(TraceAspectMethodMatcher.Instance))
+                        .IgnoreErrorsWhileTryingInjectAspects();
                 });
             return services;
         }

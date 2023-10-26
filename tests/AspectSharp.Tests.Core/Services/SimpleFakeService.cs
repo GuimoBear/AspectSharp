@@ -1,5 +1,7 @@
 ﻿using AspectSharp.Tests.Core.Services.Interfaces;
 using System;
+using System.Collections.Generic;
+using System.Net.Http.Headers;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
@@ -45,5 +47,37 @@ namespace AspectSharp.Tests.Core.Services
             return string.Format("Hello {0}: the random number is {1}", param, new Random().Next(0, 100));
         }
 #endif
+
+        static readonly Random random = new Random();
+
+        public bool MethodWithOutValueTypeParameter(int inValue, out int outValue)
+        {
+            outValue = random.Next();
+            return true;
+        }
+
+        public bool MethodWithOutReferenceTypeParameter(Dictionary<string, int> inValue, out Dictionary<string, int> outValue)
+        {
+            outValue = new Dictionary<string, int>()
+            {
+                { Guid.NewGuid().ToString(), random.Next() }
+            };
+            return true;
+        }
+
+        public bool MethodWithRefValueTypeParameter(int inValue, ref int outValue)
+        {
+            outValue = random.Next();
+            return true;
+        }
+
+        public bool MethodWithRefReferenceTypeParameter(Dictionary<string, int> inValue, ref Dictionary<string, int> outValue)
+        {
+            outValue = new Dictionary<string, int>()
+            {
+                { Guid.NewGuid().ToString(), random.Next() }
+            };
+            return true;
+        }
     }
 }

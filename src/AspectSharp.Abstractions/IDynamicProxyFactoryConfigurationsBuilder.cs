@@ -41,5 +41,7 @@ namespace AspectSharp.Abstractions
 
         IDynamicProxyFactoryConfigurationsBuilder WithInterceptor<TInterceptor>(TInterceptor instance, Action<IInterceptorConfig> configure)
             where TInterceptor : class, IInterceptor;
+
+        IDynamicProxyFactoryConfigurationsBuilder IgnoreErrorsWhileTryingInjectAspects();
     }
 }

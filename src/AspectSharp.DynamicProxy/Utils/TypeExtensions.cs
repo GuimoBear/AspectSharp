@@ -71,22 +71,7 @@ namespace AspectSharp.DynamicProxy.Utils
 
         public static MethodInfo? GetMethod(this Type type, MethodInfo methodInfo)
         {
-            var parameters = methodInfo.GetParameters();
-            var parameterTypes = new Type[parameters.Length];
-            var parameterNames = new string[parameters.Length];
-            var parametersIsRefOrOut = new bool[parameters.Length];
-            for (int i = 0; i < parameters.Length; i++)
-            {
-                var parameter = parameters[i];
-                parametersIsRefOrOut[i] = parameter.ParameterType.IsByRef && parameter.ParameterType.IsAutoLayout && parameter.ParameterType.Name.EndsWith("&");
-                parameterNames[i] = parameter.Name;
-#if NET7_0_OR_GREATER
-                parameterTypes[i] = parameter.ParameterType;
-#else
-                parameterTypes[i] = parametersIsRefOrOut[i] ? parameter.ParameterType.GetElementType() : parameter.ParameterType;
-#endif
-            }
-            return type.GetMethodExactly(methodInfo.Name, parameterTypes, parameterNames, parametersIsRefOrOut);
+            return type.GetMethodByStringRepresentation(MethodInfoUtils.StringRepresentation(methodInfo));
         }
 
         public static MethodInfo? GetMethodExactly(this Type type, string name, Type[] parameterTypes, string[] parameterNames, bool[] parametersIsRefOrOut)

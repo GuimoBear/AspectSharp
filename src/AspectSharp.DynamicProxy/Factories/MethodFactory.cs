@@ -34,7 +34,7 @@ namespace AspectSharp.DynamicProxy.Factories
             {
                 var methodInfo = targetType.GetMethod(interfaceMethodInfo);
 
-                var customAspectTuple = CustomAspectContextFactory.CreateCustomAspectContext(methodInfo, moduleBuilder);
+                var customAspectTuple = CustomAspectContextFactory.CreateCustomAspectContext(interfaceMethodInfo, moduleBuilder);
                 var customAspectContext = customAspectTuple.Item1;
                 var contextConstructor = customAspectTuple.Item2;
 

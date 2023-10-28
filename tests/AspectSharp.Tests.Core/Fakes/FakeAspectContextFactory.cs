@@ -8,15 +8,17 @@ namespace AspectSharp.Tests.Core.Fakes
     {
         private readonly IServiceProvider _serviceProvider;
 
-        public AspectContext Context { get; private set; }
+        public AspectContext CurrentContext { get; set; }
+
+        public IServiceProvider Services => _serviceProvider;
 
         public FakeAspectContextFactory(IServiceProvider serviceProvider)
             => _serviceProvider = serviceProvider;
 
         public AspectContext CreateContext(AspectContextActivator activator, object target, object proxy, object[] parameters)
         {
-            Context = new ConcreteAspectContext(activator, target, proxy, parameters, _serviceProvider);
-            return Context;
+            CurrentContext = new ConcreteAspectContext(activator, target, proxy, parameters, _serviceProvider);
+            return CurrentContext;
         }
     }
 }

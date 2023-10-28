@@ -1,4 +1,5 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Utils;
 using AspectSharp.Tests.Core.Enums;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Utils;
@@ -22,13 +23,26 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                 var interceptorDictionary = tuple.Item5;
 
                 IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData = new Dictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>();
-                foreach(var methodInfo in serviceType.GetMethods())
+                foreach(var mi in serviceType.GetMethods())
                 {
+                    var methodInfo = mi;
                     var globalInterceptors = new List<IInterceptor>();
                     foreach (var globalInterceptorConfig in configs.GlobalInterceptors)
                     {
                         if (globalInterceptorConfig.TryGetInterceptor(methodInfo, out var interceptor))
                             globalInterceptors.Add(interceptor);
+                    }
+
+                    if (methodInfo.IsGenericMethodDefinition)
+                    {
+                        try
+                        {
+                            methodInfo = methodInfo.MakeGenericMethod(new Type[] { typeof(string) });
+                        }
+                        catch
+                        {
+                            methodInfo = methodInfo.MakeGenericMethod(new Type[] { typeof(ConcreteAspectContext) });
+                        }
                     }
                     var methodName = methodInfo.Name;
 

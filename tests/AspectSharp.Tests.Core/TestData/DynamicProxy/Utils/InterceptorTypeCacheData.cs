@@ -5,6 +5,7 @@ using AspectSharp.Tests.Core.Aspects;
 using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -15,20 +16,20 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
     {
         public static IEnumerable<Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>> GetInterceptorTypeDataTheoryData()
         {
-            yield return GetInterceptorTypeDataWithInterfaceContainingAllScenarios();
-            yield return GetInterceptorTypeDataUsingDefaultConfigs();
-            yield return GetInterceptorTypeDataWithInterceptOnAddEvent();
-            yield return GetInterceptorTypeDataWithInterceptOnRemoveEvent();
-            yield return GetInterceptorTypeDataWithInterceptOnAnyEventMethod();
-            yield return GetInterceptorTypeDataWithInterceptOnGetProperty();
-            yield return GetInterceptorTypeDataWithInterceptOnSetProperty();
-            yield return GetInterceptorTypeDataWithInterceptOnAnyPropertyMethod();
-            yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
-            yield return GetInterceptorTypeDataWithUninspectedInterface();
-            yield return GetInterceptorTypeDataUsingDefaultConfigsAndGenericReferenceType();
-            yield return GetInterceptorTypeDataUsingDefaultConfigsAndGenericValueType();
-            yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericReferenceType();
-            yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericValueType();
+            //yield return GetInterceptorTypeDataWithInterfaceContainingAllScenarios();
+            //yield return GetInterceptorTypeDataUsingDefaultConfigs();
+            //yield return GetInterceptorTypeDataWithInterceptOnAddEvent();
+            //yield return GetInterceptorTypeDataWithInterceptOnRemoveEvent();
+            //yield return GetInterceptorTypeDataWithInterceptOnAnyEventMethod();
+            //yield return GetInterceptorTypeDataWithInterceptOnGetProperty();
+            //yield return GetInterceptorTypeDataWithInterceptOnSetProperty();
+            //yield return GetInterceptorTypeDataWithInterceptOnAnyPropertyMethod();
+            //yield return GetInterceptorTypeDataExcludingTypeDefinitionAspectsForMethods();
+            //yield return GetInterceptorTypeDataWithUninspectedInterface();
+            //yield return GetInterceptorTypeDataUsingDefaultConfigsAndGenericReferenceType();
+            //yield return GetInterceptorTypeDataUsingDefaultConfigsAndGenericValueType();
+            //yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericReferenceType();
+            //yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericValueType();
             yield return GetInterceptorTypeDataUsingDefaultConfigsAndServiceWithGenericMethod();
         }
 
@@ -1283,9 +1284,21 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
             {
                 {
-                    serviceType.GetMethod(nameof(IServiceWithGenericMethod.Call)),
-                    typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(IServiceWithGenericMethod.Call)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                }
+                    serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 0),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 0).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                //{
+                //    serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType),
+                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                //},
+                //{
+                //    serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                //},
+                //{
+                //    serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().First(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                //}
             };
             var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
             {

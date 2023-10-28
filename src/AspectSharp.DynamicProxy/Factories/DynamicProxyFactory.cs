@@ -19,7 +19,7 @@ namespace AspectSharp.DynamicProxy.Factories
         internal static readonly AssemblyBuilder _proxiedClassesAssemblyBuilder = NewAssemblyBuilder();
         internal static readonly ModuleBuilder _proxiedClassesModuleBuilder = NewModuleBuilder(_proxiedClassesAssemblyBuilder);
 
-        public static readonly IDictionary<Tuple<Type, Type, int>, Tuple<Type , Type>> _cachedProxyTypes
+        private static readonly IDictionary<Tuple<Type, Type, int>, Tuple<Type , Type>> _cachedProxyTypes
             = new Dictionary<Tuple<Type, Type, int>, Tuple<Type, Type>>();
 
         public static Type Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
@@ -44,10 +44,12 @@ namespace AspectSharp.DynamicProxy.Factories
                     typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Proxies.{0}Proxy", targetType.Name), TypeAttributes.Public | TypeAttributes.Sealed);
                 else
                     typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Proxies.{0}Proxy{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
+                GenericParameterUtils.DefineGenericParameter(targetType, typeBuilder);
+
                 var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Pipelines.{0}", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
                 GenericParameterUtils.DefineGenericParameter(targetType, pipelineDefinitionsTypeBuilder);
 
-                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, _proxiedClassesModuleBuilder, interceptedTypeData, configs);
+                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
 
                 var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateTypeInfo().AsType();
 

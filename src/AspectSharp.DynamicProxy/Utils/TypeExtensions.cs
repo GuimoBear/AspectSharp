@@ -6,6 +6,8 @@ using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Reflection.Metadata;
+using System.Security.Cryptography;
+using System.Xml.Linq;
 
 namespace AspectSharp.DynamicProxy.Utils
 {
@@ -51,7 +53,7 @@ namespace AspectSharp.DynamicProxy.Utils
         {
             if (_numericTypesLoadOpCode.TryGetValue(parameterType, out var opCode))
                 cil.Emit(opCode);
-            else if (parameterType.IsValueType)
+            else if (parameterType.IsValueType || parameterType.ContainsGenericParameters)
                 cil.Emit(OpCodes.Ldobj, parameterType);
             else
                 cil.Emit(OpCodes.Ldind_Ref);
@@ -79,7 +81,7 @@ namespace AspectSharp.DynamicProxy.Utils
                 parametersIsRefOrOut[i] = parameter.ParameterType.IsByRef && parameter.ParameterType.IsAutoLayout && parameter.ParameterType.Name.EndsWith("&");
                 parameterNames[i] = parameter.Name;
 #if NET7_0_OR_GREATER
-                    parameterTypes[i] = parameter.ParameterType;
+                parameterTypes[i] = parameter.ParameterType;
 #else
                 parameterTypes[i] = parametersIsRefOrOut[i] ? parameter.ParameterType.GetElementType() : parameter.ParameterType;
 #endif
@@ -105,12 +107,19 @@ namespace AspectSharp.DynamicProxy.Utils
 #else
                                    var parameterType = parameterIsOutOrRef ? tuple.Item1.ParameterType.GetElementType() : tuple.Item1.ParameterType;
 #endif
-
                                    var expectedParameter = parameters[tuple.Item2];
                                    return expectedParameter.Equals(new Tuple<Type, string, bool>(parameterType, tuple.Item1.Name, parameterIsOutOrRef));
                                }));
             return method;
         }
+
+        public static MethodInfo? GetMethodByStringRepresentation(this Type type, string methodStringRepresentation)
+        {
+            var method = type.GetMethodsRecursively()
+                .FirstOrDefault(mi => MethodInfoUtils.StringRepresentation(mi).Equals(methodStringRepresentation));
+            return method;
+        }
+
         public static IEnumerable<MethodInfo> GetMethodsRecursively(this Type type, BindingFlags? bindingFlags = null)
         => GetMethodsRecursively(type, new HashSet<int>(), bindingFlags);
         public static IEnumerable<PropertyInfo> GetPropertiesRecursively(this Type type, BindingFlags? bindingFlags = null)

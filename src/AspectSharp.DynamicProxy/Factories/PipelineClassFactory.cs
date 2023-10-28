@@ -3,6 +3,7 @@ using AspectSharp.Abstractions.Attributes;
 using AspectSharp.DynamicProxy.Utils;
 using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -40,7 +41,7 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly ParameterInfo[] _aspectDelegateParameters = typeof(AspectDelegate).GetMethod(nameof(AspectDelegate.Invoke)).GetParameters();
         private static readonly Type _asyncStateMachineType = typeof(IAsyncStateMachine);
 
-        public static IReadOnlyDictionary<MethodInfo, PropertyInfo> CreatePipelineClass(Type targetType, Type serviceType, TypeBuilder typeBuilder, ModuleBuilder moduleBuilder, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
+        public static IReadOnlyDictionary<MethodInfo, PropertyInfo> CreatePipelineClass(Type targetType, Type serviceType, TypeBuilder typeBuilder, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
         {
             var attrs = MethodAttributes.Public | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
             var staticAttrs = MethodAttributes.Private | MethodAttributes.Static | MethodAttributes.HideBySig | MethodAttributes.SpecialName | MethodAttributes.RTSpecialName;
@@ -65,12 +66,11 @@ namespace AspectSharp.DynamicProxy.Factories
             var ret = new Dictionary<MethodInfo, PropertyInfo>();
             foreach (var interfaceMethodInfo in methods)
             {
-                
                 var methodInfo = targetType.GetMethod(interfaceMethodInfo);
                 if (interceptedTypeData.TryGetMethodInterceptorAttributes(interfaceMethodInfo, out _) ||
-                interceptedTypeData.TryGetMethodGlobalInterceptors(interfaceMethodInfo, out _))
+                    interceptedTypeData.TryGetMethodGlobalInterceptors(interfaceMethodInfo, out _))
                 {
-                    var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, moduleBuilder, staticCil, interfaceMethodInfo, methodInfo, configs, index);
+                    var propertyBuilder = CreateAspectDelegateAndPipelineProperty(typeBuilder, staticCil, interfaceMethodInfo, methodInfo, configs, index);
                     ret.Add(interfaceMethodInfo, propertyBuilder);
                     index++;
                 }
@@ -80,7 +80,7 @@ namespace AspectSharp.DynamicProxy.Factories
             return ret;
         }
 
-        private static PropertyBuilder CreateAspectDelegateAndPipelineProperty(TypeBuilder typeBuilder, ModuleBuilder moduleBuilder, ILGenerator staticCil, MethodInfo interfaceMethodInfo, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
+        private static PropertyBuilder CreateAspectDelegateAndPipelineProperty(TypeBuilder typeBuilder, ILGenerator staticCil, MethodInfo interfaceMethodInfo, MethodInfo methodInfo, DynamicProxyFactoryConfigurations configs, int index)
         {
             var returnInfo = methodInfo.GetReturnInfo();
 
@@ -98,90 +98,96 @@ namespace AspectSharp.DynamicProxy.Factories
             methodBuilder = typeBuilder.DefineMethod(string.Format("AspectDelegate{0}", index), MethodAttributes.Private | MethodAttributes.HideBySig | MethodAttributes.Static, CallingConventions.Standard, typeof(Task), new Type[] { typeof(AspectContext) });
             methodBuilder.DefineParameter(1, ParameterAttributes.None, "context");
 
-            if (returnInfo.IsAsync)
-            {
-                var ret = AspectDelegateAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, methodInfo, methodBuilder);
-                ret.WriteCallerMethod();
-            }
-            else
-            {
-                cil = methodBuilder.GetILGenerator();
+            cil = methodBuilder.GetILGenerator();
+            cil.Emit(OpCodes.Ldarg_0);
+            cil.Emit(OpCodes.Castclass, typeof(IMethodInvoker));
+            cil.Emit(OpCodes.Callvirt, typeof(IMethodInvoker).GetMethod(nameof(IMethodInvoker.InvokeAsync)));
+            cil.Emit(OpCodes.Ret);
 
-                var localVariables = new List<LocalBuilder>();
-                var parameters = methodInfo.GetParameters();
-                foreach (var param in parameters)
-                    localVariables.Add(cil.DeclareLocal(param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&") ? param.ParameterType.GetElementType() : param.ParameterType));
+            //if (returnInfo.IsAsync)
+            //{
+            //    var ret = AspectDelegateAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, methodInfo, methodBuilder);
+            //    ret.WriteCallerMethod();
+            //}
+            //else
+            //{
+            //    cil = methodBuilder.GetILGenerator();
 
-                foreach (var i in Enumerable.Range(0, parameters.Length))
-                {
-                    var param = parameters[i];
-                    if (param.IsOut)
-                        continue;
-                    cil.Emit(OpCodes.Ldarg_0);
-                    cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
-                    cil.Emit(OpCodes.Ldc_I4, i);
-                    cil.Emit(OpCodes.Ldelem_Ref);
-                    if (param.ParameterType.IsValueType)
-                        cil.Emit(OpCodes.Unbox_Any, param.ParameterType);
-                    else if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
-                    {
-                        var innerType = param.ParameterType.GetElementType();
-                        if (innerType.IsValueType)
-                            cil.Emit(OpCodes.Unbox_Any, innerType);
-                        else
-                            cil.Emit(OpCodes.Castclass, innerType);
-                    }
-                    else
-                        cil.Emit(OpCodes.Castclass, param.ParameterType);
-                    cil.Emit(OpCodes.Stloc, i);
-                }
+            //    var localVariables = new List<LocalBuilder>();
+            //    var parameters = methodInfo.GetParameters();
+            //    foreach (var param in parameters)
+            //        localVariables.Add(cil.DeclareLocal(param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&") ? param.ParameterType.GetElementType() : param.ParameterType));
 
-                if (!returnInfo.IsVoid)
-                    cil.Emit(OpCodes.Ldarg_0);
+            //    foreach (var i in Enumerable.Range(0, parameters.Length))
+            //    {
+            //        var param = parameters[i];
+            //        if (param.IsOut)
+            //            continue;
+            //        cil.Emit(OpCodes.Ldarg_0);
+            //        cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
+            //        cil.Emit(OpCodes.Ldc_I4, i);
+            //        cil.Emit(OpCodes.Ldelem_Ref);
+            //        if (param.ParameterType.IsValueType)
+            //            cil.Emit(OpCodes.Unbox_Any, param.ParameterType);
+            //        else if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
+            //        {
+            //            var innerType = param.ParameterType.GetElementType();
+            //            if (innerType.IsValueType)
+            //                cil.Emit(OpCodes.Unbox_Any, innerType);
+            //            else
+            //                cil.Emit(OpCodes.Castclass, innerType);
+            //        }
+            //        else
+            //            cil.Emit(OpCodes.Castclass, param.ParameterType);
+            //        cil.Emit(OpCodes.Stloc, i);
+            //    }
 
-                cil.Emit(OpCodes.Ldarg_0);
-                cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
-                cil.Emit(OpCodes.Castclass, methodInfo.DeclaringType);
+            //    if (!returnInfo.IsVoid)
+            //        cil.Emit(OpCodes.Ldarg_0);
 
-                foreach (var i in Enumerable.Range(0, parameters.Length))
-                {
-                    var param = parameters[i];
-                    if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
-                        cil.Emit(OpCodes.Ldloca_S, i);
-                    else
-                        cil.Emit(OpCodes.Ldloc, i);
-                }
-                cil.Emit(OpCodes.Callvirt, methodInfo);
+            //    cil.Emit(OpCodes.Ldarg_0);
+            //    cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
+            //    cil.Emit(OpCodes.Castclass, methodInfo.DeclaringType);
 
-                if (!returnInfo.IsVoid)
-                {
-                    if (returnInfo.Type.IsValueType)
-                        cil.Emit(OpCodes.Box, returnInfo.Type);
-                    cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
-                }
+            //    foreach (var i in Enumerable.Range(0, parameters.Length))
+            //    {
+            //        var param = parameters[i];
+            //        if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
+            //            cil.Emit(OpCodes.Ldloca_S, i);
+            //        else
+            //            cil.Emit(OpCodes.Ldloc, i);
+            //    }
+            //    cil.Emit(OpCodes.Callvirt, methodInfo);
 
-                cil.Emit(OpCodes.Ldarg_0);
-                cil.Emit(OpCodes.Ldc_I4_1);
-                cil.Emit(OpCodes.Callvirt, _setTargetMethodCalledMethodInfo);
+            //    if (!returnInfo.IsVoid)
+            //    {
+            //        if (returnInfo.Type.IsValueType)
+            //            cil.Emit(OpCodes.Box, returnInfo.Type);
+            //        cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
+            //    }
 
-                foreach (var i in Enumerable.Range(0, parameters.Length))
-                {
-                    var param = parameters[i];
-                    if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
-                    {
-                        cil.Emit(OpCodes.Ldarg_0);
-                        cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
-                        cil.Emit(OpCodes.Ldc_I4, i);
-                        cil.Emit(OpCodes.Ldloc, i);
-                        var innerType = param.ParameterType.GetElementType();
-                        if (innerType.IsValueType)
-                            cil.Emit(OpCodes.Box, innerType);
-                        cil.Emit(OpCodes.Stelem_Ref);
-                    }
-                }
-                cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
-                cil.Emit(OpCodes.Ret);
-            }
+            //    cil.Emit(OpCodes.Ldarg_0);
+            //    cil.Emit(OpCodes.Ldc_I4_1);
+            //    cil.Emit(OpCodes.Callvirt, _setTargetMethodCalledMethodInfo);
+
+            //    foreach (var i in Enumerable.Range(0, parameters.Length))
+            //    {
+            //        var param = parameters[i];
+            //        if (param.ParameterType.IsByRef && param.ParameterType.IsAutoLayout && param.ParameterType.Name.EndsWith("&"))
+            //        {
+            //            cil.Emit(OpCodes.Ldarg_0);
+            //            cil.Emit(OpCodes.Callvirt, _getParametersMethodInfo);
+            //            cil.Emit(OpCodes.Ldc_I4, i);
+            //            cil.Emit(OpCodes.Ldloc, i);
+            //            var innerType = param.ParameterType.GetElementType();
+            //            if (innerType.IsValueType)
+            //                cil.Emit(OpCodes.Box, innerType);
+            //            cil.Emit(OpCodes.Stelem_Ref);
+            //        }
+            //    }
+            //    cil.Emit(OpCodes.Call, _getCompletedTaskMethodInfo);
+            //    cil.Emit(OpCodes.Ret);
+            //}
 
             staticCil.Emit(OpCodes.Ldnull);
             staticCil.Emit(OpCodes.Ldftn, methodBuilder);

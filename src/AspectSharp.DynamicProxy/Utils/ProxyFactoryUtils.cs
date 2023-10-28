@@ -43,6 +43,15 @@ namespace AspectSharp.DynamicProxy.Utils
             return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
         }
 
+        public static AspectContextActivator NewContextActivatorUsingStringRepresentationMethodInfo(Type serviceType, Type proxyType, Type targetType, string methodStringRepresentation)
+        {
+            var serviceMethod = serviceType.GetMethodByStringRepresentation(methodStringRepresentation);
+            var proxyMethod = proxyType.GetMethodByStringRepresentation(methodStringRepresentation);
+            var targetMethod = targetType.GetMethodByStringRepresentation(methodStringRepresentation);
+
+            return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
+        }
+
         public static IInterceptor[] GetInterceptors(Type serviceType, int previouslyUsedConfigurationsHashCode, int methodHashCode)
         {
             var serviceName = serviceType.Name;

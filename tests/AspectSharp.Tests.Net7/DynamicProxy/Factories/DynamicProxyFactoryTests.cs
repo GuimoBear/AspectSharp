@@ -47,12 +47,12 @@ namespace AspectSharp.Tests.Net7.DynamicProxy.Factories
                     {
                         var (methodDelegate, expectedAditionalDataKeys) = methodData;
 
-                        var contextFactory = serviceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory;
+                        var contextFactory = serviceProvider.GetService<IAspectContextFactory>();
                         var proxyInstance = serviceProvider.GetService(serviceType);
                         methodDelegate(proxyInstance);
                         if (expectedAditionalDataKeys.Any())
                         {
-                            var aditionalDataKeys = contextFactory.Context.AdditionalData.Keys;
+                            var aditionalDataKeys = contextFactory.CurrentContext.AdditionalData.Keys;
                             aditionalDataKeys
                                 .Should().HaveCount(expectedAditionalDataKeys.Count(), because: string.Format("method '{0}' should be the same number of aspects", method.Name));
 

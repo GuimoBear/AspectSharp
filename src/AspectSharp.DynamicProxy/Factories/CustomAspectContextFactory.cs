@@ -27,23 +27,23 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly IDictionary<Tuple<string, string, int>, Type> _cachedProxyTypes
             = new Dictionary<Tuple<string, string, int>, Type>();
 
-        public static Tuple<Type, ConstructorInfo> CreateCustomAspectContext(MethodInfo methodInfo, ModuleBuilder moduleBuilder) 
+        public static Tuple<Type, ConstructorInfo> CreateCustomAspectContext(MethodInfo interfaceMethodInfo, MethodInfo targetMethodInfo, ModuleBuilder moduleBuilder) 
         {
             lock (_cachedProxyTypes)
             {
-                var methodToCall = methodInfo;
+                var methodToCall = interfaceMethodInfo;
 
-                var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item1 == methodInfo.DeclaringType.Name && kvp.Key.Item2 == methodInfo.Name);
+                var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item1 == interfaceMethodInfo.DeclaringType.Name && kvp.Key.Item2 == interfaceMethodInfo.Name);
                 TypeBuilder typeBuilder;
                 if (previouslyDefinedProxyClassFromThisTargetCount == 0)
-                    typeBuilder = moduleBuilder.DefineType(string.Format("AspectSharp.CustomContexts.{0}_{1}AspectContext", methodInfo.DeclaringType.Name, methodInfo.Name), TypeAttributes.Public | TypeAttributes.Sealed, PARENT_TYPE);
+                    typeBuilder = moduleBuilder.DefineType(string.Format("AspectSharp.CustomContexts.{0}.{1}Context", interfaceMethodInfo.DeclaringType.Name, interfaceMethodInfo.Name), TypeAttributes.Public | TypeAttributes.Sealed, PARENT_TYPE);
                 else
-                    typeBuilder = moduleBuilder.DefineType(string.Format("AspectSharp.CustomContexts.{0}_{1}AspectContext{2}", methodInfo.DeclaringType.Name, methodInfo.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed, PARENT_TYPE);
+                    typeBuilder = moduleBuilder.DefineType(string.Format("AspectSharp.CustomContexts.{0}.{1}Context{2}", interfaceMethodInfo.DeclaringType.Name, interfaceMethodInfo.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed, PARENT_TYPE);
                 var genericParameterBuilders = Array.Empty<GenericTypeParameterBuilder>();
 
-                if (methodInfo.IsGenericMethod)
+                if (interfaceMethodInfo.IsGenericMethod)
                 {
-                    var genericParameters = methodInfo.GetGenericArguments().Select(a => a.GetTypeInfo()).ToArray();
+                    var genericParameters = interfaceMethodInfo.GetGenericArguments().Select(a => a.GetTypeInfo()).ToArray();
 
                     genericParameterBuilders = typeBuilder.DefineGenericParameters(genericParameters.Select(ti => ti.Name).ToArray());
 
@@ -59,9 +59,9 @@ namespace AspectSharp.DynamicProxy.Factories
                         }
                     }
 
-                    methodToCall = methodInfo.IsGenericMethodDefinition
-                        ? methodInfo.MakeGenericMethod(genericParameterBuilders)
-                        : methodInfo.GetGenericMethodDefinition().MakeGenericMethod(genericParameterBuilders);
+                    methodToCall = interfaceMethodInfo.IsGenericMethodDefinition
+                        ? interfaceMethodInfo.MakeGenericMethod(genericParameterBuilders)
+                        : interfaceMethodInfo.GetGenericMethodDefinition().MakeGenericMethod(genericParameterBuilders);
                 }
                 var constructorBuilder = typeBuilder.DefineConstructor(CONSTRUCTOR_ATTRIBUTES, CallingConventions.HasThis, CONSTRUCTOR_PARAMETERS);
 
@@ -80,16 +80,16 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 var returnInfo = methodToCall.GetReturnInfo();
 
-                if (returnInfo.IsAsync)
+                if (targetMethodInfo.GetReturnInfo().IsAsync)
                 {
-                    var ret = AspectDelegateAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, methodInfo, methodBuilder);
+                    var ret = AspectDelegateAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, interfaceMethodInfo, methodBuilder, genericParameterBuilders);
                     ret.WriteCallerMethod();
                 }
                 else
                 {
                     cil = methodBuilder.GetILGenerator();
 
-                    var parameters = methodInfo.GetParameters();
+                    var parameters = interfaceMethodInfo.GetParameters();
                     var parameterTypes = new List<Type>(parameters.Length);
 
                     foreach (var param in parameters)
@@ -129,7 +129,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                     cil.Emit(OpCodes.Ldarg_0);
                     cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
-                    cil.Emit(OpCodes.Castclass, methodToCall.DeclaringType);
+                    cil.Emit(OpCodes.Isinst, methodToCall.DeclaringType);
 
                     foreach (var i in Enumerable.Range(0, parameters.Length))
                     {
@@ -182,7 +182,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 var concreteType = typeBuilder.CreateTypeInfo().AsType();
                 var constructor = concreteType.GetConstructor(CONSTRUCTOR_PARAMETERS);
 
-                _cachedProxyTypes.Add(new Tuple<string, string, int>(methodInfo.DeclaringType.Name, methodInfo.Name, concreteType.GetHashCode()), concreteType);
+                _cachedProxyTypes.Add(new Tuple<string, string, int>(interfaceMethodInfo.DeclaringType.Name, interfaceMethodInfo.Name, concreteType.GetHashCode()), concreteType);
 
                 return new Tuple<Type, ConstructorInfo>(concreteType, constructor);
             }

@@ -34,7 +34,7 @@ namespace AspectSharp.DynamicProxy.Factories
             {
                 var methodInfo = targetType.GetMethod(interfaceMethodInfo);
 
-                var customAspectTuple = CustomAspectContextFactory.CreateCustomAspectContext(interfaceMethodInfo, moduleBuilder);
+                var customAspectTuple = CustomAspectContextFactory.CreateCustomAspectContext(interfaceMethodInfo, methodInfo, moduleBuilder);
                 var customAspectContext = customAspectTuple.Item1;
                 var contextConstructor = customAspectTuple.Item2;
 
@@ -54,8 +54,8 @@ namespace AspectSharp.DynamicProxy.Factories
                 methodBuilder.SetParameters(methodInfo.GetParameters().Select(pi => GenericParameterUtils.ReplaceTypeUsingGenericParameters(pi.ParameterType, methodGenericParameters)).ToArray());
                 methodBuilder.SetReturnType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(methodInfo.ReturnType, methodGenericParameters));
 
-                if (methodInfo.ReturnType.ContainsGenericParameters)
-                    returnInfo = methodBuilder.GetReturnInfo();
+                //if (methodInfo.ReturnType.ContainsGenericParameters)
+                //    returnInfo = methodBuilder.GetReturnInfo();
 
                 var hasParameters = parameters.Length > 0;
                 foreach (var tuple in parameters.Zip(Enumerable.Range(1, parameters.Length), (first, second) => new Tuple<ParameterInfo, int>(first, second)))
@@ -74,7 +74,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     if (returnInfo.IsAsync)
                     {
                         var ret = ProxyMethodAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, typeBuilder, targetType, pipelineProperty, aspectContextActivatorField, methodInfo, methodBuilder, customAspectContext, contextConstructor);
-                        ret.WriteCallerMethod(methodBuilder, targetField, contextFactoryField);
+                        ret.WriteCallerMethod(methodBuilder, methodGenericParameters, targetField, contextFactoryField);
 
                         typeBuilder.DefineMethodOverride(methodBuilder, interfaceMethodInfo);
                         yield return methodBuilder;
@@ -182,9 +182,9 @@ namespace AspectSharp.DynamicProxy.Factories
                             cil.Emit(OpCodes.Ldloc, contextVariable.LocalIndex);
                             cil.Emit(OpCodes.Callvirt, _getReturnValueMethodInfo);
                             if (returnInfo.Type.IsValueType || returnInfo.Type.ContainsGenericParameters)
-                                cil.Emit(OpCodes.Unbox_Any, returnInfo.Type);
+                                cil.Emit(OpCodes.Unbox_Any, GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, methodGenericParameters));
                             else
-                                cil.Emit(OpCodes.Castclass, returnInfo.Type);
+                                cil.Emit(OpCodes.Castclass, GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, methodGenericParameters));
                         }
                         cil.Emit(OpCodes.Ret);
                     }

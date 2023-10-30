@@ -85,7 +85,7 @@ namespace AspectSharp.DynamicProxy.Utils
                 }
                 else if (type.IsGenericType)
                 {
-                    var replacedGenericParameters = type.GenericTypeArguments.Select(g => ReplaceTypeUsingGenericParameters(genericParameters.FirstOrDefault(g1 => g1.Name == g.Name) ?? g, genericParameters)).ToArray();
+                    var replacedGenericParameters = type.GetGenericArguments().Select(g => ReplaceTypeUsingGenericParameters(genericParameters.FirstOrDefault(g1 => g1.Name == g.Name) ?? g, genericParameters)).ToArray();
                     if (!type.IsGenericTypeDefinition)
                         type = type.GetGenericTypeDefinition();
                     return type.MakeGenericType(replacedGenericParameters);

@@ -1,5 +1,9 @@
-﻿using System;
+﻿using AspectSharp.Abstractions.Attributes;
+using System;
+using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
+using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AspectSharp.DynamicProxy.Utils
@@ -7,25 +11,37 @@ namespace AspectSharp.DynamicProxy.Utils
     internal static class MethodInfoExtensions
     {
         public static ReturnData GetReturnInfo(this MethodInfo methodInfo)
-            => GetReturnInfo(methodInfo.ReturnType);
+        {
+            try
+            {
+                if (typeof(MethodBuilder).IsAssignableFrom(methodInfo.GetType()))
+                    return GetReturnInfo(methodInfo.ReturnType, false);
+                else
+                    return GetReturnInfo(methodInfo.ReturnType, methodInfo.GetCustomAttributes().Any(a => a.GetType() == typeof(AsyncStateMachineAttribute)));
+            }
+            catch
+            {
+                throw;
+            }
+        }
 
-        public static ReturnData GetReturnInfo(this Type retType)
+        public static ReturnData GetReturnInfo(this Type retType, bool containsAsyncStateMachineAttribute)
         {
 #if NETCOREAPP3_1_OR_GREATER
             var isValueTask = retType == typeof(ValueTask);
 #endif
-            var isAsync = retType == typeof(Task)
+            var isAsync = containsAsyncStateMachineAttribute && (retType == typeof(Task)
 #if NETCOREAPP3_1_OR_GREATER
-                || isValueTask;
+                || isValueTask);
 #else
-                ;
+                );
 #endif
 
             var isVoid = retType == typeof(void)
 #if NETCOREAPP3_1_OR_GREATER
-                || isValueTask
+                || (isValueTask && containsAsyncStateMachineAttribute)
 #endif
-                || isAsync;
+                || (isAsync && containsAsyncStateMachineAttribute);
 
             if (retType.IsGenericType)
             {
@@ -33,11 +49,11 @@ namespace AspectSharp.DynamicProxy.Utils
 #if NETCOREAPP3_1_OR_GREATER
                     isValueTask = genericTypeDefinition == typeof(ValueTask<>);
 #endif
-                isAsync = genericTypeDefinition == typeof(Task<>)
+                isAsync = containsAsyncStateMachineAttribute && (genericTypeDefinition == typeof(Task<>)
 #if NETCOREAPP3_1_OR_GREATER
-                || isValueTask;
+                || isValueTask);
 #else
-                ;
+                );
 #endif
                 if (isAsync)
                     retType = retType.GetGenericArguments()[0];

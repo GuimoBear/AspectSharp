@@ -26,6 +26,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                 foreach(var mi in serviceType.GetMethods())
                 {
                     var methodInfo = mi;
+                    var targetMethodInfo = targetType.GetMethod(methodInfo);
                     var globalInterceptors = new List<IInterceptor>();
                     foreach (var globalInterceptorConfig in configs.GlobalInterceptors)
                     {
@@ -55,7 +56,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                             var ret = methodInfo.Invoke(proxyInstance, parameters);
                             if (!(ret is null))
                             {
-                                var retInfo = methodInfo.GetReturnInfo();
+                                var retInfo = targetMethodInfo.GetReturnInfo();
                                 if (retInfo.IsAsync)
                                 {
 #if NETCOREAPP3_1_OR_GREATER

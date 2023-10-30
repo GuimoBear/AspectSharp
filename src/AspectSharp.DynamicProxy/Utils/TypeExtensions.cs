@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Collections.Immutable;
-using System.Data.Common;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
-using System.Reflection.Metadata;
-using System.Security.Cryptography;
-using System.Xml.Linq;
 
 namespace AspectSharp.DynamicProxy.Utils
 {
@@ -29,7 +24,7 @@ namespace AspectSharp.DynamicProxy.Utils
             { typeof(ulong), OpCodes.Ldind_I8 },
             { typeof(float), OpCodes.Ldind_R4 },
             { typeof(double), OpCodes.Ldind_R8 }
-        }.ToImmutableDictionary();
+        };
 
         private static readonly IReadOnlyDictionary<Type, OpCode> _numericTypesSetOpCode = new Dictionary<Type, OpCode>
         {
@@ -47,7 +42,7 @@ namespace AspectSharp.DynamicProxy.Utils
             { typeof(ulong), OpCodes.Stind_I8 },
             { typeof(float), OpCodes.Stind_R4 },
             { typeof(double), OpCodes.Stind_R8 }
-        }.ToImmutableDictionary();
+        };
 
         public static void EmitOptionalLoadOpCode(this Type parameterType, ILGenerator cil)
         {
@@ -69,16 +64,16 @@ namespace AspectSharp.DynamicProxy.Utils
                 cil.Emit(OpCodes.Stind_Ref);
         }
 
-        public static MethodInfo? GetMethod(this Type type, MethodInfo methodInfo)
+        public static MethodInfo GetMethod(this Type type, MethodInfo methodInfo)
         {
             return type.GetMethodByStringRepresentation(MethodInfoUtils.StringRepresentation(methodInfo));
         }
 
-        public static MethodInfo? GetMethodExactly(this Type type, string name, Type[] parameterTypes, string[] parameterNames, bool[] parametersIsRefOrOut)
+        public static MethodInfo GetMethodExactly(this Type type, string name, Type[] parameterTypes, string[] parameterNames, bool[] parametersIsRefOrOut)
         {
             var parameters = Array.Empty<Tuple<Type, string, bool>>();
             if (parameterTypes != null && parameterTypes.Length > 0)
-                parameters = parameterTypes.Select((type, idx) => new Tuple<Type, string, bool>(type, parameterNames[idx], parametersIsRefOrOut[idx])).ToArray();
+                parameters = Enumerable.Zip(parameterTypes, Enumerable.Range(0, parameterTypes.Length), (left, right) => new Tuple<Type, int>(left, right)).Select(Tuple => new Tuple<Type, string, bool>(Tuple.Item1, parameterNames[Tuple.Item2], parametersIsRefOrOut[Tuple.Item2])).ToArray();
             var method = type.GetMethodsRecursively()
                 .FirstOrDefault(mi => mi.Name == name &&
                              mi.GetParameters().Length == parameters.Length &&
@@ -98,7 +93,7 @@ namespace AspectSharp.DynamicProxy.Utils
             return method;
         }
 
-        public static MethodInfo? GetMethodByStringRepresentation(this Type type, string methodStringRepresentation)
+        public static MethodInfo GetMethodByStringRepresentation(this Type type, string methodStringRepresentation)
         {
             var method = type.GetMethodsRecursively()
                 .FirstOrDefault(mi => MethodInfoUtils.StringRepresentation(mi).Equals(methodStringRepresentation));

@@ -40,7 +40,7 @@ namespace AspectSharp.DynamicProxy.Utils
                             constraints.Add(string.Format("{0}: {1}", genericArgument.Name, strConstraints));
                     }
                     if (constraints.Count > 0)
-                        sb.AppendFormat("where {0}", string.Join(' ', constraints));
+                        sb.AppendFormat("where {0}", string.Join(" ", constraints));
                 }
 
                 return sb.ToString().Trim();
@@ -59,7 +59,7 @@ namespace AspectSharp.DynamicProxy.Utils
             var stringTemplate = "{0} {1}";
             if (pi.IsOut)
                 stringTemplate = "out {0} {1}";
-            else if (pi.ParameterType.IsByRef && pi.ParameterType.IsAutoLayout && pi.ParameterType.Name.EndsWith('&'))
+            else if (pi.ParameterType.IsByRef && pi.ParameterType.IsAutoLayout && pi.ParameterType.Name.EndsWith("&"))
                 stringTemplate = "ref {0} {1}";
             return string.Format(stringTemplate, TypeStringRepresentation(pi.ParameterType), pi.Name);
         }

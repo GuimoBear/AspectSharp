@@ -7,17 +7,17 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
 {
     public interface IServiceWithGenericMethod
     {
-        //[Aspect3]
-        //T Call<T>();
+        [Aspect3]
+        T Call<T>();
 
-        //[Aspect3]
-        //void Call<T>(T container);
+        [Aspect3]
+        void Call<T>(T container);
 
-        //[Aspect3]
-        //void Call<T>(IContainer<T> container);
+        [Aspect3]
+        void Call<T>(IContainer<T> container);
 
-        //[Aspect3]
-        //void Call<T>(Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext;
+        [Aspect3]
+        void Call<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
 
 
         [Aspect3]
@@ -30,7 +30,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         Task TaskCall<T>(IContainer<T> container);
 
         [Aspect3]
-        Task TaskCall<T>(Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext;
+        Task TaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
 
 
 
@@ -44,7 +44,7 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
         Task AsyncTaskCall<T>(IContainer<T> container);
 
         [Aspect3]
-        Task AsyncTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext;
+        Task AsyncTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
 
 
 
@@ -52,23 +52,23 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
 
 
 
-        //[Aspect3]
-        //void CallWithRefParameter<T>(ref T container);
+        [Aspect3]
+        void CallWithRefParameter<T>(ref T container);
 
-        //[Aspect3]
-        //void CallWithRefParameter<T>(ref IContainer<T> container);
+        [Aspect3]
+        void CallWithRefParameter<T>(ref IContainer<T> container);
 
-        //[Aspect3]
-        //void CallWithRefParameter<T>(ref Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext;
+        [Aspect3]
+        void CallWithRefParameter<T>(ref Dictionary<string, IContainer<T>> container) where T : AspectContext;
 
-        //[Aspect3]
-        //void CallWithOutParameter<T>(T parameter, out T container);
+        [Aspect3]
+        void CallWithOutParameter<T>(T parameter, out T container);
 
-        //[Aspect3]
-        //void CallWithOutParameter<T>(IContainer<T> parameter, out IContainer<T> container);
+        [Aspect3]
+        void CallWithOutParameter<T>(IContainer<T> parameter, out IContainer<T> container);
 
-        //[Aspect3]
-        //void CallWithOutParameter<T>(Dictionary<string, IContainer<T>> parameter, out Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext;
+        [Aspect3]
+        void CallWithOutParameter<T>(Dictionary<string, IContainer<T>> parameter, out Dictionary<string, IContainer<T>> container) where T : AspectContext;
     }
 
     public interface IContainer<T>

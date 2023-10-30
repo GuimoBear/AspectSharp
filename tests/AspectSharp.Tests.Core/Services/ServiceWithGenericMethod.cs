@@ -7,20 +7,20 @@ namespace AspectSharp.Tests.Core.Services
 {
     internal class ServiceWithGenericMethod : IServiceWithGenericMethod
     {
-        //public T Call<T>()
-        //{
-        //    DoNothing();
-        //    return default;
-        //}
+        public T Call<T>()
+        {
+            DoNothing();
+            return default;
+        }
 
-        //public void Call<T>(T container)
-        //    => DoNothing();
+        public void Call<T>(T container)
+            => DoNothing();
 
-        //public void Call<T>(IContainer<T> container)
-        //    => DoNothing();
+        public void Call<T>(IContainer<T> container)
+            => DoNothing();
 
-        //public void Call<T>(Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext
-        //    => DoNothing();
+        public void Call<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext
+            => DoNothing();
 
 
 
@@ -39,7 +39,7 @@ namespace AspectSharp.Tests.Core.Services
             return Task.CompletedTask;
         }
 
-        public Task TaskCall<T>(Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext
+        public Task TaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext
         {
             DoNothing();
             return Task.CompletedTask;
@@ -66,7 +66,7 @@ namespace AspectSharp.Tests.Core.Services
             await Task.Delay(1);
         }
 
-        public async Task AsyncTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext
+        public async Task AsyncTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext
         {
             await Task.Delay(1);
         }
@@ -75,32 +75,32 @@ namespace AspectSharp.Tests.Core.Services
 
 
 
-        //public void CallWithRefParameter<T>(ref T container)
-        //    => DoNothing();
+        public void CallWithRefParameter<T>(ref T container)
+            => DoNothing();
 
-        //public void CallWithRefParameter<T>(ref IContainer<T> container)
-        //    => DoNothing();
+        public void CallWithRefParameter<T>(ref IContainer<T> container)
+            => DoNothing();
 
-        //public void CallWithRefParameter<T>(ref Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext
-        //    => DoNothing();
+        public void CallWithRefParameter<T>(ref Dictionary<string, IContainer<T>> container) where T : AspectContext
+            => DoNothing();
 
-        //public void CallWithOutParameter<T>(T parameter, out T container)
-        //{
-        //    container = parameter;
-        //    DoNothing();
-        //}
+        public void CallWithOutParameter<T>(T parameter, out T container)
+        {
+            container = parameter;
+            DoNothing();
+        }
 
-        //public void CallWithOutParameter<T>(IContainer<T> parameter, out IContainer<T> container)
-        //{
-        //    container = parameter;
-        //    DoNothing();
-        //}
+        public void CallWithOutParameter<T>(IContainer<T> parameter, out IContainer<T> container)
+        {
+            container = parameter;
+            DoNothing();
+        }
 
-        //public void CallWithOutParameter<T>(Dictionary<string, IContainer<T>> parameter, out Dictionary<string, IContainer<T>> container) where T : notnull, AspectContext
-        //{
-        //    container = parameter;
-        //    DoNothing();
-        //}
+        public void CallWithOutParameter<T>(Dictionary<string, IContainer<T>> parameter, out Dictionary<string, IContainer<T>> container) where T : AspectContext
+        {
+            container = parameter;
+            DoNothing();
+        }
 
         private void DoNothing() { }
 

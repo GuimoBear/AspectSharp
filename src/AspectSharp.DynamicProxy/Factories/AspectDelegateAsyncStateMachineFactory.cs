@@ -14,12 +14,20 @@ namespace AspectSharp.DynamicProxy.Factories
 {
     internal static class AspectDelegateAsyncStateMachineFactory
     {
+        private static readonly IDictionary<Tuple<string, string, int>, Type> _cachedProxyTypes
+            = new Dictionary<Tuple<string, string, int>, Type>();
+
         internal static GeneratedAsyncStateMachine GenerateAsyncStateMachine(ModuleBuilder moduleBuilder, MethodInfo methodInfo, MethodBuilder callerMethod, GenericTypeParameterBuilder[] callerMethodGenericParameters)
         {
-            var typeName = string.Format("AspectSharp.AsyncStateMachines.AspectDelegates.{0}_{1}", callerMethod.DeclaringType.Name, callerMethod.Name);
             var attrs = TypeAttributes.Public | TypeAttributes.Sealed | TypeAttributes.BeforeFieldInit;
 
-            var typeBuilder = moduleBuilder.DefineType(typeName, attrs, typeof(ValueType), _interfaces);
+            var previouslyDefinedProxyClassFromThisTargetCount = _cachedProxyTypes.Count(kvp => kvp.Key.Item1 == callerMethod.DeclaringType.Name && kvp.Key.Item2 == callerMethod.Name);
+            TypeBuilder typeBuilder;
+            if (previouslyDefinedProxyClassFromThisTargetCount == 0)
+                typeBuilder = moduleBuilder.DefineType(string.Format("AspectSharp.AsyncStateMachines.AspectDelegates.{0}.{1}", callerMethod.DeclaringType.Name, callerMethod.Name), attrs, typeof(ValueType), _interfaces);
+            else
+                typeBuilder = moduleBuilder.DefineType(string.Format("AspectSharp.AsyncStateMachines.AspectDelegates.{0}.{1}{2}", callerMethod.DeclaringType.Name, callerMethod.Name, previouslyDefinedProxyClassFromThisTargetCount), attrs, typeof(ValueType), _interfaces);
+
             var genericParameterBuilders = Array.Empty<GenericTypeParameterBuilder>();
 
             var methodToCall = methodInfo;
@@ -60,6 +68,7 @@ namespace AspectSharp.DynamicProxy.Factories
             DefineSetStateMachine(typeBuilder, builderField, genericParameterBuilders);
 
             var awaiterType = typeBuilder.CreateTypeInfo().AsType();
+            _cachedProxyTypes.Add(new Tuple<string, string, int>(callerMethod.DeclaringType.Name, callerMethod.Name, awaiterType.GetHashCode()), awaiterType);
 
             return new GeneratedAsyncStateMachine(callerMethod, callerMethodGenericParameters, awaiterType, stateField, builderField, contextField);
         }
@@ -117,7 +126,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
             cil.Emit(OpCodes.Ldloca_S, localAwaiter.LocalIndex);
             cil.Emit(OpCodes.Call, methodInfo.ReturnType.ContainsGenericParameters
-                ? TypeBuilder.GetMethod(localAwaiter.LocalType, typeof(TaskAwaiter<>).GetProperty(nameof(TaskAwaiter.IsCompleted)).GetGetMethod())
+                ? TypeBuilder.GetMethod(localAwaiter.LocalType, localAwaiter.LocalType.GetGenericTypeDefinition().GetProperty(nameof(TaskAwaiter.IsCompleted)).GetGetMethod())
                 : localAwaiter.LocalType.GetProperty(nameof(TaskAwaiter.IsCompleted)).GetGetMethod());
             cil.Emit(OpCodes.Brtrue_S, afterElseLabel);
 
@@ -333,7 +342,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
             cil.Emit(OpCodes.Ldarg, awaiterParameter.Position);
             cil.Emit(OpCodes.Call, methodInfo.ReturnType.ContainsGenericParameters
-                    ? TypeBuilder.GetMethod(taskAwaiterType, typeof(TaskAwaiter<>).GetMethod(nameof(TaskAwaiter.GetResult), Type.EmptyTypes))
+                    ? TypeBuilder.GetMethod(taskAwaiterType, taskAwaiterType.GetGenericTypeDefinition().GetMethod(nameof(TaskAwaiter.GetResult), Type.EmptyTypes))
                     : taskAwaiterType.GetMethod(nameof(TaskAwaiter.GetResult), Type.EmptyTypes));
             if (methodInfo.ReturnType.IsGenericType)
             {

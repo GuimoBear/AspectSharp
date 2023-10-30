@@ -64,7 +64,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                                     {
                                         if (!retInfo.IsVoid)
                                         {
-                                            var getResultMethod = typeof(ValueTask<>).MakeGenericType(retInfo.Type).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod();
+                                            var getResultMethod = typeof(ValueTask<>).MakeGenericType(methodInfo.ReturnType.GetGenericArguments()).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod();
                                             getResultMethod.Invoke(ret, Array.Empty<object>());
                                         }
                                         else
@@ -85,8 +85,6 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                     var aspectContextAditionalInfo = new List<string>();
                     IEnumerable<CustomAttributeData> interceptors = default;
                     interceptorDictionary?.TryGetValue(methodInfo, out interceptors);
-                    //if (!)
-                    //{
                     var beforeInterceptorKey = new Dictionary<string, int>();
                         var afterInterceptorKey = new Dictionary<string, int>();
                         foreach (var interceptor in (globalInterceptors.Select(interceptor => interceptor.GetType()) ?? Enumerable.Empty<Type>()).Concat(( interceptors?.Select(attr => attr.AttributeType) ?? Enumerable.Empty<Type>())))

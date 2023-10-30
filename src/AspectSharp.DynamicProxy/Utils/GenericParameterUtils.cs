@@ -79,7 +79,7 @@ namespace AspectSharp.DynamicProxy.Utils
         {
             if (type.ContainsGenericParameters)
             {
-                if (type.IsAutoLayout && type.Name.EndsWith('&'))
+                if (type.IsAutoLayout && type.Name.EndsWith("&"))
                 {
                     return ReplaceTypeUsingGenericParameters(type.GetElementType(), genericParameters).MakeByRefType();
                 }

@@ -10,7 +10,7 @@ namespace AspectSharp.DynamicProxy.Utils
 {
     internal static class ProxyFactoryUtils
     {
-        public static AspectDelegate EmptyAspectDelegate = _ => Task.CompletedTask;
+        public static AspectDelegate NoOp = _ => Task.CompletedTask;
 
         public static readonly object[] EmptyParameters = Array.Empty<object>();
 
@@ -32,7 +32,13 @@ namespace AspectSharp.DynamicProxy.Utils
         }
 
         public static Task ExecutePipeline(AspectContext context, InterceptDelegate pipeline)
-            => pipeline(context, EmptyAspectDelegate);
+            => pipeline(context, NoOp);
+
+        public static async Task<TResult> ExecutePipelineAndReturnResult<TResult>(AspectContext context, InterceptDelegate pipeline)
+        {
+            await ExecutePipeline(context, pipeline);
+            return (TResult)context.ReturnValue;
+        }
 
         public static AspectContextActivator NewContextActivator(Type serviceType, Type proxyType, Type targetType, string methodName, Type[] parameterTypes = default, string[] parameterNames = default, bool[] parametersIsRefOrOut = default)
         {

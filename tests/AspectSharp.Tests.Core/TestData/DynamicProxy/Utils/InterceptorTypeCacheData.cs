@@ -1,4 +1,4 @@
-﻿using AspectSharp.Abstractions;
+﻿ using AspectSharp.Abstractions;
 using AspectSharp.Abstractions.Attributes;
 using AspectSharp.Abstractions.Enums;
 using AspectSharp.Tests.Core.Aspects;
@@ -31,6 +31,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericReferenceType();
             yield return GetInterceptorTypeDataUsingDefaultConfigsAndInheritedGenericValueType();
             yield return GetInterceptorTypeDataUsingDefaultConfigsAndServiceWithGenericMethod();
+            yield return GetInterceptorTypeDataUsingDefaultConfigsAndServiceWithGenericTypeAndGenericMethod();
         }
 
         private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigs()
@@ -1084,11 +1085,13 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                },
-                {
+                }
+#if NETCOREAPP3_1_OR_GREATER
+                ,{
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
+#endif
             };
             var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
             {
@@ -1141,11 +1144,13 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                },
-                {
+                }
+#if NETCOREAPP3_1_OR_GREATER
+                ,{
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
+#endif
             };
             var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
             {
@@ -1198,11 +1203,13 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                },
-                {
+                }
+#if NETCOREAPP3_1_OR_GREATER
+                ,{
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
+#endif
             };
             var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
             {
@@ -1255,11 +1262,13 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
                 {
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.WaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                },
-                {
+                }
+#if NETCOREAPP3_1_OR_GREATER
+                ,{
                     serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)),
                     typeDefinitionInterceptors.Concat(serviceType.GetMethod(nameof(ISimpleGenericFakeService<int>.ValueWaitMethod)).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
                 }
+#endif
             };
             var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
             {
@@ -1283,22 +1292,22 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
             var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
             var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
             {
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 0),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 0).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 0),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 0).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.Call) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.IsGenericType && mi.GetParameters().First().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
 
 
 
@@ -1344,30 +1353,173 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Utils
 
 
 
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.GetElementType().IsGenericType),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.GetElementType().IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //},
-                //{
-                //    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
-                //    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
-                //}
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.GetElementType().IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && !mi.GetParameters().First().ParameterType.GetElementType().IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithRefParameter) && mi.GetParameters().Length == 1 && mi.GetParameters().First().ParameterType.GetElementType().IsGenericType && mi.GetParameters().First().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericMethod.CallWithOutParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                }
+            };
+            var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
+            {
+                new DynamicProxyFactoryConfigurations.GlobalInterceptorConfig(new GlobalAspect(), new GlobalAspectMethodMatcher())
+            };
+            return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>>
+            (
+                serviceType,
+                targetType,
+                new DynamicProxyFactoryConfigurations(InterceptedEventMethod.All, InterceptedPropertyMethod.All, false, globalAspects),
+                true,
+                dict.OrderBy(kvp => string.Format("{0}{1}", kvp.Key.Name, kvp.Key.GetParameters().Length)).ToDictionary(kvp => kvp.Key, kvp => kvp.Value)
+            );
+        }
+
+        private static Tuple<Type, Type, DynamicProxyFactoryConfigurations, bool, IReadOnlyDictionary<MethodInfo, IEnumerable<CustomAttributeData>>> GetInterceptorTypeDataUsingDefaultConfigsAndServiceWithGenericTypeAndGenericMethod()
+        {
+            var serviceType = typeof(IServiceWithGenericTypeAndGenericMethod<int>);
+            var targetType = typeof(ServiceWithGenericTypeAndGenericMethod<int>);
+            var typeDefinitionInterceptors = serviceType.CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var aspect1InterceptorList = typeDefinitionInterceptors.Where(attr => typeof(Aspect1Attribute).IsAssignableFrom(attr.AttributeType)).ToList();
+            var dict = new Dictionary<MethodInfo, IEnumerable<CustomAttributeData>>
+            {
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 1),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 1).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.Call) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+
+
+
+
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 1),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 1).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.TaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+
+#if NETCOREAPP3_1_OR_GREATER
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 1),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 1).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.ValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+#endif
+
+
+
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 1),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 1).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+#if NETCOREAPP3_1_OR_GREATER
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 1),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 1).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.AsyncValueTaskCall) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.IsGenericType && mi.GetParameters().Last().ParameterType.GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+#endif
+
+
+
+
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithRefParameter) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithRefParameter) && mi.GetParameters().Length == 2 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithRefParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithRefParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithRefParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithRefParameter) && mi.GetParameters().Length == 2 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithOutParameter) && mi.GetParameters().Length == 3 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithOutParameter) && mi.GetParameters().Length == 3 && !mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithOutParameter) && mi.GetParameters().Length == 3 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithOutParameter) && mi.GetParameters().Length == 3 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(IContainer<>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                },
+                {
+                    serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithOutParameter) && mi.GetParameters().Length == 3 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))),
+                    typeDefinitionInterceptors.Concat(serviceType.GetMethods().Single(mi => mi.Name == nameof(IServiceWithGenericTypeAndGenericMethod<int>.CallWithOutParameter) && mi.GetParameters().Length == 3 && mi.GetParameters().Last().ParameterType.GetElementType().IsGenericType && mi.GetParameters().Last().ParameterType.GetElementType().GetGenericTypeDefinition().Equals(typeof(Dictionary<,>))).CustomAttributes.Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.AttributeType))).ToList()
+                }
             };
             var globalAspects = new List<DynamicProxyFactoryConfigurations.GlobalInterceptorConfig>
             {

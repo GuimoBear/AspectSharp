@@ -1,8 +1,6 @@
 ﻿using AspectSharp.Tests.Core.Services.Interfaces;
 using System;
 using System.Collections.Generic;
-using System.Net.Http.Headers;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 
 namespace AspectSharp.Tests.Core.Services

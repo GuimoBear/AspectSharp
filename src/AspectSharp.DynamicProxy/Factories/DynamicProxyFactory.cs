@@ -111,13 +111,27 @@ namespace AspectSharp.DynamicProxy.Factories
 
         private static AssemblyBuilder NewAssemblyBuilder()
         {
+            
             var assemblyName = new AssemblyName("AspectSharp.Proxies");
-            return AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+#if NETCOREAPP3_1_OR_GREATER
+            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+#elif NET46 || NET461 || NET462 || NET47 || NET471 || NET472 || NET48 || NET481
+            var assemblyBuilder =  AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave);
+#else
+            var assemblyBuilder =  AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
+#endif
+            return assemblyBuilder;
         }
 
         private static ModuleBuilder NewModuleBuilder(AssemblyBuilder assemblyBuilder)
         {
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule("Impl");
+#if NETCOREAPP3_1_OR_GREATER
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name);
+#elif NET461_OR_GREATER
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name, assemblyBuilder.GetName().Name + ".mod");
+#else
+            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name);
+#endif
             return moduleBuilder;
         }
     }

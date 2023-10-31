@@ -7,11 +7,11 @@ namespace AspectSharp.DynamicProxy.Utils
 {
     internal static class GenericParameterUtils
     {
-        internal static void DefineGenericParameter(Type targetType, TypeBuilder typeBuilder)
+        internal static Tuple<TypeInfo[], GenericTypeParameterBuilder[]> DefineGenericParameter(Type targetType, TypeBuilder typeBuilder)
         {
             if (!targetType.GetTypeInfo().IsGenericTypeDefinition)
             {
-                return;
+                return new Tuple<TypeInfo[], GenericTypeParameterBuilder[]>(Array.Empty<TypeInfo>(), Array.Empty<GenericTypeParameterBuilder>());
             }
             var genericArguments = targetType.GetTypeInfo().GetGenericArguments().Select(t => t.GetTypeInfo()).ToArray();
             var genericArgumentsBuilders = typeBuilder.DefineGenericParameters(genericArguments.Select(a => a.Name).ToArray());
@@ -24,6 +24,7 @@ namespace AspectSharp.DynamicProxy.Utils
                     if (constraint.IsInterface) genericArgumentsBuilders[index].SetInterfaceConstraints(constraint.AsType());
                 }
             }
+            return new Tuple<TypeInfo[], GenericTypeParameterBuilder[]>(genericArguments, genericArgumentsBuilders);
         }
 
         internal static GenericTypeParameterBuilder[] DefineGenericParameter(MethodInfo tergetMethod, MethodBuilder methodBuilder)
@@ -75,24 +76,25 @@ namespace AspectSharp.DynamicProxy.Utils
             return GenericParameterAttributes.None;
         }
 
-        internal static Type ReplaceTypeUsingGenericParameters(Type type, GenericTypeParameterBuilder[] genericParameters)
+        internal static Type ReplaceTypeUsingGenericParameters(Type type, GenericTypeParameterBuilder[] methodGenericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             if (type.ContainsGenericParameters)
             {
                 if (type.IsAutoLayout && type.Name.EndsWith("&"))
                 {
-                    return ReplaceTypeUsingGenericParameters(type.GetElementType(), genericParameters).MakeByRefType();
+                    return ReplaceTypeUsingGenericParameters(type.GetElementType(), methodGenericParameters, typeGenericParameters).MakeByRefType();
                 }
                 else if (type.IsGenericType)
                 {
-                    var replacedGenericParameters = type.GetGenericArguments().Select(g => ReplaceTypeUsingGenericParameters(genericParameters.FirstOrDefault(g1 => g1.Name == g.Name) ?? g, genericParameters)).ToArray();
+                    var replacedGenericParameters = type.GetGenericArguments()
+                        .Select(g => ReplaceTypeUsingGenericParameters(methodGenericParameters.FirstOrDefault(g1 => g1.Name == g.Name) ?? typeGenericParameters.FirstOrDefault(g1 => g1.Name == g.Name) ?? g, methodGenericParameters, typeGenericParameters)).ToArray();
                     if (!type.IsGenericTypeDefinition)
                         type = type.GetGenericTypeDefinition();
                     return type.MakeGenericType(replacedGenericParameters);
                 }
                 else
                 {
-                    return genericParameters.First(g => g.Name == type.Name);
+                    return methodGenericParameters.FirstOrDefault(g => g.Name == type.Name) ?? typeGenericParameters.First(g => g.Name == type.Name);
                 }
             }
             return type;

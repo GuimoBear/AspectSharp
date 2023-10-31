@@ -24,6 +24,8 @@ namespace AspectSharp.DynamicProxy.Factories
             FieldInfo originContextActivatorField, 
             MethodInfo methodInfo,
             MethodBuilder callerMethod,
+            GenericTypeParameterBuilder[] callerMethodGenericParameters, 
+            TypeInfo[] typeGnericParameters,
             Type customAspectContext, 
             ConstructorInfo contextConstructor)
         {
@@ -43,7 +45,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
             if (methodToCall.IsGenericMethod)
             {
-                var genericParameters = methodInfo.GetGenericArguments().Select(a => a.GetTypeInfo()).ToArray();
+                var genericParameters = typeGnericParameters.Concat(methodInfo.GetGenericArguments().Select(a => a.GetTypeInfo())).ToArray();
 
                 genericParameterBuilders = typeBuilder.DefineGenericParameters(genericParameters.Select(ti => ti.Name).ToArray());
 
@@ -68,15 +70,15 @@ namespace AspectSharp.DynamicProxy.Factories
             }
 
             var stateFieldBuilder = DefineStateField(typeBuilder);
-            var builderFieldBuilder = DefineMethodBuilderField(typeBuilder, methodToCall, genericParameterBuilders);
+            var builderFieldBuilder = DefineMethodBuilderField(typeBuilder, methodToCall, genericParameterBuilders, callerMethodGenericParameters);
             var targetFieldBuilder = DefineTargetField(typeBuilder, targetType);
             var proxyFieldBuilder = DefineProxyField(typeBuilder, proxyType);
             var contextFactoryFieldBuilder = DefineContextFactoryField(typeBuilder);
-            var parameterFieldBuilders = DefineParametersField(typeBuilder, methodParameters, genericParameterBuilders);
+            var parameterFieldBuilders = DefineParametersField(typeBuilder, methodParameters, genericParameterBuilders, callerMethodGenericParameters);
             var contextField = DefineContextField(typeBuilder);
-            var awaiterField = DefineAwaiterField(typeBuilder, methodToCall, genericParameterBuilders);
+            var awaiterField = DefineAwaiterField(typeBuilder, methodToCall, genericParameterBuilders, callerMethodGenericParameters);
 
-            DefineMoveNext(typeBuilder, methodToCall, stateFieldBuilder, builderFieldBuilder, targetFieldBuilder, proxyFieldBuilder, originContextActivatorField, contextConstructor, contextFactoryFieldBuilder, contextField, parameterFieldBuilders, pipelineProperty, awaiterField, genericParameterBuilders);
+            DefineMoveNext(typeBuilder, methodToCall, stateFieldBuilder, builderFieldBuilder, targetFieldBuilder, proxyFieldBuilder, originContextActivatorField, contextConstructor, contextFactoryFieldBuilder, contextField, parameterFieldBuilders, pipelineProperty, awaiterField, genericParameterBuilders, callerMethodGenericParameters);
             DefineSetStateMachine(typeBuilder, builderFieldBuilder);
 
             var awaiterType = typeBuilder.CreateTypeInfo().AsType();
@@ -96,8 +98,8 @@ namespace AspectSharp.DynamicProxy.Factories
         private static FieldBuilder DefineStateField(TypeBuilder typeBuilder)
             => typeBuilder.DefineField("<>__state", _stateType, FieldAttributes.Public);
 
-        private static FieldBuilder DefineMethodBuilderField(TypeBuilder typeBuilder, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters)
-            => typeBuilder.DefineField("<>___builder", GenericParameterUtils.ReplaceTypeUsingGenericParameters(GetAsyncMethodBuilderType(methodInfo.ReturnType), genericParameters), FieldAttributes.Public);
+        private static FieldBuilder DefineMethodBuilderField(TypeBuilder typeBuilder, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
+            => typeBuilder.DefineField("<>___builder", GenericParameterUtils.ReplaceTypeUsingGenericParameters(GetAsyncMethodBuilderType(methodInfo.ReturnType), genericParameters, typeGenericParameters), FieldAttributes.Public);
 
         private static FieldBuilder DefineTargetField(TypeBuilder typeBuilder, Type serviceType)
             => typeBuilder.DefineField("<>__target", serviceType, FieldAttributes.Public);
@@ -108,20 +110,20 @@ namespace AspectSharp.DynamicProxy.Factories
         private static FieldBuilder DefineContextFactoryField(TypeBuilder typeBuilder)
             => typeBuilder.DefineField("<>__contextFactory", typeof(IAspectContextFactory), FieldAttributes.Public);
 
-        private static FieldBuilder[] DefineParametersField(TypeBuilder typeBuilder, ParameterInfo[] methodParameters, GenericTypeParameterBuilder[] genericParameters)
+        private static FieldBuilder[] DefineParametersField(TypeBuilder typeBuilder, ParameterInfo[] methodParameters, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             if (methodParameters.Length == 0)
                 return Array.Empty<FieldBuilder>();
             var ret = new List<FieldBuilder>();
             foreach (var parameter in methodParameters)
-                ret.Add(typeBuilder.DefineField(string.Format("<>__{0}", parameter.Name), GenericParameterUtils.ReplaceTypeUsingGenericParameters(parameter.ParameterType, genericParameters), FieldAttributes.Public));
+                ret.Add(typeBuilder.DefineField(string.Format("<>__{0}", parameter.Name), GenericParameterUtils.ReplaceTypeUsingGenericParameters(parameter.ParameterType, genericParameters, typeGenericParameters), FieldAttributes.Public));
             return ret.ToArray();
         }
 
         private static FieldBuilder DefineContextField(TypeBuilder typeBuilder)
             => typeBuilder.DefineField("<>__context", typeof(AspectContext), FieldAttributes.Private);
 
-        private static FieldBuilder DefineAwaiterField(TypeBuilder typeBuilder, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters)
+        private static FieldBuilder DefineAwaiterField(TypeBuilder typeBuilder, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             var returnInfo = methodInfo.GetReturnInfo();
             if (returnInfo.IsVoid)
@@ -130,17 +132,17 @@ namespace AspectSharp.DynamicProxy.Factories
             }
             else
             {
-                return typeBuilder.DefineField("<>__awaiter", typeof(TaskAwaiter<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters)), FieldAttributes.Private);
+                return typeBuilder.DefineField("<>__awaiter", typeof(TaskAwaiter<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters, typeGenericParameters)), FieldAttributes.Private);
             }
         }
 
-        private static MethodBuilder DefineMoveNext(TypeBuilder typeBuilder, MethodInfo methodInfo, FieldBuilder stateField, FieldBuilder builderField, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, PropertyInfo pipelineProperty, FieldBuilder awaiterField, GenericTypeParameterBuilder[] genericParameters)
+        private static MethodBuilder DefineMoveNext(TypeBuilder typeBuilder, MethodInfo methodInfo, FieldBuilder stateField, FieldBuilder builderField, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, PropertyInfo pipelineProperty, FieldBuilder awaiterField, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             var returnInfo = methodInfo.GetReturnInfo();
 
-            var prepareAwaiterMethod = DefinePrepareAwaiter(typeBuilder, targetField, proxyField, originContextActivatorField, contextConstructor, contextFactoryField, contextField, parameterFields, pipelineProperty, methodInfo, genericParameters);
+            var prepareAwaiterMethod = DefinePrepareAwaiter(typeBuilder, targetField, proxyField, originContextActivatorField, contextConstructor, contextFactoryField, contextField, parameterFields, pipelineProperty, methodInfo, genericParameters, typeGenericParameters);
             var awaitOnCompletedMethod = DefineAwaitOnCompleted(typeBuilder, stateField, awaiterField, builderField);
-            var afterCompletionMethod = DefineAfterCompletionMethod(typeBuilder, awaiterField, methodInfo, contextField, genericParameters);
+            var afterCompletionMethod = DefineAfterCompletionMethod(typeBuilder, awaiterField, methodInfo, contextField, genericParameters, typeGenericParameters);
 
             var awaiterType = _taskAwaiterType;
 
@@ -155,7 +157,7 @@ namespace AspectSharp.DynamicProxy.Factories
             var localException = cil.DeclareLocal(_exceptionType);
             LocalBuilder localReturn = default;
             if (!returnInfo.IsVoid)
-                localReturn = cil.DeclareLocal(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters));
+                localReturn = cil.DeclareLocal(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters, typeGenericParameters));
 
             var stateEqualsZeroLabel = cil.DefineLabel();
             var afterElseLabel = cil.DefineLabel();
@@ -281,13 +283,13 @@ namespace AspectSharp.DynamicProxy.Factories
             return methodBuilder;
         }
 
-        private static MethodBuilder DefinePrepareAwaiter(TypeBuilder typeBuilder, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, PropertyInfo pipelineProperty, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters)
+        private static MethodBuilder DefinePrepareAwaiter(TypeBuilder typeBuilder, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, PropertyInfo pipelineProperty, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             var attrs = MethodAttributes.Private | MethodAttributes.HideBySig;
             var returnInfo = methodInfo.GetReturnInfo();
             var returnType = _taskAwaiterType;
             if (!returnInfo.IsVoid)
-                returnType = typeof(TaskAwaiter<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters));
+                returnType = typeof(TaskAwaiter<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters, typeGenericParameters));
 
             var methodBuilder = typeBuilder.DefineMethod("PrepareAwaiter", attrs, CallingConventions.Standard | CallingConventions.HasThis, returnType, Type.EmptyTypes);
 
@@ -349,10 +351,10 @@ namespace AspectSharp.DynamicProxy.Factories
             }
             else
             {
-                cil.Emit(OpCodes.Call, typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.ExecutePipelineAndReturnResult)).MakeGenericMethod(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters)));
+                cil.Emit(OpCodes.Call, typeof(ProxyFactoryUtils).GetMethod(nameof(ProxyFactoryUtils.ExecutePipelineAndReturnResult)).MakeGenericMethod(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters, typeGenericParameters)));
                 cil.Emit(OpCodes.Callvirt, returnInfo.Type.ContainsGenericParameters 
-                    ? TypeBuilder.GetMethod(typeof(Task<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters)), typeof(Task<>).GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes))
-                    : typeof(Task<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters)).GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes));
+                    ? TypeBuilder.GetMethod(typeof(Task<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters, typeGenericParameters)), typeof(Task<>).GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes))
+                    : typeof(Task<>).MakeGenericType(GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameters, typeGenericParameters)).GetMethod(nameof(Task.GetAwaiter), Type.EmptyTypes));
             }
             cil.Emit(OpCodes.Ret);
 
@@ -389,7 +391,7 @@ namespace AspectSharp.DynamicProxy.Factories
             return methodBuilder;
         }
 
-        private static MethodBuilder DefineAfterCompletionMethod(TypeBuilder typeBuilder, FieldBuilder awaiterField, MethodInfo methodInfo, FieldBuilder contextField, GenericTypeParameterBuilder[] genericParameters)
+        private static MethodBuilder DefineAfterCompletionMethod(TypeBuilder typeBuilder, FieldBuilder awaiterField, MethodInfo methodInfo, FieldBuilder contextField, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             var retInfo = methodInfo.GetReturnInfo();
             var taskAwaiterByRefType = awaiterField.FieldType.MakeByRefType();
@@ -397,7 +399,7 @@ namespace AspectSharp.DynamicProxy.Factories
             var attrs = MethodAttributes.Private | MethodAttributes.Virtual;
             Type returnType = default;
             if (!retInfo.IsVoid)
-                returnType = GenericParameterUtils.ReplaceTypeUsingGenericParameters(retInfo.Type, genericParameters);
+                returnType = GenericParameterUtils.ReplaceTypeUsingGenericParameters(retInfo.Type, genericParameters, typeGenericParameters);
             var methodBuilder = typeBuilder.DefineMethod("AfterCompletion", attrs, CallingConventions.Standard | CallingConventions.HasThis, returnType, new Type[] { taskAwaiterByRefType });
             var awaiterParameter = methodBuilder.DefineParameter(1, ParameterAttributes.None, "awaiter");
 
@@ -414,17 +416,6 @@ namespace AspectSharp.DynamicProxy.Factories
                     ? TypeBuilder.GetMethod(awaiterField.FieldType, typeof(TaskAwaiter<>).GetMethod(nameof(TaskAwaiter.GetResult), Type.EmptyTypes))
                     : awaiterField.FieldType.GetMethod(nameof(TaskAwaiter.GetResult), Type.EmptyTypes));
             }
-
-            //if (!retInfo.IsVoid)
-            //{
-            //    cil.Emit(OpCodes.Ldarg_0);
-            //    cil.Emit(OpCodes.Ldfld, contextField);
-            //    cil.Emit(OpCodes.Callvirt, _getReturnValueMethodInfo);
-            //    if (retInfo.Type.IsValueType || retInfo.Type.ContainsGenericParameters)
-            //        cil.Emit(OpCodes.Unbox_Any, returnType);
-            //    else
-            //        cil.Emit(OpCodes.Castclass, returnType);
-            //}
 
             cil.Emit(OpCodes.Ret);
 
@@ -478,12 +469,12 @@ namespace AspectSharp.DynamicProxy.Factories
                 ? TypeBuilder.GetMethod(builderField.FieldType, builderField.FieldType.GetGenericTypeDefinition().GetMethod(nameof(AsyncTaskMethodBuilder.SetException)))
                 : builderField.FieldType.GetMethod(nameof(AsyncTaskMethodBuilder.SetException));
 
-        private static MethodInfo GetCreateMethodBuilderMethod(Type builderFieldType, GenericTypeParameterBuilder[] genericParameters)
+        private static MethodInfo GetCreateMethodBuilderMethod(Type builderFieldType)
             => builderFieldType.ContainsGenericParameters
                 ? TypeBuilder.GetMethod(builderFieldType, builderFieldType.GetGenericTypeDefinition().GetMethod(nameof(AsyncTaskMethodBuilder.Create)))
                 : builderFieldType.GetMethod(nameof(AsyncTaskMethodBuilder.Create));
 
-        private static MethodInfo GetStartMethodBuilderGenericMethod(Type builderFieldType, Type stateMachineType, GenericTypeParameterBuilder[] genericParameters)
+        private static MethodInfo GetStartMethodBuilderGenericMethod(Type builderFieldType, Type stateMachineType)
             => builderFieldType.ContainsGenericParameters
                 ? TypeBuilder.GetMethod(builderFieldType, builderFieldType.GetGenericTypeDefinition().GetMethod(nameof(AsyncTaskMethodBuilder.Start))).MakeGenericMethod(stateMachineType)
                 : builderFieldType.GetMethod(nameof(AsyncTaskMethodBuilder.Start)).MakeGenericMethod(stateMachineType);
@@ -526,7 +517,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 ParameterFields = parameterFields;
             }
 
-            public void WriteCallerMethod(MethodBuilder callerMethod, GenericTypeParameterBuilder[] callerMethodGenericParameters, FieldInfo targetField, FieldInfo contextFactoryField)
+            public void WriteCallerMethod(MethodBuilder callerMethod, GenericTypeParameterBuilder[] callerMethodGenericParameters, GenericTypeParameterBuilder[] typeGenericParameters, FieldInfo targetField, FieldInfo contextFactoryField)
             {
                 var attributeConstructor = typeof(AsyncStateMachineAttribute).GetConstructor(new Type[] { typeof(Type) });
                 var customAttribute = new CustomAttributeBuilder(attributeConstructor, new object[] { Type });
@@ -534,7 +525,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 var builderFieldType = BuilderField.FieldType;
                 if (builderFieldType.ContainsGenericParameters)
-                    builderFieldType = builderFieldType.GetGenericTypeDefinition().MakeGenericType(callerMethodGenericParameters);
+                    builderFieldType = builderFieldType.GetGenericTypeDefinition().MakeGenericType(builderFieldType.GetGenericArguments().Select(g => GenericParameterUtils.ReplaceTypeUsingGenericParameters(g, callerMethodGenericParameters, typeGenericParameters)).ToArray());
 
                 var asyncStateMachineType = Type;
 
@@ -546,7 +537,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 var parameterFields = ParameterFields;
                 if (Type.IsGenericType)
                 {
-                    asyncStateMachineType = Type.MakeGenericType(callerMethodGenericParameters);
+                    asyncStateMachineType = Type.MakeGenericType(typeGenericParameters.Concat(callerMethodGenericParameters).ToArray());
 
                     stateField = TypeBuilder.GetField(asyncStateMachineType, stateField);
                     builderField = TypeBuilder.GetField(asyncStateMachineType, builderField);
@@ -570,7 +561,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 cil.Emit(OpCodes.Stfld, stateField);
 
                 cil.Emit(OpCodes.Ldloca_S, localAwaiterStateMachine);
-                var createMethodBuilderMethod = GetCreateMethodBuilderMethod(builderFieldType, callerMethodGenericParameters);
+                var createMethodBuilderMethod = GetCreateMethodBuilderMethod(builderFieldType);
                 cil.Emit(OpCodes.Call, createMethodBuilderMethod);
                 cil.Emit(OpCodes.Stfld, builderField);
 
@@ -598,7 +589,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 cil.Emit(OpCodes.Ldloca_S, localAwaiterStateMachine);
                 cil.Emit(OpCodes.Ldflda, builderField);
                 cil.Emit(OpCodes.Ldloca_S, localAwaiterStateMachine);
-                var startMethodBuilderGenericMethod = GetStartMethodBuilderGenericMethod(builderFieldType, localAwaiterStateMachine.LocalType, callerMethodGenericParameters);
+                var startMethodBuilderGenericMethod = GetStartMethodBuilderGenericMethod(builderFieldType, localAwaiterStateMachine.LocalType);
                 cil.Emit(OpCodes.Call, startMethodBuilderGenericMethod);
 
                 cil.Emit(OpCodes.Ldloca_S, localAwaiterStateMachine);

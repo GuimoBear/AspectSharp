@@ -27,7 +27,7 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly IDictionary<Tuple<string, string, int>, Type> _cachedProxyTypes
             = new Dictionary<Tuple<string, string, int>, Type>();
 
-        public static Tuple<Type, ConstructorInfo> CreateCustomAspectContext(MethodInfo interfaceMethodInfo, MethodInfo targetMethodInfo, ModuleBuilder moduleBuilder) 
+        public static Tuple<Type, ConstructorInfo> CreateCustomAspectContext(MethodInfo interfaceMethodInfo, MethodInfo targetMethodInfo, ModuleBuilder moduleBuilder, TypeInfo[] typeGenericArguments, GenericTypeParameterBuilder[] typeGenericArgumentBuilders) 
         {
             lock (_cachedProxyTypes)
             {
@@ -43,7 +43,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 if (interfaceMethodInfo.IsGenericMethod)
                 {
-                    var genericParameters = interfaceMethodInfo.GetGenericArguments().Select(a => a.GetTypeInfo()).ToArray();
+                    var genericParameters = typeGenericArguments.Concat(interfaceMethodInfo.GetGenericArguments().Select(a => a.GetTypeInfo())).ToArray();
 
                     genericParameterBuilders = typeBuilder.DefineGenericParameters(genericParameters.Select(ti => ti.Name).ToArray());
 
@@ -60,8 +60,8 @@ namespace AspectSharp.DynamicProxy.Factories
                     }
 
                     methodToCall = interfaceMethodInfo.IsGenericMethodDefinition
-                        ? interfaceMethodInfo.MakeGenericMethod(genericParameterBuilders)
-                        : interfaceMethodInfo.GetGenericMethodDefinition().MakeGenericMethod(genericParameterBuilders);
+                        ? interfaceMethodInfo.MakeGenericMethod(genericParameterBuilders.Where(t => !typeGenericArguments.Any(t1 => t1.Name == t.Name)).ToArray())
+                        : interfaceMethodInfo.GetGenericMethodDefinition().MakeGenericMethod(genericParameterBuilders.Where(t => !typeGenericArguments.Any(t1 => t1.Name == t.Name)).ToArray());
                 }
                 var constructorBuilder = typeBuilder.DefineConstructor(CONSTRUCTOR_ATTRIBUTES, CallingConventions.HasThis, CONSTRUCTOR_PARAMETERS);
 
@@ -82,7 +82,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                 if (targetMethodInfo.GetReturnInfo().IsAsync)
                 {
-                    var ret = AspectDelegateAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, interfaceMethodInfo, methodBuilder, genericParameterBuilders);
+                    var ret = AspectDelegateAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, interfaceMethodInfo, methodBuilder, genericParameterBuilders, typeGenericArguments, typeGenericArgumentBuilders);
                     ret.WriteCallerMethod();
                 }
                 else
@@ -94,7 +94,7 @@ namespace AspectSharp.DynamicProxy.Factories
 
                     foreach (var param in parameters)
                     {
-                        var parameterType = GenericParameterUtils.ReplaceTypeUsingGenericParameters(param.ParameterType, genericParameterBuilders);
+                        var parameterType = GenericParameterUtils.ReplaceTypeUsingGenericParameters(param.ParameterType, genericParameterBuilders, typeGenericArgumentBuilders);
                         parameterTypes.Add(parameterType);
                         cil.DeclareLocal(parameterType.IsAutoLayout && parameterType.Name.EndsWith("&") ? parameterType.GetElementType() : parameterType);
                     }
@@ -129,7 +129,11 @@ namespace AspectSharp.DynamicProxy.Factories
 
                     cil.Emit(OpCodes.Ldarg_0);
                     cil.Emit(OpCodes.Callvirt, _getTargetMethodInfo);
-                    cil.Emit(OpCodes.Isinst, methodToCall.DeclaringType);
+
+                    if (methodToCall.DeclaringType.IsGenericTypeDefinition)
+                        cil.Emit(OpCodes.Isinst, methodToCall.DeclaringType.MakeGenericType(typeGenericArgumentBuilders));
+                    else
+                        cil.Emit(OpCodes.Isinst, methodToCall.DeclaringType);
 
                     foreach (var i in Enumerable.Range(0, parameters.Length))
                     {
@@ -149,7 +153,7 @@ namespace AspectSharp.DynamicProxy.Factories
                     if (!returnInfo.IsVoid)
                     {
                         if (returnInfo.Type.IsValueType || returnInfo.Type.ContainsGenericParameters)
-                            cil.Emit(OpCodes.Box, GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameterBuilders));
+                            cil.Emit(OpCodes.Box, GenericParameterUtils.ReplaceTypeUsingGenericParameters(returnInfo.Type, genericParameterBuilders, typeGenericArgumentBuilders));
                         cil.Emit(OpCodes.Callvirt, _setReturnValueMethodInfo);
                     }
 

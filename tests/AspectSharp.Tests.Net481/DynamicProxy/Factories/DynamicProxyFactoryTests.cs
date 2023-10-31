@@ -50,6 +50,8 @@ namespace AspectSharp.Tests.Net481.DynamicProxy.Factories
                 //.AddSingleton(targetType)
                 //.AddSingleton(serviceType, proxyType);
 
+                if (serviceType.IsGenericTypeDefinition)
+                    serviceType = serviceType.MakeGenericType(new Type[] { typeof(string) });
                 using (var serviceProvider = services.BuildServiceProvider(true))
                 {
                     foreach (var kvp in methodCallData)

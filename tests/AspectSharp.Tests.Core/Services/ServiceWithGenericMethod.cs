@@ -44,7 +44,28 @@ namespace AspectSharp.Tests.Core.Services
             DoNothing();
             return Task.CompletedTask;
         }
+#if NETCOREAPP3_1_OR_GREATER
+        public ValueTask<T> ValueTaskCall<T>()
+            => new ValueTask<T>(Task.FromResult(default(T)));
 
+        public ValueTask ValueTaskCall<T>(T container)
+        {
+            DoNothing();
+            return new ValueTask(Task.CompletedTask);
+        }
+
+        public ValueTask ValueTaskCall<T>(IContainer<T> container)
+        {
+            DoNothing();
+            return new ValueTask(Task.CompletedTask);
+        }
+
+        public ValueTask ValueTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext
+        {
+            DoNothing();
+            return new ValueTask(Task.CompletedTask);
+        }
+#endif
 
 
 
@@ -70,6 +91,30 @@ namespace AspectSharp.Tests.Core.Services
         {
             await Task.Delay(1);
         }
+
+
+#if NETCOREAPP3_1_OR_GREATER
+        public async ValueTask<T> AsyncValueTaskCall<T>()
+        {
+            await Task.Delay(1);
+            return default(T);
+        }
+
+        public async ValueTask AsyncValueTaskCall<T>(T container)
+        {
+            await Task.Delay(1);
+        }
+
+        public async ValueTask AsyncValueTaskCall<T>(IContainer<T> container)
+        {
+            await Task.Delay(1);
+        }
+
+        public async ValueTask AsyncValueTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext
+        {
+            await Task.Delay(1);
+        }
+#endif
 
 
 

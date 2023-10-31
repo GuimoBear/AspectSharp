@@ -40,6 +40,8 @@ namespace AspectSharp.Tests.Net6.DynamicProxy.Factories
                 services.AddSingleton<IAspectContextFactory, FakeAspectContextFactory>();
                 //.AddSingleton(targetType)
                 //.AddSingleton(serviceType, proxyType);
+                if (serviceType.IsGenericTypeDefinition)
+                    serviceType = serviceType.MakeGenericType(new Type[] { typeof(string) });
 
                 using (var serviceProvider = services.BuildServiceProvider(true))
                 {

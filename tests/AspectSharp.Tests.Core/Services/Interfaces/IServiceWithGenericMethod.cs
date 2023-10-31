@@ -31,7 +31,19 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
 
         [Aspect3]
         Task TaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
+#if NETCOREAPP3_1_OR_GREATER
+        [Aspect3]
+        ValueTask<T> ValueTaskCall<T>();
 
+        [Aspect3]
+        ValueTask ValueTaskCall<T>(T container);
+
+        [Aspect3]
+        ValueTask ValueTaskCall<T>(IContainer<T> container);
+
+        [Aspect3]
+        ValueTask ValueTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
+#endif
 
 
         [Aspect3]
@@ -45,7 +57,19 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
 
         [Aspect3]
         Task AsyncTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
+#if NETCOREAPP3_1_OR_GREATER
+        [Aspect3]
+        ValueTask<T> AsyncValueTaskCall<T>();
 
+        [Aspect3]
+        ValueTask AsyncValueTaskCall<T>(T container);
+
+        [Aspect3]
+        ValueTask AsyncValueTaskCall<T>(IContainer<T> container);
+
+        [Aspect3]
+        ValueTask AsyncValueTaskCall<T>(Dictionary<string, IContainer<T>> container) where T : AspectContext;
+#endif
 
 
 

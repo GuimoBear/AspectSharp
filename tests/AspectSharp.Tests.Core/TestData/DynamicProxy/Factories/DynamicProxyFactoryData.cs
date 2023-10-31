@@ -22,6 +22,11 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                 var configs = tuple.Item3;
                 var interceptorDictionary = tuple.Item5;
 
+                if (serviceType.IsGenericTypeDefinition)
+                {
+                    serviceType = serviceType.MakeGenericType(new Type[] { typeof(string) });
+                    targetType = targetType.MakeGenericType(new Type[] { typeof(string) });
+                }
                 IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData = new Dictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>();
                 foreach(var mi in serviceType.GetMethods())
                 {
@@ -114,8 +119,8 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
 
                 yield return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>>
                 (
-                    serviceType,
-                    targetType,
+                    tuple.Item1,
+                    tuple.Item2,
                     configs,
                     methodCallData
                 );

@@ -100,8 +100,17 @@ namespace AspectSharp.Benchmarks
                    .WithIterationCount(Iterations)
                    .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
+            AddJob(Job.Default
+                   .WithRuntime(CoreRuntime.Core70)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
+            );
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;
+            AddLogicalGroupRules(BenchmarkLogicalGroupRule.ByJob, BenchmarkLogicalGroupRule.ByCategory);
 
             if (!(filter is null))
                 AddFilter(filter);

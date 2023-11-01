@@ -23,7 +23,7 @@ namespace AspectSharp.Benchmarks
         public override void IterationSetup()
             => base.IterationSetup();
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.Metrified))]
         public override string CallFakeService()
         {
@@ -41,7 +41,7 @@ namespace AspectSharp.Benchmarks
             }
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.Unmetrified))]
         public override string CallFakeServiceWithoutMetrics()
         {
@@ -59,7 +59,7 @@ namespace AspectSharp.Benchmarks
             }
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.UnmetrifiedClass))]
         public override string CallUnmetrifiedFakeService()
         {
@@ -77,7 +77,7 @@ namespace AspectSharp.Benchmarks
             }
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.AsyncMetrified))]
         public override async Task<string> CallFakeServiceAsync()
         {
@@ -95,7 +95,7 @@ namespace AspectSharp.Benchmarks
             }
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.AsyncUnmetrified))]
         public override async Task<string> CallFakeServiceWithoutMetricsAsync()
         {
@@ -113,7 +113,7 @@ namespace AspectSharp.Benchmarks
             }
         }
 
-        [Benchmark]
+        [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.AsyncUnmetrifiedClass))]
         public override async Task<string> CallUnmetrifiedFakeServiceAsync()
         {

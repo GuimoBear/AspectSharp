@@ -38,8 +38,10 @@ namespace AspectSharp.Tests.Net5.DynamicProxy.Factories
                 
                 services.Remove(services.First(sd => sd.ServiceType == typeof(IAspectContextFactory)));
                 services.AddSingleton<IAspectContextFactory, FakeAspectContextFactory>();
-                    //.AddSingleton(targetType)
-                    //.AddSingleton(serviceType, proxyType);
+                //.AddSingleton(targetType)
+                //.AddSingleton(serviceType, proxyType);
+                if (serviceType.IsGenericTypeDefinition)
+                    serviceType = serviceType.MakeGenericType(new Type[] { typeof(string) });
 
                 using (var serviceProvider = services.BuildServiceProvider(true))
                 {

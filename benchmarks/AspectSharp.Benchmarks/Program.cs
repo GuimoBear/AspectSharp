@@ -118,7 +118,9 @@ namespace AspectSharp.Benchmarks
             { BenchmarkRuntime.Net48, ClrRuntime.Net48 },
             { BenchmarkRuntime.NetCoreApp31, CoreRuntime.Core31 },
             { BenchmarkRuntime.Net5, CoreRuntime.Core50 },
-            { BenchmarkRuntime.Net6, CoreRuntime.Core60 }
+            { BenchmarkRuntime.Net6, CoreRuntime.Core60 },
+            { BenchmarkRuntime.Net7, CoreRuntime.Core70 },
+            { BenchmarkRuntime.Net8, CoreRuntime.Core80 }
         };
 
         private readonly BenchmarkRuntime _runtime;
@@ -184,8 +186,10 @@ namespace AspectSharp.Benchmarks
         Net48 = 16, 
         NetCoreApp31 = 32, 
         Net5 = 64, 
-        Net6 = 128, 
-        All = Net461 | Net462 | Net47 | Net48 | NetCoreApp31 | Net5 | Net6
+        Net6 = 128,
+        Net7 = 256,
+        Net8 = 512,
+        All = Net461 | Net462 | Net47 | Net48 | NetCoreApp31 | Net5 | Net6 | Net7 | Net8
     }
 
     [Flags]

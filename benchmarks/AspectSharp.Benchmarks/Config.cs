@@ -23,6 +23,7 @@ namespace AspectSharp.Benchmarks
 
             AddExporter(CsvExporter.Default);
             AddExporter(MarkdownExporter.GitHub);
+            AddExporter(RPlotExporter.Default);
             AddExporter(HtmlExporter.Default);
 
             var md = MemoryDiagnoser.Default;
@@ -108,9 +109,18 @@ namespace AspectSharp.Benchmarks
                    .WithIterationCount(Iterations)
                    .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
             );
+            AddJob(Job.Default
+                   .WithRuntime(CoreRuntime.Core80)
+                   .WithLaunchCount(1)
+                   .WithWarmupCount(2)
+                   .WithUnrollFactor(UnrollFactor)
+                   .WithIterationCount(Iterations)
+                   .WithEnvironmentVariable(new EnvironmentVariable(MetricsBenchmarkBase.CREATE_SCOPE_DURING_BENCHMARK_ENV_NAME, createScopeDuringBenchmark.ToString()))
+            );
+
+            AddLogicalGroupRules(BenchmarkLogicalGroupRule.ByCategory, BenchmarkLogicalGroupRule.ByJob);
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;
-            AddLogicalGroupRules(BenchmarkLogicalGroupRule.ByJob, BenchmarkLogicalGroupRule.ByCategory);
 
             if (!(filter is null))
                 AddFilter(filter);

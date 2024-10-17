@@ -14,13 +14,13 @@ namespace AspectSharp.Tests.Net6.Abstractions
 
             var configs = sut.Build();
 
-            configs.ExcludeTypeDefinitionAspectsForMethods
+            configs.ExcludeAspectsForMethods
                 .Should().BeFalse();
 
-            configs.IncludeTypeDefinitionAspectsToEvents
+            configs.IncludeAspectsToEvents
                 .Should().Be(InterceptedEventMethod.None);
 
-            configs.IncludeTypeDefinitionAspectsToProperties
+            configs.IncludeAspectsToProperties
                 .Should().Be(InterceptedPropertyMethod.None);
         }
 
@@ -29,11 +29,11 @@ namespace AspectSharp.Tests.Net6.Abstractions
         {
             var sut = new DynamicProxyFactoryConfigurationsBuilder();
 
-            sut.ExcludeTypeDefinitionAspectsForMethods();
+            sut.ExcludeAspectsForMethods();
 
             var configs = sut.Build();
 
-            configs.ExcludeTypeDefinitionAspectsForMethods
+            configs.ExcludeAspectsForMethods
                 .Should().BeTrue();
         }
 
@@ -46,11 +46,11 @@ namespace AspectSharp.Tests.Net6.Abstractions
         {
             var sut = new DynamicProxyFactoryConfigurationsBuilder();
 
-            sut.IncludeTypeDefinitionAspectsToProperties(expectedMethods);
+            sut.IncludeAspectsToProperties(expectedMethods);
 
             var configs = sut.Build();
 
-            configs.IncludeTypeDefinitionAspectsToProperties
+            configs.IncludeAspectsToProperties
                 .Should().Be(expectedMethods);
         }
 
@@ -58,17 +58,16 @@ namespace AspectSharp.Tests.Net6.Abstractions
         [InlineData(InterceptedEventMethod.None)]
         [InlineData(InterceptedEventMethod.Add)]
         [InlineData(InterceptedEventMethod.Remove)]
-        [InlineData(InterceptedEventMethod.Raise)]
         [InlineData(InterceptedEventMethod.All)]
         public void Given_IncludeTypeDefinitionAspectsToEvents_When_BuildConfigs_Then_IncludeTypeDefinitionAspectsToEventsShouldBeExpectedResult(InterceptedEventMethod expectedMethods)
         {
             var sut = new DynamicProxyFactoryConfigurationsBuilder();
 
-            sut.IncludeTypeDefinitionAspectsToEvents(expectedMethods);
+            sut.IncludeAspectsToEvents(expectedMethods);
 
             var configs = sut.Build();
 
-            configs.IncludeTypeDefinitionAspectsToEvents
+            configs.IncludeAspectsToEvents
                 .Should().Be(expectedMethods);
         }
     }

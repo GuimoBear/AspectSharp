@@ -1,4 +1,5 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy;
 using AspectSharp.DynamicProxy.Utils;
 using AspectSharp.Tests.Core.Enums;
 using AspectSharp.Tests.Core.TestData.DynamicProxy.Utils;
@@ -21,20 +22,46 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                 var configs = tuple.Item3;
                 var interceptorDictionary = tuple.Item5;
 
-                IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData = new Dictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>();
-                foreach(var methodInfo in serviceType.GetMethods())
+                if (serviceType.IsGenericTypeDefinition)
                 {
+                    serviceType = serviceType.MakeGenericType(new Type[] { typeof(string) });
+                    targetType = targetType.MakeGenericType(new Type[] { typeof(string) });
+                }
+                IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>> methodCallData = new Dictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>();
+                foreach(var mi in serviceType.GetMethods())
+                {
+                    var methodInfo = mi;
+                    var targetMethodInfo = targetType.GetMethod(methodInfo);
+                    var globalInterceptors = new List<IInterceptor>();
+                    foreach (var globalInterceptorConfig in configs.GlobalInterceptors)
+                    {
+                        if (globalInterceptorConfig.TryGetInterceptor(methodInfo, out var interceptor))
+                            globalInterceptors.Add(interceptor);
+                    }
+
+                    if (methodInfo.IsGenericMethodDefinition)
+                    {
+                        try
+                        {
+                            methodInfo = methodInfo.MakeGenericMethod(new Type[] { typeof(string) });
+                        }
+                        catch
+                        {
+                            methodInfo = methodInfo.MakeGenericMethod(new Type[] { typeof(ConcreteAspectContext) });
+                        }
+                    }
+                    var methodName = methodInfo.Name;
+
                     var parameters = methodInfo.GetParameters().Select(p => p.ParameterType.GetDefault()).ToArray();
 
                     Action<object> action = proxyInstance =>
                     {
-                        var methodName = methodInfo.Name;
                         try
                         {
                             var ret = methodInfo.Invoke(proxyInstance, parameters);
                             if (!(ret is null))
                             {
-                                var retInfo = methodInfo.GetReturnInfo();
+                                var retInfo = targetMethodInfo.GetReturnInfo();
                                 if (retInfo.IsAsync)
                                 {
 #if NETCOREAPP3_1_OR_GREATER
@@ -42,7 +69,7 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                                     {
                                         if (!retInfo.IsVoid)
                                         {
-                                            var getResultMethod = typeof(ValueTask<>).MakeGenericType(retInfo.Type).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod();
+                                            var getResultMethod = typeof(ValueTask<>).MakeGenericType(methodInfo.ReturnType.GetGenericArguments()).GetProperty(nameof(ValueTask<int>.Result)).GetGetMethod();
                                             getResultMethod.Invoke(ret, Array.Empty<object>());
                                         }
                                         else
@@ -58,43 +85,42 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
                         {
                             throw;
                         }
-
                     };
 
                     var aspectContextAditionalInfo = new List<string>();
-                    if (!(interceptorDictionary is null) && interceptorDictionary.TryGetValue(methodInfo, out var interceptors))
-                    {
-                        var beforeInterceptorKey = new Dictionary<string, int>();
+                    IEnumerable<CustomAttributeData> interceptors = default;
+                    interceptorDictionary?.TryGetValue(methodInfo, out interceptors);
+                    var beforeInterceptorKey = new Dictionary<string, int>();
                         var afterInterceptorKey = new Dictionary<string, int>();
-                        foreach (var interceptor in interceptors)
+                        foreach (var interceptor in (globalInterceptors.Select(interceptor => interceptor.GetType()) ?? Enumerable.Empty<Type>()).Concat(( interceptors?.Select(attr => attr.AttributeType) ?? Enumerable.Empty<Type>())))
                         {
-                            var key = string.Format("{0}: {1} {2}", interceptor.AttributeType.Name, InterceptMoment.Before.ToString().ToLower(), methodInfo.Name);
+                            var key = string.Format("{0}: {1} {2}", interceptor.Name, InterceptMoment.Before.ToString().ToLower(), methodInfo.Name);
                             int count = 1;
                             if (beforeInterceptorKey.TryGetValue(key, out var value))
                             {
                                 count += value;
                                 beforeInterceptorKey[key] = count;
                             }
-                            beforeInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.AttributeType.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.Before.ToString().ToLower(), methodInfo.Name), count);
+                            beforeInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.Before.ToString().ToLower(), methodInfo.Name), count);
 
-                            key = string.Format("{0}: {1} {2}", interceptor.AttributeType.Name, InterceptMoment.After.ToString().ToLower(), methodInfo.Name);
+                            key = string.Format("{0}: {1} {2}", interceptor.Name, InterceptMoment.After.ToString().ToLower(), methodInfo.Name);
                             count = 1;
                             if (afterInterceptorKey.TryGetValue(key, out value))
                             {
                                 count += value;
                                 afterInterceptorKey[key] = count;
                             }
-                            afterInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.AttributeType.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.After.ToString().ToLower(), methodInfo.Name), count);
+                            afterInterceptorKey.Add(string.Format("{0}{1}: {2} {3}", interceptor.Name, (count == 1 ? string.Empty : string.Format(" {0}", count)), InterceptMoment.After.ToString().ToLower(), methodInfo.Name), count);
                         }
                         aspectContextAditionalInfo.AddRange(beforeInterceptorKey.Keys.Concat(afterInterceptorKey.Keys.Reverse()));
-                    }
+                    //}
                     methodCallData.Add(methodInfo, new Tuple<Action<object>, IEnumerable<string>>(action, aspectContextAditionalInfo));
                 }
 
                 yield return new Tuple<Type, Type, DynamicProxyFactoryConfigurations, IDictionary<MethodInfo, Tuple<Action<object>, IEnumerable<string>>>>
                 (
-                    serviceType,
-                    targetType,
+                    tuple.Item1,
+                    tuple.Item2,
                     configs,
                     methodCallData
                 );
@@ -102,7 +128,9 @@ namespace AspectSharp.Tests.Core.TestData.DynamicProxy.Factories
         }
         private static object GetDefault(this Type type)
         {
-            if (type.IsValueType)
+            if (type.IsByRef && type.IsAutoLayout && type.Name.EndsWith("&"))
+                return GetDefault(type.GetElementType());
+            else if (type.IsValueType)
                 return Activator.CreateInstance(type);
             else if (type == typeof(string))
                 return "";

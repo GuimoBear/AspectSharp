@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AspectSharp.DynamicProxy.Utils;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
@@ -10,7 +11,7 @@ namespace AspectSharp.DynamicProxy.Factories
     {
         public static void CreateProperties(Type serviceType, TypeBuilder typeBuilder, IEnumerable<MethodBuilder> methods, FieldInfo targetField)
         {
-            var properties = serviceType.GetProperties();
+            var properties = serviceType.GetPropertiesRecursively();
             foreach (var property in properties)
             {
                 var propertyBuilder = typeBuilder.DefineProperty(property.Name, PropertyAttributes.None, property.PropertyType, null);

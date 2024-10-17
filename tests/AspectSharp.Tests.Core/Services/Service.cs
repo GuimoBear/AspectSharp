@@ -19,13 +19,13 @@ namespace AspectSharp.Tests.Core.Services
 
         public IEnumerable<string> Function()
         {
-            _factory.Context.AdditionalData.Add("Service.Function", null);
+            _factory.CurrentContext.AdditionalData.Add("Service.Function", null);
             return Enumerable.Empty<string>();
         }
 
         public async Task<IEnumerable<string>> AsyncFunction()
         {
-            _factory.Context.AdditionalData.Add("Service.AsyncFunction", null);
+            _factory.CurrentContext.AdditionalData.Add("Service.AsyncFunction", null);
             await Task.Delay(TimeSpan.FromMilliseconds(0.1));
             return Enumerable.Empty<string>();
         }
@@ -33,7 +33,7 @@ namespace AspectSharp.Tests.Core.Services
 #if NETCOREAPP3_1_OR_GREATER
         public async ValueTask<IEnumerable<string>> ValueAsyncFunction()
         {
-            _factory.Context.AdditionalData.Add("Service.ValueAsyncFunction", null);
+            _factory.CurrentContext.AdditionalData.Add("Service.ValueAsyncFunction", null);
             await Task.Delay(TimeSpan.FromMilliseconds(0.1));
             return Enumerable.Empty<string>();
         }

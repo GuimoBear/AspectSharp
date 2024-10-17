@@ -27,6 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\AspectSharp.Extensions.DependencyInjection\AspectSharp.Extensions.DependencyInjection.csproj" />
     <ProjectReference Include="..\AspectSharp.Tests.Core\AspectSharp.Tests.Core.csproj" />
   </ItemGroup>
 

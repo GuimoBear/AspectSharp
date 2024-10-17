@@ -14,8 +14,8 @@ namespace AspectSharp.Benchmarks
 {
     public class Config : ManualConfig
     {
-        public const int UnrollFactor = 3000;
-        public const int Iterations = 20;
+        public const int UnrollFactor = 5000;
+        public const int Iterations = 30;
 
         public Config(IFilter filter, bool createScopeDuringBenchmark)
         {

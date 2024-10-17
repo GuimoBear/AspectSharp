@@ -14,10 +14,10 @@ namespace AspectSharp.Tests.Net5
         [Fact]
         public void Given_AnNotInterfaceType_When_CreateProxy_Then_ThrowNotInterfaceTypeException()
         {
-            var configs = new DynamicProxyFactoryConfigurations(default, default, true);
+            var configs = new DynamicProxyFactoryConfigurations(default, default, true, default);
 
             var targetClass = typeof(FakeService);
-            Assert.Throws<NotInterfaceTypeException>(() => DynamicProxyFactory.Create(targetClass, targetClass, new InterceptorTypeCache.InterceptedTypeData(default), configs));
+            Assert.Throws<NotInterfaceTypeException>(() => DynamicProxyFactory.Create(targetClass, targetClass, new InterceptorTypeCache.InterceptedTypeData(default, default), configs));
         }
 
         [Fact]
@@ -26,7 +26,7 @@ namespace AspectSharp.Tests.Net5
             var serviceClass = typeof(IFakeService);
             var targetClass = typeof(FakeService);
 
-            var configs = new DynamicProxyFactoryConfigurations(default, default, true);
+            var configs = new DynamicProxyFactoryConfigurations(default, default, true, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceClass, configs, out var interceptedTypeData)
                 .Should().BeTrue();

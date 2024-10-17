@@ -2,6 +2,7 @@
 using AspectSharp.Abstractions.Enums;
 using AspectSharp.Tests.Core.Aspects;
 using System;
+using System.Collections.Generic;
 
 namespace AspectSharp.Tests.Core.Services.Interfaces
 {
@@ -51,5 +52,21 @@ namespace AspectSharp.Tests.Core.Services.Interfaces
 
         [ExcludeAspectsFromTypeDefinition]
         void MethodWithAnyAspect();
+
+        [Aspect3]
+        [ExcludeAspectsFromTypeDefinition]
+        bool MethodWithOutValueTypeParameter(int inValue, out int outValue);
+
+        [Aspect3]
+        [ExcludeAspectsFromTypeDefinition]
+        bool MethodWithOutReferenceTypeParameter(Dictionary<string, int> inValue, out Dictionary<string, int> outValue);
+
+        [Aspect3]
+        [ExcludeAspectsFromTypeDefinition]
+        bool MethodWithRefValueTypeParameter(int inValue, ref int outValue);
+
+        [Aspect3]
+        [ExcludeAspectsFromTypeDefinition]
+        bool MethodWithRefReferenceTypeParameter(Dictionary<string, int> inValue, ref Dictionary<string, int> outValue);
     }
 }

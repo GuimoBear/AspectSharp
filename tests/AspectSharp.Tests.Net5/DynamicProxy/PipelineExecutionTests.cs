@@ -21,7 +21,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         {
             var serviceType = typeof(IService);
             var targetType = typeof(Service);
-            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false);
+            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData);
 
@@ -40,7 +40,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
 
                 var ret = service.Function();
 
-                var dict = (scope.ServiceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory).Context.AdditionalData;
+                var dict = (scope.ServiceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory).CurrentContext.AdditionalData;
 
                 dict.Should().HaveCount(9);
 
@@ -53,7 +53,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         {
             var serviceType = typeof(IService);
             var targetType = typeof(Service);
-            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false);
+            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData);
 
@@ -72,7 +72,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
 
                 var ret = await service.AsyncFunction();
 
-                var dict = (scope.ServiceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory).Context.AdditionalData;
+                var dict = (scope.ServiceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory).CurrentContext.AdditionalData;
 
                 dict.Should().HaveCount(9);
 
@@ -85,7 +85,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
         {
             var serviceType = typeof(IService);
             var targetType = typeof(Service);
-            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false);
+            var configs = new DynamicProxyFactoryConfigurations(InterceptedEventMethod.None, InterceptedPropertyMethod.None, false, default);
 
             InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out var interceptedTypeData);
 
@@ -104,7 +104,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
 
                 var ret = await service.ValueAsyncFunction();
 
-                var dict = (scope.ServiceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory).Context.AdditionalData;
+                var dict = (scope.ServiceProvider.GetService<IAspectContextFactory>() as FakeAspectContextFactory).CurrentContext.AdditionalData;
 
                 dict.Should().HaveCount(9);
 

@@ -18,28 +18,43 @@ namespace AspectSharp.Extensions.DependencyInjection
 
             var configs = builder.Build();
             InterceptorTypeCache.SetConfigurations(configs);
-            services.AddTransient<IAspectContextFactory, AspectContextFactory>();
 
             var serviceProvider = services.BuildServiceProvider(true);
             foreach (var sd in services.ToList())
             {
                 if (InterceptorTypeCache.TryGetInterceptedTypeData(sd.ServiceType, out var interceptorTypeCache))
                 {
+                    ServiceDescriptor targetServiceDescriptor = default;
                     var targetType = sd.ImplementationType;
-                    if (targetType is null && !(sd.ImplementationInstance is null))
+                    try
                     {
-                        var instance = sd.ImplementationInstance;
-                        targetType = instance.GetType();
-                    }
-                    else if (!(sd.ImplementationFactory is null))
-                    {
-                        var instance = sd.ImplementationFactory(serviceProvider);
-                        if (!(instance is null))
+                        if (targetType is null && !(sd.ImplementationInstance is null))
+                        {
+                            var instance = sd.ImplementationInstance;
                             targetType = instance.GetType();
-                        if (instance is IDisposable disposable)
-                            try { disposable.Dispose(); } catch { }
-                        else if (instance is IAsyncDisposable asyncDisposable)
-                            try { asyncDisposable.DisposeAsync().GetAwaiter().GetResult(); } catch { }
+                            targetServiceDescriptor = new ServiceDescriptor(targetType, instance);
+                        }
+                        else if (!(sd.ImplementationFactory is null))
+                        {
+                            var instance = sd.ImplementationFactory(serviceProvider);
+                            if (!(instance is null))
+                            {
+                                targetType = instance.GetType();
+                                targetServiceDescriptor = new ServiceDescriptor(targetType, sd.ImplementationFactory, sd.Lifetime);
+                            }
+                            if (instance is IDisposable disposable)
+                                try { disposable.Dispose(); } catch { }
+                            else if (instance is IAsyncDisposable asyncDisposable)
+                                try { asyncDisposable.DisposeAsync().GetAwaiter().GetResult(); } catch { }
+                        }
+                        else
+                            targetServiceDescriptor = new ServiceDescriptor(targetType, targetType, sd.Lifetime);
+                    }
+                    catch
+                    {
+                        if (configs.IgnoreErrorsWhileTryingInjectAspects)
+                            continue;
+                        throw;
                     }
                     if (!(targetType is null))
                     {
@@ -47,17 +62,20 @@ namespace AspectSharp.Extensions.DependencyInjection
                         {
                             var proxyType = DynamicProxyFactory.Create(sd.ServiceType, targetType, interceptorTypeCache, configs);
                             services.Remove(sd);
-                            services.Add(new ServiceDescriptor(targetType, targetType, sd.Lifetime));
+                            services.Add(targetServiceDescriptor);
                             services.Add(new ServiceDescriptor(sd.ServiceType, proxyType, sd.Lifetime));
                         }
-                        catch
+                        catch (Exception ex)
                         {
-
+                            if (configs.IgnoreErrorsWhileTryingInjectAspects)
+                                continue;
+                            throw;
                         }
                     }
 
                 }
             };
+            services.AddTransient<IAspectContextFactory, AspectContextFactory>();
             return services;
         }
     }

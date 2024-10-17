@@ -2,7 +2,7 @@
   "profiles": {
     "AspectSharp.Benchmarks": {
       "commandName": "Project",
-      "commandLineArgs": "benchmark --runtime NEt6 --category AsyncMetrified --create-scope"
+      "commandLineArgs": "benchmark --runtime Net5,Net6,Net7 --category All"
     }
   }
 }

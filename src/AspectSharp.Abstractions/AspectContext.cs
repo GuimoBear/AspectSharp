@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace AspectSharp.Abstractions
 {
@@ -34,5 +35,6 @@ namespace AspectSharp.Abstractions
 
         public bool TargetMethodCalled { get; internal set; }
 
+        internal abstract Task Run();
     }
 }

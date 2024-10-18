@@ -18,7 +18,20 @@ namespace AspectSharp.Benchmarks.Services
             return string.Format("Hello {0}", param);
         }
 
+        public string SayHelloWithFourInterceptors(string param)
+        {
+            _logger.LogInformation("SayHello called: {0}", param);
+            return string.Format("Hello {0}", param);
+        }
+
         public async Task<string> SayHelloAsync(string param)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(0.005));
+            _logger.LogInformation("SayHello called: {0}", param);
+            return string.Format("Hello {0}", param);
+        }
+
+        public async Task<string> SayHelloWithFourInterceptorsAsync(string param)
         {
             await Task.Delay(TimeSpan.FromMilliseconds(0.005));
             _logger.LogInformation("SayHello called: {0}", param);

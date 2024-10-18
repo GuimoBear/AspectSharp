@@ -10,7 +10,11 @@ namespace AspectSharp.DynamicProxy.Utils
 {
     internal static class ProxyFactoryUtils
     {
+#if NET5_0_OR_GREATER
+        public static AspectDelegate NoOp = static _ => Task.CompletedTask;
+#else
         public static AspectDelegate NoOp = _ => Task.CompletedTask;
+#endif
 
         public static readonly object[] EmptyParameters = Array.Empty<object>();
 
@@ -34,9 +38,9 @@ namespace AspectSharp.DynamicProxy.Utils
         public static Task ExecutePipeline(AspectContext context, InterceptDelegate pipeline)
             => pipeline(context, NoOp);
 
-        public static async Task<TResult> ExecutePipelineAndReturnResult<TResult>(AspectContext context, InterceptDelegate pipeline)
+        public static async Task<TResult> ExecutePipelineAndReturnResult<TResult>(AspectContext context)
         {
-            await ExecutePipeline(context, pipeline);
+            await context.Run();
             return (TResult)context.ReturnValue;
         }
 
@@ -46,26 +50,34 @@ namespace AspectSharp.DynamicProxy.Utils
             var proxyMethod = proxyType.GetMethodExactly(methodName, parameterTypes ?? Array.Empty<Type>(), parameterNames ?? Array.Empty<string>(), parametersIsRefOrOut ?? Array.Empty<bool>());
             var targetMethod = targetType.GetMethodExactly(methodName, parameterTypes ?? Array.Empty<Type>(), parameterNames ?? Array.Empty<string>(), parametersIsRefOrOut ?? Array.Empty<bool>());
 
-            return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
+            return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod, null, null);
         }
 
-        public static AspectContextActivator NewContextActivatorUsingStringRepresentationMethodInfo(Type serviceType, Type proxyType, Type targetType, string methodStringRepresentation)
+        public static AspectContextActivator NewContextActivatorUsingStringRepresentationMethodInfo(Type serviceType, Type proxyType, Type targetType, string methodStringRepresentation, int previouslyUsedConfigurationsHashCode, AspectDelegate next)
         {
             var serviceMethod = serviceType.GetMethodByStringRepresentation(methodStringRepresentation);
             var proxyMethod = proxyType.GetMethodByStringRepresentation(methodStringRepresentation);
             var targetMethod = targetType.GetMethodByStringRepresentation(methodStringRepresentation);
 
-            return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod);
+            var interceptors = GetInterceptors(serviceType, previouslyUsedConfigurationsHashCode, serviceMethod);
+            //Array.Reverse(interceptors);
+
+            return new AspectContextActivator(serviceType, serviceMethod, proxyType, proxyMethod, targetType, targetMethod, interceptors, next);
         }
 
         public static IInterceptor[] GetInterceptors(Type serviceType, int previouslyUsedConfigurationsHashCode, int methodHashCode)
+        {
+            return GetInterceptors(serviceType, previouslyUsedConfigurationsHashCode, serviceType.GetMethodsRecursively().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode));
+        }
+
+
+        public static IInterceptor[] GetInterceptors(Type serviceType, int previouslyUsedConfigurationsHashCode, MethodInfo methodInfo)
         {
             var serviceName = serviceType.Name;
 
             if (!InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, previouslyUsedConfigurationsHashCode, out var interceptedTypeData))
                 return Array.Empty<AbstractInterceptorAttribute>();
 
-            var methodInfo = serviceType.GetMethodsRecursively().FirstOrDefault(mi => mi.GetHashCode() == methodHashCode);
             if (methodInfo is null)
                 return Array.Empty<AbstractInterceptorAttribute>();
 
@@ -75,7 +87,7 @@ namespace AspectSharp.DynamicProxy.Utils
                 return Array.Empty<AbstractInterceptorAttribute>();
 
             var typeDefinitionAttributes = new List<Tuple<CustomAttributeData, AbstractInterceptorAttribute>>();
-            foreach(var interceptorInstance in serviceType.GetCustomAttributes(true).Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType())))
+            foreach (var interceptorInstance in serviceType.GetCustomAttributes(true).Where(attr => typeof(AbstractInterceptorAttribute).IsAssignableFrom(attr.GetType())))
             {
                 var interceptorData = serviceType.CustomAttributes.FirstOrDefault(attr => attr.AttributeType == interceptorInstance.GetType());
                 if (!(interceptorData is null))

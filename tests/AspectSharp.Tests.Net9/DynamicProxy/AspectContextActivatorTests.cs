@@ -3,14 +3,18 @@ using AspectSharp.DynamicProxy;
 using AspectSharp.Tests.Core.Proxies;
 using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
+using AspectSharp.Tests.Net9.Fixtures;
 using FluentAssertions;
 using System;
 using Xunit;
 
-namespace AspectSharp.Tests.Net7.DynamicProxy
+namespace AspectSharp.Tests.Net9.DynamicProxy
 {
+    [Collection(SaveFixtureCollection.NAME)]
     public class AspectContextActivatorTests
     {
+        public AspectContextActivatorTests(SaveFixtures _) { }
+
         [Fact]
         public void ConstructAspectContextActivatorConstructorFacts()
         {

@@ -20,6 +20,13 @@ namespace AspectSharp.Benchmarks.Aspects
         }
     }
 
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    public sealed class AspectCoreNoOpMethodAttribute : AbstractInterceptorAttribute
+    {
+        public override async Task Invoke(AspectContext context, AspectDelegate next)
+            => next(context);
+    }
+
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false)]
     public sealed class AspectSharpMetrifyMethodAttribute : Abstractions.Attributes.AbstractInterceptorAttribute
     {
@@ -32,5 +39,12 @@ namespace AspectSharp.Benchmarks.Aspects
                 return;
             }
         }
+    }
+
+    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true)]
+    public sealed class AspectSharpNoOpMethodAttribute : Abstractions.Attributes.AbstractInterceptorAttribute
+    {
+        public override Task Invoke(Abstractions.AspectContext context, Abstractions.AspectDelegate next)
+            => next(context);
     }
 }

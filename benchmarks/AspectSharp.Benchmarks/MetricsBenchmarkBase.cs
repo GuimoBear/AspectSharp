@@ -42,10 +42,12 @@ namespace AspectSharp.Benchmarks
         }
 
         public abstract string CallFakeService();
+        public abstract string CallFakeServiceWithFourInterceptors();
         public abstract string CallFakeServiceWithoutMetrics();
         public abstract string CallUnmetrifiedFakeService();
 
         public abstract Task<string> CallFakeServiceAsync();
+        public abstract Task<string> CallFakeServiceWithFourInterceptorsAsync();
         public abstract Task<string> CallFakeServiceWithoutMetricsAsync();
         public abstract Task<string> CallUnmetrifiedFakeServiceAsync();
 

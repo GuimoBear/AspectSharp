@@ -2,7 +2,10 @@
 using AspectSharp.DynamicProxy.Utils;
 using System;
 using System.Collections.Generic;
+using System.Collections.Immutable;
+using System.Drawing;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace AspectSharp.DynamicProxy
 {
@@ -51,6 +54,15 @@ namespace AspectSharp.DynamicProxy
             ServiceProvider = serviceProvider;
 
             AdditionalData = new LazyDictionary();
+        }
+
+        private int _index;
+
+        internal override Task Run()
+        {
+            if (_index == _activator.Interceptors.Length)
+                return _activator.Tail(this);
+            return _activator.Interceptors[_index++].Invoke(this, _ctx => _ctx.Run());
         }
     }
 }

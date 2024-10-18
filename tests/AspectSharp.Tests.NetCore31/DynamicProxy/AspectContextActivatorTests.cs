@@ -1,8 +1,10 @@
-﻿using AspectSharp.DynamicProxy;
+﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy;
 using AspectSharp.Tests.Core.Proxies;
 using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
 using FluentAssertions;
+using System;
 using Xunit;
 
 namespace AspectSharp.Tests.Net5.DynamicProxy
@@ -19,7 +21,7 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
             var targetService = typeof(FakeService);
             var targetMethod = targetService.GetMethod(nameof(FakeService.DoSomethingAsyncWithParameterAndReferenceTypeReturn));
 
-            var sut = new AspectContextActivator(serviceType, serviceMethod, proxyService, proxyMethod, targetService, targetMethod);
+            var sut = new AspectContextActivator(serviceType, serviceMethod, proxyService, proxyMethod, targetService, targetMethod, Array.Empty<IInterceptor>(), null);
 
             sut.ServiceType
                 .Should().Be(serviceType);
@@ -33,6 +35,10 @@ namespace AspectSharp.Tests.Net5.DynamicProxy
                 .Should().Be(targetService);
             sut.TargetMethod
                 .Should().BeSameAs(targetMethod);
+            sut.Interceptors
+                .Should().BeEmpty();
+            sut.Tail
+                .Should().BeNull();
         }
     }
 }

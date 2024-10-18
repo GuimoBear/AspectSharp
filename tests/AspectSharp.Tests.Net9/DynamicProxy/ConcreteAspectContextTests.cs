@@ -1,19 +1,22 @@
 ﻿using AspectSharp.Abstractions;
 using AspectSharp.DynamicProxy;
-using AspectSharp.Tests.Core.Aspects;
 using AspectSharp.Tests.Core.Proxies;
 using AspectSharp.Tests.Core.Services;
 using AspectSharp.Tests.Core.Services.Interfaces;
+using AspectSharp.Tests.Net9.Fixtures;
 using FluentAssertions;
 using Moq;
 using System;
 using System.Linq;
 using Xunit;
 
-namespace AspectSharp.Tests.Net6.DynamicProxy
+namespace AspectSharp.Tests.Net9.DynamicProxy
 {
+    [Collection(SaveFixtureCollection.NAME)]
     public class ConcreteAspectContextTests
     {
+        public ConcreteAspectContextTests(SaveFixtures _) { }
+
         [Fact]
         public void ConcreteAspectContextConstructorFacts()
         {

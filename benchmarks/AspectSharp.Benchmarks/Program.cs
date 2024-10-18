@@ -19,17 +19,17 @@ namespace AspectSharp.Benchmarks
             await Run(new ControlMetricsBenchmark());
             await Run(new NoMetricsBenchmark());
             using (var parser = new Parser(with =>
-             {
-                 with.CaseSensitive = Parser.Default.Settings.CaseSensitive;
-                 with.CaseInsensitiveEnumValues = true;
-                 with.ParsingCulture = Parser.Default.Settings.ParsingCulture;
-                 with.HelpWriter = Parser.Default.Settings.HelpWriter;
-                 with.IgnoreUnknownArguments = Parser.Default.Settings.IgnoreUnknownArguments;
-                 with.AutoHelp = Parser.Default.Settings.AutoHelp;
-                 with.AutoVersion = Parser.Default.Settings.AutoVersion;
-                 with.EnableDashDash = Parser.Default.Settings.EnableDashDash;
-                 with.MaximumDisplayWidth = Parser.Default.Settings.MaximumDisplayWidth;
-             }))
+            {
+                with.CaseSensitive = Parser.Default.Settings.CaseSensitive;
+                with.CaseInsensitiveEnumValues = true;
+                with.ParsingCulture = Parser.Default.Settings.ParsingCulture;
+                with.HelpWriter = Parser.Default.Settings.HelpWriter;
+                with.IgnoreUnknownArguments = Parser.Default.Settings.IgnoreUnknownArguments;
+                with.AutoHelp = Parser.Default.Settings.AutoHelp;
+                with.AutoVersion = Parser.Default.Settings.AutoVersion;
+                with.EnableDashDash = Parser.Default.Settings.EnableDashDash;
+                with.MaximumDisplayWidth = Parser.Default.Settings.MaximumDisplayWidth;
+            }))
             {
                 parser.ParseArguments<BenchmarkOptions>(args)
                     .WithParsed(filter =>
@@ -120,7 +120,8 @@ namespace AspectSharp.Benchmarks
             { BenchmarkRuntime.Net5, CoreRuntime.Core50 },
             { BenchmarkRuntime.Net6, CoreRuntime.Core60 },
             { BenchmarkRuntime.Net7, CoreRuntime.Core70 },
-            { BenchmarkRuntime.Net8, CoreRuntime.Core80 }
+            { BenchmarkRuntime.Net8, CoreRuntime.Core80 },
+            { BenchmarkRuntime.Net9, CoreRuntime.Core90 }
         };
 
         private readonly BenchmarkRuntime _runtime;
@@ -134,7 +135,7 @@ namespace AspectSharp.Benchmarks
             _createScopeDuringBenchmark = createScopeDuringBenchmark;
             _runtime = runtime;
             var runtimeList = new List<Runtime>();
-            foreach(var _runtime in Enum.GetValues(runtime.GetType()).Cast<Enum>().Where(runtime.HasFlag).Cast<BenchmarkRuntime>())
+            foreach (var _runtime in Enum.GetValues(runtime.GetType()).Cast<Enum>().Where(runtime.HasFlag).Cast<BenchmarkRuntime>())
             {
                 if (_benchmarkRuntimes.TryGetValue(_runtime, out var benchmarkRuntime))
                     runtimeList.Add(benchmarkRuntime);
@@ -162,7 +163,7 @@ namespace AspectSharp.Benchmarks
         {
             get
             {
-                return new List<Example>() 
+                return new List<Example>()
                 {
                     new Example("Run metrified methods in a single runtime", new BenchmarkOptions(false, BenchmarkRuntime.Net47, BenchmarkCategory.Metrified)),
                     new Example("Creating scope during benchmark method, run metrified and unmetrified methods in a multiple runtimes", new BenchmarkOptions(true, BenchmarkRuntime.Net48 | BenchmarkRuntime.Net5 | BenchmarkRuntime.Net6, BenchmarkCategory.Metrified | BenchmarkCategory.Unmetrified)),
@@ -179,30 +180,31 @@ namespace AspectSharp.Benchmarks
     [Flags]
     internal enum BenchmarkRuntime
     {
-        Net461 = 1, 
-        Net462 = 2, 
-        Net47 = 4, 
-        Net472 = 8, 
-        Net48 = 16, 
-        NetCoreApp31 = 32, 
-        Net5 = 64, 
+        Net461 = 1,
+        Net462 = 2,
+        Net47 = 4,
+        Net472 = 8,
+        Net48 = 16,
+        NetCoreApp31 = 32,
+        Net5 = 64,
         Net6 = 128,
         Net7 = 256,
         Net8 = 512,
-        All = Net461 | Net462 | Net47 | Net48 | NetCoreApp31 | Net5 | Net6 | Net7 | Net8
+        Net9 = 1024,
+        All = Net461 | Net462 | Net47 | Net48 | NetCoreApp31 | Net5 | Net6 | Net7 | Net8 | Net9
     }
 
     [Flags]
     internal enum BenchmarkCategory
     {
-        Metrified = 1, 
+        Metrified = 1,
         Unmetrified = 2,
         UnmetrifiedClass = 4,
-        AsyncMetrified= 8,
+        AsyncMetrified = 8,
         AsyncUnmetrified = 16,
         AsyncUnmetrifiedClass = 32,
-        AllSync = Metrified | Unmetrified | UnmetrifiedClass, 
-        AllAsync = AsyncMetrified | AsyncUnmetrified | AsyncUnmetrifiedClass, 
+        AllSync = Metrified | Unmetrified | UnmetrifiedClass,
+        AllAsync = AsyncMetrified | AsyncUnmetrified | AsyncUnmetrifiedClass,
         All = AllSync | AllAsync
     }
 }

@@ -29,6 +29,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspectSharp.Tests.Net7", "t
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspectSharp.Tests.Net8", "tests\AspectSharp.Tests.Net8\AspectSharp.Tests.Net8.csproj", "{C966B3F6-FD3B-4A84-B034-C151B440A376}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AspectSharp.Tests.Net9", "tests\AspectSharp.Tests.Net9\AspectSharp.Tests.Net9.csproj", "{15DC65F4-B81C-42D3-B0EB-C94B2F6E70BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -75,6 +77,10 @@ Global
 		{C966B3F6-FD3B-4A84-B034-C151B440A376}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C966B3F6-FD3B-4A84-B034-C151B440A376}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C966B3F6-FD3B-4A84-B034-C151B440A376}.Release|Any CPU.Build.0 = Release|Any CPU
+		{15DC65F4-B81C-42D3-B0EB-C94B2F6E70BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{15DC65F4-B81C-42D3-B0EB-C94B2F6E70BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{15DC65F4-B81C-42D3-B0EB-C94B2F6E70BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{15DC65F4-B81C-42D3-B0EB-C94B2F6E70BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -90,6 +96,7 @@ Global
 		{1AFAE60C-45D1-4892-847D-F92B81D38C12} = {758BBCA7-BD6D-4B39-95D9-71C65A952F12}
 		{CB0A2199-8EED-4BF6-8A4B-CA1DD6FA342D} = {758BBCA7-BD6D-4B39-95D9-71C65A952F12}
 		{C966B3F6-FD3B-4A84-B034-C151B440A376} = {758BBCA7-BD6D-4B39-95D9-71C65A952F12}
+		{15DC65F4-B81C-42D3-B0EB-C94B2F6E70BC} = {758BBCA7-BD6D-4B39-95D9-71C65A952F12}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {E6799D24-BB5A-435E-8918-BDE5D06326D3}

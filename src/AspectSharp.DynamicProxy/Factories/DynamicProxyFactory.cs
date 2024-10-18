@@ -15,12 +15,11 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly object _lock = new object();
 
         private static readonly ConstructorInfo _objectConstructorMethodInfo = typeof(object).GetConstructor(Array.Empty<Type>());
-
         internal static readonly AssemblyBuilder _proxiedClassesAssemblyBuilder = NewAssemblyBuilder();
         internal static readonly ModuleBuilder _proxiedClassesModuleBuilder = NewModuleBuilder(_proxiedClassesAssemblyBuilder);
 
-        private static readonly IDictionary<Tuple<Type, Type, string, string, int>, Tuple<Type, Type>> _cachedProxyTypes
-            = new Dictionary<Tuple<Type, Type, string, string, int>, Tuple<Type, Type>>();
+        private static readonly IDictionary<Tuple<Type, Type, string, string, int>, Type> _cachedProxyTypes
+            = new Dictionary<Tuple<Type, Type, string, string, int>, Type>();
 
         public static Type Create(Type serviceType, Type targetType, InterceptedTypeData interceptedTypeData, DynamicProxyFactoryConfigurations configs)
         {
@@ -34,7 +33,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 Configurations.GlobalInterceptors, 
                 Configurations.IgnoreErrorsWhileTryingInjectAspects);
             if (_cachedProxyTypes.TryGetValue(new Tuple<Type, Type, string, string, int>(serviceType, targetType, serviceType.Name, targetType.Name, configs.GetHashCode()), out var type))
-                return type.Item1;
+                return type;
 
             lock (_lock)
             {
@@ -46,20 +45,21 @@ namespace AspectSharp.DynamicProxy.Factories
                     typeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Proxies.{0}Proxy{1}", targetType.Name, previouslyDefinedProxyClassFromThisTargetCount), TypeAttributes.Public | TypeAttributes.Sealed);
                 var (typeGenericParameters, typeGenericParameterBuilders) = GenericParameterUtils.DefineGenericParameter(targetType, typeBuilder);
 
-                var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Pipelines.{0}", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
+                //var pipelineDefinitionsTypeBuilder = _proxiedClassesModuleBuilder.DefineType(string.Format("AspectSharp.Pipelines.{0}", typeBuilder.Name), TypeAttributes.Public | TypeAttributes.Sealed);
                 //GenericParameterUtils.DefineGenericParameter(targetType, pipelineDefinitionsTypeBuilder);
 
-                var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
+                //var pipelineProperties = PipelineClassFactory.CreatePipelineClass(targetType, serviceType, pipelineDefinitionsTypeBuilder, interceptedTypeData, configs);
 
-                var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateTypeInfo().AsType();
+                //var concretePipelineType = pipelineDefinitionsTypeBuilder.CreateTypeInfo().AsType();
 
-                var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData);
+                var aspectDelegates = AspectDelegateFactory.Create(targetType, serviceType, typeBuilder, interceptedTypeData, configs);
+                var contextActivatorFields = AspectActivatorFieldFactory.CreateStaticFields(typeBuilder, serviceType, targetType, interceptedTypeData, aspectDelegates, configs);
 
                 var readonlyFields = DefineReadonlyFields(targetType, typeBuilder, typeGenericParameterBuilders).ToArray();
 
                 DefineConstructor(typeBuilder, readonlyFields);
 
-                var methods = MethodFactory.CreateMethods(_proxiedClassesModuleBuilder, targetType, serviceType, typeBuilder, typeGenericParameters, typeGenericParameterBuilders, readonlyFields, pipelineProperties, contextActivatorFields).ToList();
+                var methods = MethodFactory.CreateMethods(_proxiedClassesModuleBuilder, targetType, serviceType, typeBuilder, typeGenericParameters, typeGenericParameterBuilders, readonlyFields, aspectDelegates, contextActivatorFields).ToList();
 
                 PropertyFactory.CreateProperties(serviceType, typeBuilder, methods, readonlyFields[0]);
 
@@ -68,7 +68,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 typeBuilder.AddInterfaceImplementation(serviceType);
 
                 var concreteType = typeBuilder.CreateTypeInfo().AsType();
-                _cachedProxyTypes.Add(new Tuple<Type, Type, string, string, int>(serviceType, targetType, serviceType.Name, targetType.Name, configs.GetHashCode()), new Tuple<Type, Type>(concreteType, concretePipelineType));
+                _cachedProxyTypes.Add(new Tuple<Type, Type, string, string, int>(serviceType, targetType, serviceType.Name, targetType.Name, configs.GetHashCode()), concreteType);
                 return concreteType;
             }
         }
@@ -111,28 +111,13 @@ namespace AspectSharp.DynamicProxy.Factories
 
         private static AssemblyBuilder NewAssemblyBuilder()
         {
-            
             var assemblyName = new AssemblyName("AspectSharp.Proxies");
-#if NETCOREAPP3_1_OR_GREATER
-            var assemblyBuilder = AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-#elif NET46 || NET461 || NET462 || NET47 || NET471 || NET472 || NET48 || NET481
-            var assemblyBuilder =  AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.RunAndSave);
-#else
-            var assemblyBuilder =  AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
-#endif
-            return assemblyBuilder;
+            return AssemblyBuilder.DefineDynamicAssembly(assemblyName, AssemblyBuilderAccess.Run);
         }
 
         private static ModuleBuilder NewModuleBuilder(AssemblyBuilder assemblyBuilder)
         {
-#if NETCOREAPP3_1_OR_GREATER
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name);
-#elif NET461_OR_GREATER
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name, assemblyBuilder.GetName().Name + ".mod");
-#else
-            var moduleBuilder = assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name);
-#endif
-            return moduleBuilder;
+            return assemblyBuilder.DefineDynamicModule(assemblyBuilder.GetName().Name);
         }
     }
 }

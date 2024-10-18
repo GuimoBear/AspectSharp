@@ -20,7 +20,6 @@ namespace AspectSharp.DynamicProxy.Factories
             ModuleBuilder moduleBuilder,
             TypeBuilder proxyType,
             Type targetType,
-            PropertyInfo pipelineProperty,
             FieldInfo originContextActivatorField, 
             MethodInfo methodInfo,
             MethodBuilder callerMethod,
@@ -78,7 +77,7 @@ namespace AspectSharp.DynamicProxy.Factories
             var contextField = DefineContextField(typeBuilder);
             var awaiterField = DefineAwaiterField(typeBuilder, methodToCall, genericParameterBuilders, callerMethodGenericParameters);
 
-            DefineMoveNext(typeBuilder, methodToCall, stateFieldBuilder, builderFieldBuilder, targetFieldBuilder, proxyFieldBuilder, originContextActivatorField, contextConstructor, contextFactoryFieldBuilder, contextField, parameterFieldBuilders, pipelineProperty, awaiterField, genericParameterBuilders, callerMethodGenericParameters);
+            DefineMoveNext(typeBuilder, methodToCall, stateFieldBuilder, builderFieldBuilder, targetFieldBuilder, proxyFieldBuilder, originContextActivatorField, contextConstructor, contextFactoryFieldBuilder, contextField, parameterFieldBuilders, awaiterField, genericParameterBuilders, callerMethodGenericParameters);
             DefineSetStateMachine(typeBuilder, builderFieldBuilder);
 
             var awaiterType = typeBuilder.CreateTypeInfo().AsType();
@@ -136,11 +135,11 @@ namespace AspectSharp.DynamicProxy.Factories
             }
         }
 
-        private static MethodBuilder DefineMoveNext(TypeBuilder typeBuilder, MethodInfo methodInfo, FieldBuilder stateField, FieldBuilder builderField, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, PropertyInfo pipelineProperty, FieldBuilder awaiterField, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
+        private static MethodBuilder DefineMoveNext(TypeBuilder typeBuilder, MethodInfo methodInfo, FieldBuilder stateField, FieldBuilder builderField, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, FieldBuilder awaiterField, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             var returnInfo = methodInfo.GetReturnInfo();
 
-            var prepareAwaiterMethod = DefinePrepareAwaiter(typeBuilder, targetField, proxyField, originContextActivatorField, contextConstructor, contextFactoryField, contextField, parameterFields, pipelineProperty, methodInfo, genericParameters, typeGenericParameters);
+            var prepareAwaiterMethod = DefinePrepareAwaiter(typeBuilder, targetField, proxyField, originContextActivatorField, contextConstructor, contextFactoryField, contextField, parameterFields, methodInfo, genericParameters, typeGenericParameters);
             var awaitOnCompletedMethod = DefineAwaitOnCompleted(typeBuilder, stateField, awaiterField, builderField);
             var afterCompletionMethod = DefineAfterCompletionMethod(typeBuilder, awaiterField, methodInfo, contextField, genericParameters, typeGenericParameters);
 
@@ -283,7 +282,7 @@ namespace AspectSharp.DynamicProxy.Factories
             return methodBuilder;
         }
 
-        private static MethodBuilder DefinePrepareAwaiter(TypeBuilder typeBuilder, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, PropertyInfo pipelineProperty, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
+        private static MethodBuilder DefinePrepareAwaiter(TypeBuilder typeBuilder, FieldBuilder targetField, FieldBuilder proxyField, FieldInfo originContextActivatorField, ConstructorInfo contextConstructor, FieldBuilder contextFactoryField, FieldBuilder contextField, FieldBuilder[] parameterFields, MethodInfo methodInfo, GenericTypeParameterBuilder[] genericParameters, GenericTypeParameterBuilder[] typeGenericParameters)
         {
             var attrs = MethodAttributes.Private | MethodAttributes.HideBySig;
             var returnInfo = methodInfo.GetReturnInfo();
@@ -343,10 +342,9 @@ namespace AspectSharp.DynamicProxy.Factories
 
             cil.Emit(OpCodes.Ldarg_0);
             cil.Emit(OpCodes.Ldfld, contextField);
-            cil.Emit(OpCodes.Call, pipelineProperty.GetMethod);
             if (returnInfo.IsVoid)
             {
-                cil.Emit(OpCodes.Call, _executePipelineMethodInfo);
+                cil.Emit(OpCodes.Callvirt, _runMethodInfo);
                 cil.Emit(OpCodes.Callvirt, _getAwaiterMethodInfo);
             }
             else
@@ -634,5 +632,7 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _getServicesValueMethodInfo = typeof(IAspectContextFactory).GetProperty(nameof(IAspectContextFactory.Services)).GetGetMethod();
         private static readonly MethodInfo _setLastContextMethodInfo = typeof(IAspectContextFactory).GetProperty(nameof(IAspectContextFactory.CurrentContext)).GetSetMethod();
         private static readonly MethodInfo _getReturnValueMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.ReturnValue)).GetGetMethod();
+
+        private static readonly MethodInfo _runMethodInfo = typeof(AspectContext).GetMethod(nameof(AspectContext.Run), BindingFlags.NonPublic | BindingFlags.Instance);
     }
 }

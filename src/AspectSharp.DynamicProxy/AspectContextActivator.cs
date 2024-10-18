@@ -1,4 +1,5 @@
-﻿using System;
+﻿using AspectSharp.Abstractions;
+using System;
 using System.Linq;
 using System.Reflection;
 
@@ -6,6 +7,9 @@ namespace AspectSharp.DynamicProxy
 {
     public sealed class AspectContextActivator
     {
+        internal readonly IInterceptor[] Interceptors;
+        internal readonly AspectDelegate Tail;
+
         public MemberTypes MemberType { get; }
 
         public Type ServiceType { get; }
@@ -26,8 +30,12 @@ namespace AspectSharp.DynamicProxy
             Type proxyType,
             MethodInfo proxyMethod,
             Type targetType,
-            MethodInfo TtrgetMethod)
+            MethodInfo TtrgetMethod,
+            IInterceptor[] interceptors, 
+            AspectDelegate tail)
         {
+            Interceptors = interceptors;
+            Tail = tail;
             ServiceType = serviceType;
             ServiceMethod = serviceMethod;
             ProxyType = proxyType;

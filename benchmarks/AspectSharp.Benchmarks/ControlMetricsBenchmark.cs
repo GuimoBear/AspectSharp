@@ -41,6 +41,24 @@ namespace AspectSharp.Benchmarks
             }
         }
 
+        [Benchmark]
+        [BenchmarkCategory(nameof(BenchmarkCategory.Metrified))]
+        public override string CallFakeServiceWithFourInterceptors()
+        {
+            if (CreateScopeDuringBenchmark)
+                Scope = NewScope();
+            try
+            {
+                var service = Scope.ServiceProvider.GetRequiredService<IMetrifiedFakeService>();
+                return service.SayHello("Peter");
+            }
+            finally
+            {
+                if (CreateScopeDuringBenchmark)
+                    Scope.Dispose();
+            }
+        }
+
         [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.Unmetrified))]
         public override string CallFakeServiceWithoutMetrics()
@@ -80,6 +98,24 @@ namespace AspectSharp.Benchmarks
         [Benchmark(Baseline = true)]
         [BenchmarkCategory(nameof(BenchmarkCategory.AsyncMetrified))]
         public override async Task<string> CallFakeServiceAsync()
+        {
+            if (CreateScopeDuringBenchmark)
+                Scope = NewScope();
+            try
+            {
+                var service = Scope.ServiceProvider.GetRequiredService<IMetrifiedFakeService>();
+                return await service.SayHelloAsync("Peter");
+            }
+            finally
+            {
+                if (CreateScopeDuringBenchmark)
+                    Scope.Dispose();
+            }
+        }
+
+        [Benchmark]
+        [BenchmarkCategory(nameof(BenchmarkCategory.AsyncMetrified))]
+        public override async Task<string> CallFakeServiceWithFourInterceptorsAsync()
         {
             if (CreateScopeDuringBenchmark)
                 Scope = NewScope();

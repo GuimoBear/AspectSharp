@@ -21,9 +21,11 @@ namespace AspectSharp.DynamicProxy.Factories
         private static readonly MethodInfo _getParametersMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.Parameters)).GetGetMethod();
         private static readonly MethodInfo _getReturnValueMethodInfo = typeof(AspectContext).GetProperty(nameof(AspectContext.ReturnValue)).GetGetMethod();
 
+        private static readonly MethodInfo _runMethodInfo = typeof(AspectContext).GetMethod(nameof(AspectContext.Run), BindingFlags.NonPublic | BindingFlags.Instance);
+
         private static readonly MethodInfo _getCompletedTaskMethodInfo = typeof(Task).GetProperty(nameof(Task.CompletedTask)).GetGetMethod();
 
-        public static IEnumerable<MethodBuilder> CreateMethods(ModuleBuilder moduleBuilder, Type targetType, Type serviceType, TypeBuilder typeBuilder, TypeInfo[] typeGenericArguments, GenericTypeParameterBuilder[] typeGenericArgumentBuilders, FieldInfo[] fields, IReadOnlyDictionary<MethodInfo, PropertyInfo> pipelineProperties, IReadOnlyDictionary<MethodInfo, FieldInfo> contextActivatorFields)
+        public static IEnumerable<MethodBuilder> CreateMethods(ModuleBuilder moduleBuilder, Type targetType, Type serviceType, TypeBuilder typeBuilder, TypeInfo[] typeGenericArguments, GenericTypeParameterBuilder[] typeGenericArgumentBuilders, FieldInfo[] fields, IReadOnlyDictionary<MethodInfo, MethodInfo> pipelineProperties, IReadOnlyDictionary<MethodInfo, FieldInfo> contextActivatorFields)
         {
             var targetField = fields[0];
             var contextFactoryField = fields[1];
@@ -73,7 +75,7 @@ namespace AspectSharp.DynamicProxy.Factories
                 {
                     if (returnInfo.IsAsync)
                     {
-                        var ret = ProxyMethodAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, typeBuilder, targetType, pipelineProperty, aspectContextActivatorField, methodInfo, methodBuilder, typeGenericArgumentBuilders, typeGenericArguments, customAspectContext, contextConstructor);
+                        var ret = ProxyMethodAsyncStateMachineFactory.GenerateAsyncStateMachine(moduleBuilder, typeBuilder, targetType, aspectContextActivatorField, methodInfo, methodBuilder, typeGenericArgumentBuilders, typeGenericArguments, customAspectContext, contextConstructor);
                         ret.WriteCallerMethod(methodBuilder, methodGenericParameters, typeGenericArgumentBuilders, targetField, contextFactoryField);
 
                         typeBuilder.DefineMethodOverride(methodBuilder, interfaceMethodInfo);
@@ -136,10 +138,6 @@ namespace AspectSharp.DynamicProxy.Factories
                         cil.Emit(OpCodes.Newobj, contextConstructor);
                         cil.Emit(OpCodes.Stloc, contextVariable.LocalIndex);
 
-
-
-
-
                         //cil.Emit(OpCodes.Callvirt, _createContextMethodInfo);
 
                         cil.Emit(OpCodes.Ldarg_0);
@@ -147,10 +145,8 @@ namespace AspectSharp.DynamicProxy.Factories
                         cil.Emit(OpCodes.Ldloc, contextVariable.LocalIndex);
                         cil.Emit(OpCodes.Callvirt, _setLastContextMethodInfo);
 
-
                         cil.Emit(OpCodes.Ldloc, contextVariable.LocalIndex);
-                        cil.Emit(OpCodes.Call, pipelineProperty.GetMethod);
-                        cil.Emit(OpCodes.Call, _executePipelineMethodInfo);
+                        cil.Emit(OpCodes.Callvirt, _runMethodInfo);
                         cil.Emit(OpCodes.Callvirt, _waitTaskMethodInfo);
 
                         if (hasRefOrOutParameters)

@@ -25,7 +25,7 @@ namespace AspectSharp.Tests.Net7.DynamicProxy
             var targetService = typeof(FakeService);
             var targetMethod = targetService.GetMethod(nameof(FakeService.DoSomethingAsyncWithParameterAndReferenceTypeReturn));
 
-            var activator = new AspectContextActivator(serviceType, serviceMethod, proxyService, proxyMethod, targetService, targetMethod);
+            var activator = new AspectContextActivator(serviceType, serviceMethod, proxyService, proxyMethod, targetService, targetMethod, Array.Empty<IInterceptor>(), null);
 
             var configs = new DynamicProxyFactoryConfigurations();
             AspectSharp.DynamicProxy.Utils.InterceptorTypeCache.TryGetInterceptedTypeData(serviceType, configs, out _);

@@ -9,6 +9,7 @@ using BenchmarkDotNet.Filters;
 using BenchmarkDotNet.Jobs;
 using BenchmarkDotNet.Loggers;
 using BenchmarkDotNet.Order;
+using BenchmarkDotNet.Reports;
 
 namespace AspectSharp.Benchmarks
 {
@@ -119,6 +120,8 @@ namespace AspectSharp.Benchmarks
             );
 
             AddLogicalGroupRules(BenchmarkLogicalGroupRule.ByCategory, BenchmarkLogicalGroupRule.ByJob);
+
+            SummaryStyle = SummaryStyle.Default.WithRatioStyle(RatioStyle.Trend);
             Orderer = new DefaultOrderer(SummaryOrderPolicy.FastestToSlowest);
             Options |= ConfigOptions.JoinSummary;
 

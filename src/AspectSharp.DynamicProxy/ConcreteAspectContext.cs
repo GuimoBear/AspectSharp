@@ -1,4 +1,5 @@
 ﻿using AspectSharp.Abstractions;
+using AspectSharp.DynamicProxy.Utils;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
@@ -7,19 +8,21 @@ namespace AspectSharp.DynamicProxy
 {
     internal class ConcreteAspectContext : AspectContext
     {
-        public override MemberTypes MemberType { get; }
+        private readonly AspectContextActivator _activator;
 
-        public override Type ServiceType { get; }
+        public override MemberTypes MemberType => _activator.MemberType;
 
-        public override MethodInfo ServiceMethod { get; }
+        public override Type ServiceType => _activator.ServiceType;
 
-        public override Type ProxyType { get; }
+        public override MethodInfo ServiceMethod => _activator.ServiceMethod;
 
-        public override MethodInfo ProxyMethod { get; }
+        public override Type ProxyType => _activator.ProxyType;
 
-        public override Type TargetType { get; }
+        public override MethodInfo ProxyMethod => _activator.ProxyMethod;
 
-        public override MethodInfo TargetMethod { get; }
+        public override Type TargetType => _activator.TargetType;
+
+        public override MethodInfo TargetMethod => _activator.TargetMethod;
 
         public override object Proxy { get; }
 
@@ -40,20 +43,14 @@ namespace AspectSharp.DynamicProxy
             object[] parameters,
             IServiceProvider serviceProvider)
         {
-            MemberType = activator.MemberType;
-            ServiceType = activator.ServiceType;
-            ServiceMethod = activator.ServiceMethod;
-            ProxyType = activator.ProxyType;
-            ProxyMethod = activator.ProxyMethod;
-            TargetType = activator.TargetType;
-            TargetMethod = activator.TargetMethod;
+            _activator = activator;
 
             Proxy = proxy;
             Target = target;
             Parameters = parameters;
             ServiceProvider = serviceProvider;
 
-            AdditionalData = new Dictionary<string, object>();
+            AdditionalData = new LazyDictionary();
         }
     }
 }
